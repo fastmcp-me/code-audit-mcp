@@ -108,7 +108,10 @@ jobs:
         run: npm run build
 
       - name: Create tarball
-        run: npm pack
+        run: |
+          npm pack
+          echo "Created tarball:"
+          ls -la *.tgz
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -148,8 +151,17 @@ jobs:
       - name: Install and test package
         shell: bash
         run: |
-          # Find the tarball file
-          TARBALL=$(ls *.tgz)
+          # List all files to debug
+          echo "Files in directory:"
+          ls -la
+          
+          # Find the correct tarball file (should be moikas-code-code-audit-mcp-*.tgz)
+          TARBALL=$(ls moikas-code-code-audit-mcp-*.tgz 2>/dev/null | head -n1)
+          if [ -z "$TARBALL" ]; then
+            # Fallback to any .tgz file
+            TARBALL=$(ls *.tgz | head -n1)
+          fi
+          
           echo "Installing tarball: $TARBALL"
           npm install -g "$TARBALL"
           code-audit --version || echo "Global install test failed"

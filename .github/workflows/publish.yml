@@ -154,21 +154,21 @@ jobs:
           # List all files to debug
           echo "Files in directory:"
           ls -la
-          
+
           # Find tgz files one per line
           echo "Tarballs found:"
           find . -maxdepth 1 -name "*.tgz" -type f
-          
+
           # Find the correct tarball file - use find to ensure one per line
           TARBALL=$(find . -maxdepth 1 -name "moikas-code-code-audit-mcp-*.tgz" -type f | head -n1)
           if [ -z "$TARBALL" ]; then
             # Fallback to any .tgz file
             TARBALL=$(find . -maxdepth 1 -name "*.tgz" -type f | head -n1)
           fi
-          
+
           # Remove leading ./ if present
           TARBALL=${TARBALL#./}
-          
+
           echo "Installing tarball: $TARBALL"
           npm install -g "$TARBALL"
           code-audit --version || echo "Global install test failed"

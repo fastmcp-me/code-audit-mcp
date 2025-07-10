@@ -1,10 +1,11 @@
 /**
- * Unit tests for configuration utility and command
+ * Unit tests for configuration utility
  */
 
-import { describe, test, expect, beforeEach, afterEach, mock } from 'bun:test';
+import { describe, test, beforeEach, afterEach } from 'node:test';
+import assert from 'node:assert';
 import { join } from 'path';
-import { existsSync, rmSync, mkdirSync } from 'fs';
+import { existsSync, rmSync, mkdirSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import {
   getConfigManager,
@@ -14,13 +15,19 @@ import {
   resetConfig,
   getDefaultConfig,
   hasProjectConfig,
-  ConfigSchema,
 } from '../../src/cli/utils/config.js';
 
 const TEST_CONFIG_DIR = join(tmpdir(), 'code-audit-test-config');
 
 describe('Configuration Utility', () => {
+  let originalHome: string | undefined;
+  let originalCwd: string;
+
   beforeEach(() => {
+    // Save original values
+    originalHome = process.env.HOME;
+    originalCwd = process.cwd();
+
     // Clean up any existing test config
     if (existsSync(TEST_CONFIG_DIR)) {
       rmSync(TEST_CONFIG_DIR, { recursive: true, force: true });
@@ -29,25 +36,35 @@ describe('Configuration Utility', () => {
 
     // Mock the home directory for testing
     process.env.HOME = TEST_CONFIG_DIR;
+    process.chdir(TEST_CONFIG_DIR);
   });
 
   afterEach(() => {
+    // Restore original values
+    if (originalHome !== undefined) {
+      process.env.HOME = originalHome;
+    }
+    process.chdir(originalCwd);
+
     // Clean up test config
     if (existsSync(TEST_CONFIG_DIR)) {
       rmSync(TEST_CONFIG_DIR, { recursive: true, force: true });
     }
+
+    // Reset singleton instance
+    (global as any).__configManager = undefined;
   });
 
   describe('getDefaultConfig', () => {
     test('should return valid default configuration', () => {
       const defaultConfig = getDefaultConfig();
 
-      expect(defaultConfig).toBeDefined();
-      expect(defaultConfig.ollama).toBeDefined();
-      expect(defaultConfig.ollama.host).toBe('http://localhost:11434');
-      expect(defaultConfig.ollama.models.primary).toBe('codellama:7b');
-      expect(defaultConfig.audit.rules.security).toBe(true);
-      expect(defaultConfig.server.transport).toBe('stdio');
+      assert.ok(defaultConfig);
+      assert.ok(defaultConfig.ollama);
+      assert.strictEqual(defaultConfig.ollama.host, 'http://localhost:11434');
+      assert.strictEqual(defaultConfig.ollama.models.primary, 'codellama:7b');
+      assert.strictEqual(defaultConfig.audit.rules.security, true);
+      assert.strictEqual(defaultConfig.server.transport, 'stdio');
     });
 
     test('should return a deep copy of the default config', () => {
@@ -56,7 +73,7 @@ describe('Configuration Utility', () => {
 
       config1.ollama.host = 'http://modified.local';
 
-      expect(config2.ollama.host).toBe('http://localhost:11434');
+      assert.strictEqual(config2.ollama.host, 'http://localhost:11434');
     });
   });
 
@@ -65,15 +82,15 @@ describe('Configuration Utility', () => {
       const manager1 = getConfigManager();
       const manager2 = getConfigManager();
 
-      expect(manager1).toBe(manager2);
+      assert.strictEqual(manager1, manager2);
     });
 
     test('should initialize with default configuration', async () => {
       const config = await getConfig();
       const defaultConfig = getDefaultConfig();
 
-      expect(config.ollama.host).toBe(defaultConfig.ollama.host);
-      expect(config.ollama.timeout).toBe(defaultConfig.ollama.timeout);
+      assert.strictEqual(config.ollama.host, defaultConfig.ollama.host);
+      assert.strictEqual(config.ollama.timeout, defaultConfig.ollama.timeout);
     });
   });
 
@@ -82,8 +99,8 @@ describe('Configuration Utility', () => {
       const manager = getConfigManager();
       const validation = manager.validateConfig();
 
-      expect(validation.isValid).toBe(true);
-      expect(validation.errors).toEqual([]);
+      assert.strictEqual(validation.isValid, true);
+      assert.deepStrictEqual(validation.errors, []);
     });
 
     test('should detect invalid host URL', async () => {
@@ -92,8 +109,8 @@ describe('Configuration Utility', () => {
       const manager = getConfigManager();
       const validation = manager.validateConfig();
 
-      expect(validation.isValid).toBe(false);
-      expect(validation.errors).toContain('ollama.host is required');
+      assert.strictEqual(validation.isValid, false);
+      assert.ok(validation.errors.includes('ollama.host is required'));
     });
 
     test('should detect invalid timeout', async () => {
@@ -102,9 +119,9 @@ describe('Configuration Utility', () => {
       const manager = getConfigManager();
       const validation = manager.validateConfig();
 
-      expect(validation.isValid).toBe(false);
-      expect(validation.errors).toContain(
-        'ollama.timeout must be at least 1000ms'
+      assert.strictEqual(validation.isValid, false);
+      assert.ok(
+        validation.errors.includes('ollama.timeout must be at least 1000ms')
       );
     });
 
@@ -114,9 +131,9 @@ describe('Configuration Utility', () => {
       const manager = getConfigManager();
       const validation = manager.validateConfig();
 
-      expect(validation.isValid).toBe(false);
-      expect(validation.errors).toContain(
-        'server.port must be between 1 and 65535'
+      assert.strictEqual(validation.isValid, false);
+      assert.ok(
+        validation.errors.includes('server.port must be between 1 and 65535')
       );
     });
   });
@@ -124,39 +141,46 @@ describe('Configuration Utility', () => {
   describe('get and set configuration values', () => {
     test('should get configuration value', async () => {
       const host = await getConfigValue<string>('ollama.host');
-      expect(host).toBe('http://localhost:11434');
+      assert.strictEqual(host, 'http://localhost:11434');
     });
 
     test('should get nested configuration value', async () => {
       const primary = await getConfigValue<string>('ollama.models.primary');
-      expect(primary).toBe('codellama:7b');
+      assert.strictEqual(primary, 'codellama:7b');
     });
 
     test('should return undefined for non-existent key', async () => {
       const value = await getConfigValue('non.existent.key');
-      expect(value).toBeUndefined();
+      assert.strictEqual(value, undefined);
     });
 
     test('should set configuration value', async () => {
       await setConfigValue('ollama.host', 'http://test.local:11434');
 
       const host = await getConfigValue<string>('ollama.host');
-      expect(host).toBe('http://test.local:11434');
+      assert.strictEqual(host, 'http://test.local:11434');
     });
 
     test('should set nested configuration value', async () => {
       await setConfigValue('ollama.models.primary', 'test-model:latest');
 
       const primary = await getConfigValue<string>('ollama.models.primary');
-      expect(primary).toBe('test-model:latest');
+      assert.strictEqual(primary, 'test-model:latest');
     });
 
     test('should validate configuration values before setting', async () => {
-      await expect(setConfigValue('ollama.timeout', 100)).rejects.toThrow();
-      await expect(setConfigValue('server.port', -1)).rejects.toThrow();
-      await expect(
-        setConfigValue('audit.output.format', 'invalid')
-      ).rejects.toThrow();
+      await assert.rejects(
+        () => setConfigValue('ollama.timeout', 100),
+        /Invalid value/
+      );
+      await assert.rejects(
+        () => setConfigValue('server.port', -1),
+        /Invalid value/
+      );
+      await assert.rejects(
+        () => setConfigValue('audit.output.format', 'invalid'),
+        /Invalid value/
+      );
     });
   });
 
@@ -168,24 +192,24 @@ describe('Configuration Utility', () => {
 
       // Reset configuration
       const success = await resetConfig(async () => true);
-      expect(success).toBe(true);
+      assert.strictEqual(success, true);
 
       // Check values are back to defaults
       const host = await getConfigValue<string>('ollama.host');
       const port = await getConfigValue<number>('server.port');
 
-      expect(host).toBe('http://localhost:11434');
-      expect(port).toBe(3000);
+      assert.strictEqual(host, 'http://localhost:11434');
+      assert.strictEqual(port, 3000);
     });
 
     test('should not reset if confirmation callback returns false', async () => {
       await setConfigValue('ollama.host', 'http://modified.local');
 
       const success = await resetConfig(async () => false);
-      expect(success).toBe(false);
+      assert.strictEqual(success, false);
 
       const host = await getConfigValue<string>('ollama.host');
-      expect(host).toBe('http://modified.local');
+      assert.strictEqual(host, 'http://modified.local');
     });
   });
 
@@ -194,8 +218,8 @@ describe('Configuration Utility', () => {
       const manager = getConfigManager();
       const paths = manager.getConfigPaths();
 
-      expect(paths.global).toBeDefined();
-      expect(paths.global).toContain('.code-audit');
+      assert.ok(paths.global);
+      assert.ok(paths.global.includes('.code-audit'));
     });
   });
 
@@ -204,9 +228,9 @@ describe('Configuration Utility', () => {
       const manager = getConfigManager();
       const exported = manager.exportConfig();
 
-      expect(exported.global).toBeDefined();
-      expect(exported.global.ollama).toBeDefined();
-      expect(exported.global.audit).toBeDefined();
+      assert.ok(exported.global);
+      assert.ok(exported.global.ollama);
+      assert.ok(exported.global.audit);
     });
 
     test('should import configuration', async () => {
@@ -223,7 +247,7 @@ describe('Configuration Utility', () => {
 
       // Check that config was restored
       const host = await getConfigValue<string>('ollama.host');
-      expect(host).toBe('http://localhost:11434');
+      assert.strictEqual(host, 'http://localhost:11434');
     });
   });
 
@@ -231,8 +255,8 @@ describe('Configuration Utility', () => {
     test('should generate anonymous telemetry ID', async () => {
       const telemetryId = await getConfigValue<string>('telemetry.anonymousId');
 
-      expect(telemetryId).toBeDefined();
-      expect(telemetryId).toMatch(/^audit_[a-z0-9]+$/);
+      assert.ok(telemetryId);
+      assert.match(telemetryId, /^audit_[a-z0-9]+$/);
     });
 
     test('should preserve telemetry ID across resets', async () => {
@@ -241,18 +265,27 @@ describe('Configuration Utility', () => {
       await resetConfig(async () => true);
 
       const newId = await getConfigValue<string>('telemetry.anonymousId');
-      expect(newId).toBeDefined();
+      assert.ok(newId);
       // New ID should be generated after reset
     });
   });
 
   describe('project configuration detection', () => {
     test('should detect absence of project config', () => {
-      expect(hasProjectConfig()).toBe(false);
+      assert.strictEqual(hasProjectConfig(), false);
     });
 
-    // Note: Testing project config detection would require setting up
-    // temporary project files, which is more complex for this test suite
+    test('should detect presence of project config', () => {
+      // Create a project config file
+      writeFileSync(
+        join(TEST_CONFIG_DIR, '.code-audit.json'),
+        JSON.stringify({
+          server: { port: 4000 },
+        })
+      );
+
+      assert.strictEqual(hasProjectConfig(), true);
+    });
   });
 
   describe('configuration migration', () => {
@@ -261,7 +294,7 @@ describe('Configuration Utility', () => {
       const migrated = await manager.migrateConfig();
 
       // For version 1.0.0, no migration should be needed
-      expect(migrated).toBe(false);
+      assert.strictEqual(migrated, false);
     });
   });
 
@@ -270,7 +303,7 @@ describe('Configuration Utility', () => {
       await setConfigValue('audit.rules.security', false);
 
       const value = await getConfigValue<boolean>('audit.rules.security');
-      expect(value).toBe(false);
+      assert.strictEqual(value, false);
     });
 
     test('should handle array values', async () => {
@@ -278,7 +311,7 @@ describe('Configuration Utility', () => {
       await setConfigValue('ollama.models.fallback', newFallbacks);
 
       const value = await getConfigValue<string[]>('ollama.models.fallback');
-      expect(value).toEqual(newFallbacks);
+      assert.deepStrictEqual(value, newFallbacks);
     });
   });
 
@@ -291,32 +324,8 @@ describe('Configuration Utility', () => {
         getConfigValue('audit.rules.security'),
       ];
 
-      await expect(Promise.all(promises)).resolves.toBeDefined();
+      const results = await Promise.all(promises);
+      assert.ok(results);
     });
-  });
-});
-
-describe('Configuration Value Parsing', () => {
-  // These tests would be for the parseConfigValue function in the config command
-  // Since it's an internal function, we'll test it through the command interface
-
-  test('should parse string values correctly', () => {
-    // This would require exposing the parseConfigValue function or testing through CLI
-    expect(true).toBe(true); // Placeholder
-  });
-
-  test('should parse boolean values correctly', () => {
-    // Placeholder for testing boolean parsing
-    expect(true).toBe(true);
-  });
-
-  test('should parse number values correctly', () => {
-    // Placeholder for testing number parsing
-    expect(true).toBe(true);
-  });
-
-  test('should parse array values correctly', () => {
-    // Placeholder for testing array parsing
-    expect(true).toBe(true);
   });
 });

@@ -200,7 +200,11 @@ jobs:
 
       - name: Publish to NPM
         run: |
-          npm publish *.tgz --access public
+          # Find the tarball file
+          TARBALL=$(find . -maxdepth 1 -name "*.tgz" -type f | head -n1)
+          TARBALL=${TARBALL#./}
+          echo "Publishing tarball: $TARBALL"
+          npm publish "$TARBALL" --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

@@ -94,13 +94,13 @@ jobs:
           # Check if version needs updating
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           TARGET_VERSION="${{ needs.validate.outputs.version }}"
-          
+
           if [ "$CURRENT_VERSION" != "$TARGET_VERSION" ]; then
             npm version $TARGET_VERSION --no-git-tag-version
           else
             echo "Version already set to $TARGET_VERSION, skipping npm version"
           fi
-          
+
           sed -i 's/"name": "@moikas\/code-audit-mcp"/"name": "@moikas-code\/code-audit-mcp"/' package.json
           cat package.json | grep -A 5 -B 5 '"name":'
 

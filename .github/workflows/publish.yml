@@ -146,8 +146,12 @@ jobs:
           name: npm-package
 
       - name: Install and test package
+        shell: bash
         run: |
-          npm install -g *.tgz
+          # Find the tarball file
+          TARBALL=$(ls *.tgz)
+          echo "Installing tarball: $TARBALL"
+          npm install -g "$TARBALL"
           code-audit --version || echo "Global install test failed"
 
   publish-npm:

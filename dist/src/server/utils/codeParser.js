@@ -1,5 +1,5 @@
 /**
- * Code parsing utilities for language detection and analysis
+ * Code parsing utilities for _language detection and analysis
  */
 /**
  * Language detection based on code patterns and syntax
@@ -125,7 +125,7 @@ export class LanguageDetector {
         ],
     };
     /**
-     * Detect programming language from code content
+     * Detect programming _language from code content
      */
     static detectLanguage(code, filename) {
         // First try to detect from filename extension
@@ -137,7 +137,7 @@ export class LanguageDetector {
         }
         // Then analyze code patterns
         const scores = {};
-        for (const [language, patterns] of Object.entries(this.patterns)) {
+        for (const [_language, patterns] of Object.entries(this.patterns)) {
             let score = 0;
             for (const pattern of patterns) {
                 const matches = code.match(pattern);
@@ -145,14 +145,14 @@ export class LanguageDetector {
                     score += matches.length;
                 }
             }
-            scores[language] = score;
+            scores[_language] = score;
         }
-        // Return language with highest score
+        // Return _language with highest score
         const bestMatch = Object.entries(scores).reduce((a, b) => scores[a[0]] > scores[b[0]] ? a : b);
         return bestMatch[1] > 0 ? bestMatch[0] : 'unknown';
     }
     /**
-     * Detect language from file extension
+     * Detect _language from file extension
      */
     static detectFromExtension(filename) {
         const ext = filename.toLowerCase().split('.').pop();
@@ -184,10 +184,10 @@ export class LanguageDetector {
         return ext ? extensionMap[ext] || null : null;
     }
     /**
-     * Check if detected language is supported
+     * Check if detected _language is supported
      */
-    static isSupported(language) {
-        return Object.keys(this.patterns).includes(language);
+    static isSupported(_language) {
+        return Object.keys(this.patterns).includes(_language);
     }
 }
 /**
@@ -197,32 +197,32 @@ export class CodeParser {
     /**
      * Parse code structure and extract functions, classes, etc.
      */
-    static parseCode(code, language) {
+    static parseCode(code, _language) {
         const lines = code.split('\n');
         return {
-            language,
-            functions: this.extractFunctions(code, language),
-            classes: this.extractClasses(code, language),
-            imports: this.extractImports(code, language),
-            exports: this.extractExports(code, language),
-            comments: this.extractComments(code, language),
+            _language,
+            functions: this.extractFunctions(code, _language),
+            classes: this.extractClasses(code, _language),
+            imports: this.extractImports(code, _language),
+            exports: this.extractExports(code, _language),
+            comments: this.extractComments(code, _language),
             lineCount: lines.length,
-            complexity: this.calculateComplexity(code, language),
+            complexity: this.calculateComplexity(code, _language),
         };
     }
     /**
      * Extract function definitions
      */
-    static extractFunctions(code, language) {
+    static extractFunctions(code, _language) {
         const functions = [];
         const lines = code.split('\n');
-        const functionPatterns = this.getFunctionPatterns(language);
+        const functionPatterns = this.getFunctionPatterns(_language);
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
             for (const pattern of functionPatterns) {
                 const match = line.match(pattern);
                 if (match) {
-                    const func = this.parseFunctionDetails(lines, i, match, language);
+                    const func = this.parseFunctionDetails(lines, i, match, _language);
                     if (func) {
                         functions.push(func);
                     }
@@ -234,16 +234,16 @@ export class CodeParser {
     /**
      * Extract class definitions
      */
-    static extractClasses(code, language) {
+    static extractClasses(code, _language) {
         const classes = [];
         const lines = code.split('\n');
-        const classPatterns = this.getClassPatterns(language);
+        const classPatterns = this.getClassPatterns(_language);
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
             for (const pattern of classPatterns) {
                 const match = line.match(pattern);
                 if (match) {
-                    const cls = this.parseClassDetails(lines, i, match, language);
+                    const cls = this.parseClassDetails(lines, i, match, _language);
                     if (cls) {
                         classes.push(cls);
                     }
@@ -255,9 +255,9 @@ export class CodeParser {
     /**
      * Extract import statements
      */
-    static extractImports(code, language) {
+    static extractImports(code, _language) {
         const imports = [];
-        const importPatterns = this.getImportPatterns(language);
+        const importPatterns = this.getImportPatterns(_language);
         for (const pattern of importPatterns) {
             const matches = code.match(new RegExp(pattern.source, 'gm'));
             if (matches) {
@@ -269,9 +269,9 @@ export class CodeParser {
     /**
      * Extract export statements
      */
-    static extractExports(code, language) {
+    static extractExports(code, _language) {
         const exports = [];
-        const exportPatterns = this.getExportPatterns(language);
+        const exportPatterns = this.getExportPatterns(_language);
         for (const pattern of exportPatterns) {
             const matches = code.match(new RegExp(pattern.source, 'gm'));
             if (matches) {
@@ -283,10 +283,10 @@ export class CodeParser {
     /**
      * Extract comments
      */
-    static extractComments(code, language) {
+    static extractComments(code, _language) {
         const comments = [];
         const lines = code.split('\n');
-        const commentPatterns = this.getCommentPatterns(language);
+        const commentPatterns = this.getCommentPatterns(_language);
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
             // Single line comments
@@ -322,9 +322,9 @@ export class CodeParser {
     /**
      * Calculate code complexity
      */
-    static calculateComplexity(code, language) {
+    static calculateComplexity(code, _language) {
         let complexity = 1; // Base complexity
-        const complexityPatterns = this.getComplexityPatterns(language);
+        const complexityPatterns = this.getComplexityPatterns(_language);
         for (const pattern of complexityPatterns) {
             const matches = code.match(new RegExp(pattern.source, 'g'));
             if (matches) {
@@ -334,9 +334,9 @@ export class CodeParser {
         return complexity;
     }
     /**
-     * Get function patterns for specific language
+     * Get function patterns for specific _language
      */
-    static getFunctionPatterns(language) {
+    static getFunctionPatterns(_language) {
         const patterns = {
             javascript: [
                 /function\s+(\w+)\s*\([^)]*\)/,
@@ -354,12 +354,12 @@ export class CodeParser {
             go: [/func\s+(\w+)\s*\([^)]*\)/],
             rust: [/fn\s+(\w+)\s*\([^)]*\)/],
         };
-        return patterns[language] || [];
+        return patterns[_language] || [];
     }
     /**
-     * Get class patterns for specific language
+     * Get class patterns for specific _language
      */
-    static getClassPatterns(language) {
+    static getClassPatterns(_language) {
         const patterns = {
             javascript: [/class\s+(\w+)/],
             typescript: [/class\s+(\w+)/, /interface\s+(\w+)/],
@@ -369,12 +369,12 @@ export class CodeParser {
             go: [/type\s+(\w+)\s+struct/],
             rust: [/struct\s+(\w+)/, /enum\s+(\w+)/, /trait\s+(\w+)/],
         };
-        return patterns[language] || [];
+        return patterns[_language] || [];
     }
     /**
-     * Get import patterns for specific language
+     * Get import patterns for specific _language
      */
-    static getImportPatterns(language) {
+    static getImportPatterns(_language) {
         const patterns = {
             javascript: [/import.*from.*/, /require\s*\(.*/],
             typescript: [/import.*from.*/],
@@ -382,22 +382,22 @@ export class CodeParser {
             java: [/import\s+.*;/],
             go: [/import\s+.*/],
         };
-        return patterns[language] || [];
+        return patterns[_language] || [];
     }
     /**
-     * Get export patterns for specific language
+     * Get export patterns for specific _language
      */
-    static getExportPatterns(language) {
+    static getExportPatterns(_language) {
         const patterns = {
             javascript: [/export\s+.*/, /module\.exports\s*=.*/],
             typescript: [/export\s+.*/],
         };
-        return patterns[language] || [];
+        return patterns[_language] || [];
     }
     /**
-     * Get comment patterns for specific language
+     * Get comment patterns for specific _language
      */
-    static getCommentPatterns(language) {
+    static getCommentPatterns(_language) {
         const patterns = {
             javascript: {
                 single: [/\/\/.*/],
@@ -416,12 +416,12 @@ export class CodeParser {
                 multi: [/\/\*[\s\S]*?\*\//],
             },
         };
-        return patterns[language] || { single: [], multi: [] };
+        return patterns[_language] || { single: [], multi: [] };
     }
     /**
-     * Get complexity patterns for specific language
+     * Get complexity patterns for specific _language
      */
-    static getComplexityPatterns(language) {
+    static getComplexityPatterns(_language) {
         return [
             /\bif\b/,
             /\belse\b/,
@@ -441,7 +441,7 @@ export class CodeParser {
     /**
      * Parse function details from matched line
      */
-    static parseFunctionDetails(lines, startLine, match, language) {
+    static parseFunctionDetails(lines, startLine, match, _language) {
         const name = match[1] || 'anonymous';
         const line = lines[startLine];
         return {
@@ -457,7 +457,7 @@ export class CodeParser {
     /**
      * Parse class details from matched line
      */
-    static parseClassDetails(lines, startLine, match, language) {
+    static parseClassDetails(lines, startLine, match, _language) {
         const name = match[1] || 'anonymous';
         return {
             name,

@@ -128,7 +128,7 @@ export async function removeModel(modelName) {
  * Ensure required models are installed
  */
 export async function ensureRequiredModels() {
-    const config = await getConfig();
+    const _config = await getConfig();
     const installedModels = await getInstalledModels();
     const installedModelNames = installedModels.map((m) => m.name);
     // Essential models that should be available

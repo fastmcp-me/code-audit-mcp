@@ -27,7 +27,7 @@ export class CompletenessAuditor extends BaseAuditor {
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
             const lineNumber = i + 1;
-            const trimmedLine = line.trim().toLowerCase();
+            const _trimmedLine = line.trim().toLowerCase();
             // TODO comments
             if (this.isTodoComment(line)) {
                 issues.push(this.createTodoIssue(line, lineNumber));
@@ -186,7 +186,7 @@ export class CompletenessAuditor extends BaseAuditor {
     /**
      * Check if line is missing error handling
      */
-    isMissingErrorHandling(line, lines, index, language) {
+    isMissingErrorHandling(line, lines, index, _language) {
         // Look for risky operations without try-catch
         const riskyPatterns = [
             /JSON\.parse/,

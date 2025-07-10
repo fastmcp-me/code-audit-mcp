@@ -86,7 +86,7 @@ declare class ConfigManager {
     /**
      * Set configuration value with support for nested keys
      */
-    set(key: string, value: any, isGlobal?: boolean): void;
+    set(key: string, value: unknown, isGlobal?: boolean): void;
     /**
      * Reset configuration to defaults
      */
@@ -155,7 +155,7 @@ export declare function getConfigValue<T>(key: string): Promise<T | undefined>;
 /**
  * Set configuration value
  */
-export declare function setConfigValue(key: string, value: any, isGlobal?: boolean): Promise<void>;
+export declare function setConfigValue(key: string, value: unknown, isGlobal?: boolean): Promise<void>;
 /**
  * Reset configuration to defaults
  */

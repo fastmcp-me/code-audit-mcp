@@ -3,12 +3,7 @@
  */
 
 import { Ollama } from 'ollama';
-import type {
-  ModelConfig,
-  OllamaConfig,
-  AuditError,
-  HealthCheckResult,
-} from '../types.js';
+import type { OllamaConfig, AuditError, HealthCheckResult } from '../types.js';
 
 export interface OllamaResponse {
   response: string;
@@ -42,6 +37,7 @@ export class OllamaClient {
     {
       requests: number;
       failures: number;
+      totalDuration: number;
       avgResponseTime: number;
       lastUsed: Date;
     }
@@ -348,6 +344,7 @@ export class OllamaClient {
       this.modelMetrics.get(modelName) || {
         requests: 0,
         failures: 0,
+        totalDuration: 0,
         avgResponseTime: 0,
         lastUsed: new Date(0),
       }
@@ -358,10 +355,22 @@ export class OllamaClient {
    * Get all model metrics
    */
   getAllMetrics() {
-    const metrics: Record<string, any> = {};
+    const metrics: Record<
+      string,
+      {
+        requests: number;
+        failures: number;
+        totalDuration: number;
+        averageDuration: number;
+        lastUsed: Date;
+        successRate: number;
+      }
+    > = {};
     for (const [model, data] of this.modelMetrics.entries()) {
       metrics[model] = {
         ...data,
+        averageDuration:
+          data.requests > 0 ? data.totalDuration / data.requests : 0,
         successRate:
           data.requests > 0
             ? (data.requests - data.failures) / data.requests
@@ -430,6 +439,7 @@ export class OllamaClient {
     const current = this.modelMetrics.get(modelName) || {
       requests: 0,
       failures: 0,
+      totalDuration: 0,
       avgResponseTime: 0,
       lastUsed: new Date(),
     };
@@ -445,6 +455,7 @@ export class OllamaClient {
         ? responseTime
         : current.avgResponseTime * 0.8 + responseTime * 0.2;
 
+    current.totalDuration += responseTime;
     current.lastUsed = new Date();
 
     this.modelMetrics.set(modelName, current);

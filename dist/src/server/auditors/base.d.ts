@@ -29,7 +29,7 @@ export declare abstract class BaseAuditor {
     /**
      * Analyze basic code metrics
      */
-    protected analyzeCodeMetrics(code: string, language: string): Promise<{
+    protected analyzeCodeMetrics(code: string, _language: string): Promise<{
         lineCount: number;
         functionCount: number;
         complexity: number;
@@ -57,7 +57,7 @@ export declare abstract class BaseAuditor {
     /**
      * Post-process and validate issues from AI
      */
-    protected postProcessIssues(rawIssues: Partial<AuditIssue>[], request: AuditRequest, language: string): Promise<AuditIssue[]>;
+    protected postProcessIssues(rawIssues: Partial<AuditIssue>[], request: AuditRequest, _language: string): Promise<AuditIssue[]>;
     /**
      * Validate and normalize a single issue
      */
@@ -97,7 +97,7 @@ export declare abstract class BaseAuditor {
         lineCount: number;
         functionCount: number;
         complexity: number;
-    }, issues: AuditIssue[]): AuditCoverage;
+    }, _issues: AuditIssue[]): AuditCoverage;
     /**
      * Create suggestions based on issues
      */

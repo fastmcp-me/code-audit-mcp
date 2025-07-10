@@ -1,5 +1,5 @@
 /**
- * Code parsing utilities for language detection and analysis
+ * Code parsing utilities for _language detection and analysis
  */
 export interface ParsedFunction {
     name: string;
@@ -21,7 +21,7 @@ export interface ParsedClass {
     implements?: string[];
 }
 export interface ParsedCode {
-    language: string;
+    _language: string;
     functions: ParsedFunction[];
     classes: ParsedClass[];
     imports: string[];
@@ -40,17 +40,17 @@ export interface ParsedCode {
 export declare class LanguageDetector {
     private static patterns;
     /**
-     * Detect programming language from code content
+     * Detect programming _language from code content
      */
     static detectLanguage(code: string, filename?: string): string;
     /**
-     * Detect language from file extension
+     * Detect _language from file extension
      */
     private static detectFromExtension;
     /**
-     * Check if detected language is supported
+     * Check if detected _language is supported
      */
-    static isSupported(language: string): boolean;
+    static isSupported(_language: string): boolean;
 }
 /**
  * Generic code parser for extracting structure and metrics
@@ -59,7 +59,7 @@ export declare class CodeParser {
     /**
      * Parse code structure and extract functions, classes, etc.
      */
-    static parseCode(code: string, language: string): ParsedCode;
+    static parseCode(code: string, _language: string): ParsedCode;
     /**
      * Extract function definitions
      */
@@ -85,27 +85,27 @@ export declare class CodeParser {
      */
     private static calculateComplexity;
     /**
-     * Get function patterns for specific language
+     * Get function patterns for specific _language
      */
     private static getFunctionPatterns;
     /**
-     * Get class patterns for specific language
+     * Get class patterns for specific _language
      */
     private static getClassPatterns;
     /**
-     * Get import patterns for specific language
+     * Get import patterns for specific _language
      */
     private static getImportPatterns;
     /**
-     * Get export patterns for specific language
+     * Get export patterns for specific _language
      */
     private static getExportPatterns;
     /**
-     * Get comment patterns for specific language
+     * Get comment patterns for specific _language
      */
     private static getCommentPatterns;
     /**
-     * Get complexity patterns for specific language
+     * Get complexity patterns for specific _language
      */
     private static getComplexityPatterns;
     /**

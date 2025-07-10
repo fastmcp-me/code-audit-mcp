@@ -50,17 +50,17 @@ export async function stopCommand(): Promise<void> {
 
         // Wait a bit more
         await new Promise((resolve) => setTimeout(resolve, 1000));
-      } catch (error) {
+      } catch (_error) {
         // Process is dead, that's what we want
       }
 
       spinner.succeed('Server stopped successfully');
-    } catch (error: any) {
-      if (error.code === 'ESRCH') {
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ESRCH') {
         // Process doesn't exist
         spinner.succeed('Server was not running');
       } else {
-        spinner.fail(`Failed to stop server: ${error.message}`);
+        spinner.fail(`Failed to stop server: ${(error as Error).message}`);
         throw error;
       }
     }
@@ -69,11 +69,14 @@ export async function stopCommand(): Promise<void> {
     unlinkSync(pidFile);
 
     console.log(chalk.green('✅ Server shutdown complete'));
-  } catch (error: any) {
-    if (error.code === 'ENOENT') {
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       console.log(chalk.yellow('⚠️  PID file not found or corrupted'));
     } else {
-      console.error(chalk.red('❌ Failed to stop server:'), error.message);
+      console.error(
+        chalk.red('❌ Failed to stop server:'),
+        (error as Error).message
+      );
     }
   }
 }

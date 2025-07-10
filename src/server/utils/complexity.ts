@@ -144,7 +144,7 @@ export class CognitiveComplexityCalculator {
    */
   private static getStructureComplexity(
     line: string,
-    language: string
+    _language: string
   ): number {
     const patterns = [
       { pattern: /\bif\b/, score: 1 },

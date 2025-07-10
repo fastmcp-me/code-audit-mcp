@@ -194,7 +194,7 @@ class ConfigManager {
                         break;
                     }
                 }
-                catch (error) {
+                catch (_error) {
                     // Skip invalid config files
                 }
             }
@@ -259,10 +259,10 @@ class ConfigManager {
         const validations = {
             'ollama.host': (val) => typeof val === 'string' && val.length > 0,
             'ollama.timeout': (val) => typeof val === 'number' && val >= 1000,
-            'audit.output.format': (val) => ['json', 'markdown', 'html'].includes(val),
-            'audit.output.verbosity': (val) => ['minimal', 'normal', 'detailed'].includes(val),
-            'server.transport': (val) => ['stdio', 'http'].includes(val),
-            'server.logLevel': (val) => ['error', 'warn', 'info', 'debug'].includes(val),
+            'audit.output.format': (val) => typeof val === 'string' && ['json', 'markdown', 'html'].includes(val),
+            'audit.output.verbosity': (val) => typeof val === 'string' && ['minimal', 'normal', 'detailed'].includes(val),
+            'server.transport': (val) => typeof val === 'string' && ['stdio', 'http'].includes(val),
+            'server.logLevel': (val) => typeof val === 'string' && ['error', 'warn', 'info', 'debug'].includes(val),
             'server.port': (val) => typeof val === 'number' && val >= 1 && val <= 65535,
         };
         const validator = validations[key];
@@ -275,18 +275,26 @@ class ConfigManager {
      */
     mergeConfigs(global, project) {
         const result = { ...global };
-        for (const [key, value] of Object.entries(project)) {
-            if (typeof value === 'object' &&
-                value !== null &&
-                !Array.isArray(value)) {
-                result[key] = {
-                    ...result[key],
-                    ...value,
-                };
-            }
-            else {
-                result[key] = value;
-            }
+        // Type-safe merge
+        if (project.ollama) {
+            result.ollama = { ...result.ollama, ...project.ollama };
+        }
+        if (project.audit) {
+            result.audit = {
+                ...result.audit,
+                rules: project.audit.rules ? { ...result.audit.rules, ...project.audit.rules } : result.audit.rules,
+                output: project.audit.output ? { ...result.audit.output, ...project.audit.output } : result.audit.output,
+                filters: project.audit.filters ? { ...result.audit.filters, ...project.audit.filters } : result.audit.filters,
+            };
+        }
+        if (project.server) {
+            result.server = { ...result.server, ...project.server };
+        }
+        if (project.updates) {
+            result.updates = { ...result.updates, ...project.updates };
+        }
+        if (project.telemetry) {
+            result.telemetry = { ...result.telemetry, ...project.telemetry };
         }
         return result;
     }
@@ -303,10 +311,11 @@ class ConfigManager {
         const keys = path.split('.');
         const lastKey = keys.pop();
         const target = keys.reduce((current, key) => {
-            if (!current[key] || typeof current[key] !== 'object') {
-                current[key] = {};
+            const curr = current;
+            if (!curr[key] || typeof curr[key] !== 'object') {
+                curr[key] = {};
             }
-            return current[key];
+            return curr[key];
         }, obj);
         target[lastKey] = value;
     }

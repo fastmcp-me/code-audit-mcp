@@ -35,7 +35,7 @@ export async function healthCommand(options) {
             if (spinner)
                 spinner.text = 'Configuration ✓';
         }
-        catch (error) {
+        catch (_error) {
             result.checks.config = false;
             if (spinner)
                 spinner.text = 'Configuration ✗';
@@ -52,7 +52,7 @@ export async function healthCommand(options) {
             if (spinner)
                 spinner.text = 'Ollama ✓';
         }
-        catch (error) {
+        catch (_error) {
             result.checks.ollama = false;
             result.status = 'unhealthy';
             if (spinner)
@@ -79,7 +79,7 @@ export async function healthCommand(options) {
                 if (spinner)
                     spinner.text = 'Models ✓';
             }
-            catch (error) {
+            catch (_error) {
                 result.status = 'degraded';
                 if (spinner)
                     spinner.text = 'Models ✗';

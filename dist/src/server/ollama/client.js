@@ -257,6 +257,7 @@ export class OllamaClient {
         return (this.modelMetrics.get(modelName) || {
             requests: 0,
             failures: 0,
+            totalDuration: 0,
             avgResponseTime: 0,
             lastUsed: new Date(0),
         });
@@ -269,6 +270,7 @@ export class OllamaClient {
         for (const [model, data] of this.modelMetrics.entries()) {
             metrics[model] = {
                 ...data,
+                averageDuration: data.requests > 0 ? data.totalDuration / data.requests : 0,
                 successRate: data.requests > 0
                     ? (data.requests - data.failures) / data.requests
                     : 0,
@@ -317,6 +319,7 @@ export class OllamaClient {
         const current = this.modelMetrics.get(modelName) || {
             requests: 0,
             failures: 0,
+            totalDuration: 0,
             avgResponseTime: 0,
             lastUsed: new Date(),
         };
@@ -329,6 +332,7 @@ export class OllamaClient {
             current.avgResponseTime === 0
                 ? responseTime
                 : current.avgResponseTime * 0.8 + responseTime * 0.2;
+        current.totalDuration += responseTime;
         current.lastUsed = new Date();
         this.modelMetrics.set(modelName, current);
     }

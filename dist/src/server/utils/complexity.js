@@ -97,7 +97,7 @@ export class CognitiveComplexityCalculator {
     /**
      * Get complexity score for control structures
      */
-    static getStructureComplexity(line, language) {
+    static getStructureComplexity(line, _language) {
         const patterns = [
             { pattern: /\bif\b/, score: 1 },
             { pattern: /\belse\s+if\b|\belif\b/, score: 1 },

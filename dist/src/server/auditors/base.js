@@ -115,7 +115,7 @@ export class BaseAuditor {
     /**
      * Analyze basic code metrics
      */
-    async analyzeCodeMetrics(code, language) {
+    async analyzeCodeMetrics(code, _language) {
         const lines = code.split('\n');
         const lineCount = lines.length;
         // Simple function counting (language-agnostic)
@@ -228,11 +228,11 @@ export class BaseAuditor {
     /**
      * Post-process and validate issues from AI
      */
-    async postProcessIssues(rawIssues, request, language) {
+    async postProcessIssues(rawIssues, request, _language) {
         const issues = [];
         for (const raw of rawIssues) {
             try {
-                const issue = this.validateAndNormalizeIssue(raw, request, language);
+                const issue = this.validateAndNormalizeIssue(raw, request, _language);
                 if (issue) {
                     issues.push(issue);
                 }
@@ -396,7 +396,7 @@ export class BaseAuditor {
     /**
      * Create coverage information
      */
-    createCoverage(codeMetrics, issues) {
+    createCoverage(codeMetrics, _issues) {
         return {
             linesAnalyzed: codeMetrics.lineCount,
             functionsAnalyzed: codeMetrics.functionCount,

@@ -51,7 +51,7 @@ export class CompletenessAuditor extends BaseAuditor {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const lineNumber = i + 1;
-      const trimmedLine = line.trim().toLowerCase();
+      const _trimmedLine = line.trim().toLowerCase();
 
       // TODO comments
       if (this.isTodoComment(line)) {
@@ -261,7 +261,7 @@ export class CompletenessAuditor extends BaseAuditor {
     line: string,
     lines: string[],
     index: number,
-    language: string
+    _language: string
   ): boolean {
     // Look for risky operations without try-catch
     const riskyPatterns = [

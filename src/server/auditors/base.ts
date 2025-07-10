@@ -14,16 +14,11 @@ import type {
   AuditSummary,
   AuditCoverage,
   AuditSuggestions,
-  AuditMetrics,
   PromptContext,
 } from '../types.js';
 import type { OllamaClient } from '../ollama/client.js';
 import { ModelManager } from '../ollama/models.js';
-import {
-  generatePrompt,
-  generateFastModePrompt,
-  getSeverityGuidelines,
-} from '../ollama/prompts.js';
+import { generatePrompt, generateFastModePrompt } from '../ollama/prompts.js';
 
 export abstract class BaseAuditor {
   protected auditType: AuditType;
@@ -182,7 +177,7 @@ export abstract class BaseAuditor {
    */
   protected async analyzeCodeMetrics(
     code: string,
-    language: string
+    _language: string
   ): Promise<{
     lineCount: number;
     functionCount: number;
@@ -332,13 +327,13 @@ export abstract class BaseAuditor {
   protected async postProcessIssues(
     rawIssues: Partial<AuditIssue>[],
     request: AuditRequest,
-    language: string
+    _language: string
   ): Promise<AuditIssue[]> {
     const issues: AuditIssue[] = [];
 
     for (const raw of rawIssues) {
       try {
-        const issue = this.validateAndNormalizeIssue(raw, request, language);
+        const issue = this.validateAndNormalizeIssue(raw, request, _language);
         if (issue) {
           issues.push(issue);
         }
@@ -557,7 +552,7 @@ export abstract class BaseAuditor {
       functionCount: number;
       complexity: number;
     },
-    issues: AuditIssue[]
+    _issues: AuditIssue[]
   ): AuditCoverage {
     return {
       linesAnalyzed: codeMetrics.lineCount,

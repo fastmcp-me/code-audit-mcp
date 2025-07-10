@@ -120,7 +120,7 @@ async function showConfiguration(): Promise<void> {
 /**
  * Display a configuration section
  */
-function displayConfigSection(title: string, section: any): void {
+function displayConfigSection(title: string, section: unknown): void {
   console.log(chalk.cyan.bold(title + ':'));
 
   if (typeof section === 'object' && section !== null) {
@@ -136,7 +136,7 @@ function displayConfigSection(title: string, section: any): void {
 /**
  * Format configuration value for display
  */
-function formatConfigValue(value: any): string {
+function formatConfigValue(value: unknown): string {
   if (value === null || value === undefined) {
     return chalk.gray('not set');
   }
@@ -242,7 +242,7 @@ async function setConfiguration(keyValue: string): Promise<void> {
 /**
  * Parse configuration value from string
  */
-function parseConfigValue(value: string): any {
+function parseConfigValue(value: string): unknown {
   const trimmed = value.trim();
 
   // Boolean values

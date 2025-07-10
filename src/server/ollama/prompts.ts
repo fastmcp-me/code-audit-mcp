@@ -422,7 +422,7 @@ Important:
  * Generate a fast mode prompt (security + completeness only)
  */
 export function generateFastModePrompt(context: PromptContext): string {
-  const fastContext = {
+  const _fastContext = {
     ...context,
     auditType: 'security' as AuditType,
   };

@@ -69,13 +69,21 @@ export declare class OllamaClient {
     getModelMetrics(modelName: string): {
         requests: number;
         failures: number;
+        totalDuration: number;
         avgResponseTime: number;
         lastUsed: Date;
     };
     /**
      * Get all model metrics
      */
-    getAllMetrics(): Record<string, any>;
+    getAllMetrics(): Record<string, {
+        requests: number;
+        failures: number;
+        totalDuration: number;
+        averageDuration: number;
+        lastUsed: Date;
+        successRate: number;
+    }>;
     /**
      * Select the best available model from a list of candidates
      */

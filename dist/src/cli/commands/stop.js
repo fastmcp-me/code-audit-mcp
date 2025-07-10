@@ -40,7 +40,7 @@ export async function stopCommand() {
                 // Wait a bit more
                 await new Promise((resolve) => setTimeout(resolve, 1000));
             }
-            catch (error) {
+            catch (_error) {
                 // Process is dead, that's what we want
             }
             spinner.succeed('Server stopped successfully');

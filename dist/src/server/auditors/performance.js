@@ -75,7 +75,7 @@ export class PerformanceAuditor extends BaseAuditor {
     /**
      * Check for nested loops
      */
-    isNestedLoop(line, lines, index, language) {
+    isNestedLoop(line, lines, index, _language) {
         const loopPatterns = [
             /\bfor\s*\(/,
             /\bwhile\s*\(/,
@@ -120,7 +120,7 @@ export class PerformanceAuditor extends BaseAuditor {
     /**
      * Check for database queries in loops
      */
-    isQueryInLoop(line, lines, index, language) {
+    isQueryInLoop(line, lines, index, _language) {
         const queryPatterns = [
             /\.query\s*\(/,
             /\.execute\s*\(/,
@@ -162,7 +162,7 @@ export class PerformanceAuditor extends BaseAuditor {
     /**
      * Check for object creation in loops
      */
-    isObjectCreationInLoop(line, lines, index, language) {
+    isObjectCreationInLoop(line, lines, index, _language) {
         const objectPatterns = [
             /new\s+\w+\s*\(/,
             /\{\s*\w+:/,
@@ -185,7 +185,7 @@ export class PerformanceAuditor extends BaseAuditor {
     /**
      * Check for missing caching opportunities
      */
-    isMissingCaching(line, language) {
+    isMissingCaching(line, _language) {
         const expensiveOperations = [
             /Math\.(sin|cos|sqrt|pow)/,
             /JSON\.parse/,

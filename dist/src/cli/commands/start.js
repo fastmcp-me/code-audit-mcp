@@ -33,7 +33,7 @@ function isServerRunning() {
         process.kill(pid, 0);
         return true;
     }
-    catch (error) {
+    catch (_error) {
         // Process doesn't exist, remove stale PID file
         unlinkSync(pidFile);
         return false;

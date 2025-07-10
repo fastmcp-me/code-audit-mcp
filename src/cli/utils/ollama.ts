@@ -38,7 +38,9 @@ export async function checkOllamaHealth(host?: string): Promise<OllamaInfo> {
     }
 
     const data = await response.json();
-    const models = data.models ? data.models.map((m: any) => m.name) : [];
+    const models = data.models
+      ? data.models.map((m: { name: string }) => m.name)
+      : [];
 
     return {
       models,
@@ -169,7 +171,7 @@ export async function removeModel(modelName: string): Promise<void> {
  * Ensure required models are installed
  */
 export async function ensureRequiredModels(): Promise<void> {
-  const config = await getConfig();
+  const _config = await getConfig();
   const installedModels = await getInstalledModels();
   const installedModelNames = installedModels.map((m) => m.name);
 

@@ -118,7 +118,7 @@ export class PerformanceAuditor extends BaseAuditor {
     line: string,
     lines: string[],
     index: number,
-    language: string
+    _language: string
   ): boolean {
     const loopPatterns = [
       /\bfor\s*\(/,
@@ -178,7 +178,7 @@ export class PerformanceAuditor extends BaseAuditor {
     line: string,
     lines: string[],
     index: number,
-    language: string
+    _language: string
   ): boolean {
     const queryPatterns = [
       /\.query\s*\(/,
@@ -230,7 +230,7 @@ export class PerformanceAuditor extends BaseAuditor {
     line: string,
     lines: string[],
     index: number,
-    language: string
+    _language: string
   ): boolean {
     const objectPatterns = [
       /new\s+\w+\s*\(/,
@@ -258,7 +258,7 @@ export class PerformanceAuditor extends BaseAuditor {
   /**
    * Check for missing caching opportunities
    */
-  private isMissingCaching(line: string, language: string): boolean {
+  private isMissingCaching(line: string, _language: string): boolean {
     const expensiveOperations = [
       /Math\.(sin|cos|sqrt|pow)/,
       /JSON\.parse/,
@@ -567,7 +567,7 @@ export class PerformanceAuditor extends BaseAuditor {
    */
   private adjustSeverityForContext(
     issues: AuditIssue[],
-    context?: any
+    context?: { performanceCritical?: boolean }
   ): AuditIssue[] {
     if (!context?.performanceCritical) {
       return issues;

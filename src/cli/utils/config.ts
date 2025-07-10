@@ -9,6 +9,22 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { homedir } from 'os';
 
 /**
+ * JSON Schema type for validation
+ */
+interface JSONSchema {
+  type: string;
+  properties?: Record<string, JSONSchema>;
+  required?: string[];
+  minimum?: number;
+  maximum?: number;
+  minLength?: number;
+  maxLength?: number;
+  items?: JSONSchema;
+  enum?: unknown[];
+  pattern?: string;
+}
+
+/**
  * Configuration schema for validation
  */
 export interface ConfigSchema {
@@ -151,7 +167,7 @@ class ConfigManager {
   /**
    * Get configuration schema for validation
    */
-  private getConfigSchema(): any {
+  private getConfigSchema(): JSONSchema {
     return {
       type: 'object',
       properties: {
@@ -257,7 +273,7 @@ class ConfigManager {
             this.projectConfig = config;
             break;
           }
-        } catch (error) {
+        } catch (_error) {
           // Skip invalid config files
         }
       }
@@ -282,13 +298,13 @@ class ConfigManager {
    */
   public get<T>(key: string): T | undefined {
     const config = this.getConfig();
-    return this.getNestedValue(config, key);
+    return this.getNestedValue(config, key) as T | undefined;
   }
 
   /**
    * Set configuration value with support for nested keys
    */
-  public set(key: string, value: any, isGlobal: boolean = true): void {
+  public set(key: string, value: unknown, isGlobal: boolean = true): void {
     this.validateConfigValue(key, value);
 
     if (isGlobal) {
@@ -330,17 +346,20 @@ class ConfigManager {
   /**
    * Validate configuration value
    */
-  private validateConfigValue(key: string, value: any): void {
+  private validateConfigValue(key: string, value: unknown): void {
     // Basic validation for common configuration keys
-    const validations: Record<string, (val: any) => boolean> = {
+    const validations: Record<string, (val: unknown) => boolean> = {
       'ollama.host': (val) => typeof val === 'string' && val.length > 0,
       'ollama.timeout': (val) => typeof val === 'number' && val >= 1000,
       'audit.output.format': (val) =>
-        ['json', 'markdown', 'html'].includes(val),
+        typeof val === 'string' && ['json', 'markdown', 'html'].includes(val),
       'audit.output.verbosity': (val) =>
+        typeof val === 'string' &&
         ['minimal', 'normal', 'detailed'].includes(val),
-      'server.transport': (val) => ['stdio', 'http'].includes(val),
+      'server.transport': (val) =>
+        typeof val === 'string' && ['stdio', 'http'].includes(val),
       'server.logLevel': (val) =>
+        typeof val === 'string' &&
         ['error', 'warn', 'info', 'debug'].includes(val),
       'server.port': (val) =>
         typeof val === 'number' && val >= 1 && val <= 65535,
@@ -361,19 +380,32 @@ class ConfigManager {
   ): ConfigSchema {
     const result = { ...global };
 
-    for (const [key, value] of Object.entries(project)) {
-      if (
-        typeof value === 'object' &&
-        value !== null &&
-        !Array.isArray(value)
-      ) {
-        result[key as keyof ConfigSchema] = {
-          ...(result[key as keyof ConfigSchema] as any),
-          ...value,
-        };
-      } else {
-        (result as any)[key] = value;
-      }
+    // Type-safe merge
+    if (project.ollama) {
+      result.ollama = { ...result.ollama, ...project.ollama };
+    }
+    if (project.audit) {
+      result.audit = {
+        ...result.audit,
+        rules: project.audit.rules
+          ? { ...result.audit.rules, ...project.audit.rules }
+          : result.audit.rules,
+        output: project.audit.output
+          ? { ...result.audit.output, ...project.audit.output }
+          : result.audit.output,
+        filters: project.audit.filters
+          ? { ...result.audit.filters, ...project.audit.filters }
+          : result.audit.filters,
+      };
+    }
+    if (project.server) {
+      result.server = { ...result.server, ...project.server };
+    }
+    if (project.updates) {
+      result.updates = { ...result.updates, ...project.updates };
+    }
+    if (project.telemetry) {
+      result.telemetry = { ...result.telemetry, ...project.telemetry };
     }
 
     return result;
@@ -382,22 +414,31 @@ class ConfigManager {
   /**
    * Get nested configuration value
    */
-  private getNestedValue(obj: any, path: string): any {
-    return path.split('.').reduce((current, key) => current?.[key], obj);
+  private getNestedValue(obj: unknown, path: string): unknown {
+    return path
+      .split('.')
+      .reduce(
+        (current, key) => (current as Record<string, unknown>)?.[key],
+        obj
+      );
   }
 
   /**
    * Set nested configuration value
    */
-  private setNestedValue(obj: any, path: string, value: any): void {
+  private setNestedValue(obj: unknown, path: string, value: unknown): void {
     const keys = path.split('.');
     const lastKey = keys.pop()!;
-    const target = keys.reduce((current, key) => {
-      if (!current[key] || typeof current[key] !== 'object') {
-        current[key] = {};
-      }
-      return current[key];
-    }, obj);
+    const target = keys.reduce(
+      (current, key) => {
+        const curr = current as Record<string, unknown>;
+        if (!curr[key] || typeof curr[key] !== 'object') {
+          curr[key] = {};
+        }
+        return curr[key] as Record<string, unknown>;
+      },
+      obj as Record<string, unknown>
+    );
 
     target[lastKey] = value;
   }
@@ -521,7 +562,7 @@ export async function getConfigValue<T>(key: string): Promise<T | undefined> {
  */
 export async function setConfigValue(
   key: string,
-  value: any,
+  value: unknown,
   isGlobal: boolean = true
 ): Promise<void> {
   return getConfigManager().set(key, value, isGlobal);

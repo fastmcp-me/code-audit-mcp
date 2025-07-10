@@ -3,7 +3,7 @@
  */
 
 import chalk from 'chalk';
-import { spawn, ChildProcess } from 'child_process';
+import { spawn } from 'child_process';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { writeFileSync, readFileSync, existsSync, unlinkSync } from 'fs';
@@ -43,7 +43,7 @@ function isServerRunning(): boolean {
     // Check if process is still alive
     process.kill(pid, 0);
     return true;
-  } catch (error) {
+  } catch (_error) {
     // Process doesn't exist, remove stale PID file
     unlinkSync(pidFile);
     return false;

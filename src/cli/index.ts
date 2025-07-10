@@ -29,7 +29,7 @@ function getPackageInfo() {
     const packagePath = join(__dirname, '../../package.json');
     const packageJson = JSON.parse(readFileSync(packagePath, 'utf8'));
     return packageJson;
-  } catch (error) {
+  } catch {
     return { name: 'code-audit-mcp', version: '1.0.0' };
   }
 }
@@ -37,14 +37,15 @@ function getPackageInfo() {
 /**
  * Check for updates
  */
-function checkForUpdates(pkg: any) {
-  const notifier = updateNotifier({ 
+function checkForUpdates(pkg: { name: string; version: string }) {
+  const notifier = updateNotifier({
     pkg,
-    updateCheckInterval: 1000 * 60 * 60 * 24 // 24 hours
+    updateCheckInterval: 1000 * 60 * 60 * 24, // 24 hours
   });
 
   if (notifier.update) {
-    console.log(chalk.yellow(`
+    console.log(
+      chalk.yellow(`
 ┌─────────────────────────────────────────────────────────────┐
 │                                                             │
 │          Update available: ${chalk.green(notifier.update.latest)}                          │
@@ -53,7 +54,8 @@ function checkForUpdates(pkg: any) {
 │          Run ${chalk.cyan('npm install -g code-audit-mcp')} to update      │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
-`));
+`)
+    );
   }
 }
 
@@ -62,7 +64,7 @@ function checkForUpdates(pkg: any) {
  */
 export async function cli(): Promise<void> {
   const pkg = getPackageInfo();
-  
+
   // Check for updates (non-blocking)
   checkForUpdates(pkg);
 
@@ -106,7 +108,7 @@ export async function cli(): Promise<void> {
   program
     .command('update')
     .description('Check for and install updates')
-    .option('--check', 'Only check for updates, don\'t install')
+    .option('--check', "Only check for updates, don't install")
     .option('--force', 'Force update even if no new version')
     .action(updateCommand);
 
@@ -136,7 +138,9 @@ export async function cli(): Promise<void> {
     .action(configCommand);
 
   // Add example usage
-  program.addHelpText('after', `
+  program.addHelpText(
+    'after',
+    `
 Examples:
   $ code-audit setup              Interactive setup wizard
   $ code-audit start              Start MCP server
@@ -146,37 +150,68 @@ Examples:
   $ code-audit update             Check for updates
 
 For more information, visit: https://github.com/warrengates/code-audit-mcp
-`);
+`
+  );
 
   // Handle global error cases
   program.exitOverride();
 
   try {
     await program.parseAsync(process.argv);
-  } catch (error: any) {
-    if (error.code === 'commander.version') {
-      // Version flag was used, exit normally
-      process.exit(0);
-    } else if (error.code === 'commander.help') {
-      // Help flag was used, exit normally
-      process.exit(0);
-    } else if (error.code === 'commander.unknownCommand') {
-      console.error(chalk.red(`Unknown command: ${error.message}`));
-      console.log(chalk.gray('Run "code-audit --help" for available commands.'));
-      process.exit(1);
-    } else {
+  } catch (error: unknown) {
+    // Type guard for Commander.js errors
+    const isCommanderError = (
+      err: unknown
+    ): err is { code: string; message: string } => {
+      return (
+        typeof err === 'object' &&
+        err !== null &&
+        'code' in err &&
+        'message' in err
+      );
+    };
+
+    // Type guard for Error objects
+    const isError = (err: unknown): err is Error => {
+      return err instanceof Error;
+    };
+
+    if (isCommanderError(error)) {
+      if (error.code === 'commander.version') {
+        // Version flag was used, exit normally
+        process.exit(0);
+      } else if (error.code === 'commander.help') {
+        // Help flag was used, exit normally
+        process.exit(0);
+      } else if (error.code === 'commander.unknownCommand') {
+        console.error(chalk.red(`Unknown command: ${error.message}`));
+        console.log(
+          chalk.gray('Run "code-audit --help" for available commands.')
+        );
+        process.exit(1);
+      }
+    }
+
+    if (isError(error)) {
       console.error(chalk.red('An error occurred:'), error.message);
       if (program.opts().verbose) {
         console.error(error.stack);
       }
-      process.exit(1);
+    } else {
+      console.error(chalk.red('An unknown error occurred:'), String(error));
     }
+    process.exit(1);
   }
 }
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
-  console.error(chalk.red('Unhandled Rejection at:'), promise, chalk.red('reason:'), reason);
+  console.error(
+    chalk.red('Unhandled Rejection at:'),
+    promise,
+    chalk.red('reason:'),
+    reason
+  );
   process.exit(1);
 });
 

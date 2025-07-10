@@ -12,17 +12,39 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 
 import { OllamaClient } from './ollama/client.js';
-import { ModelManager, DefaultModelSelectionStrategy } from './ollama/models.js';
-import { AuditorFactory } from './auditors/index.js';
-import type { 
-  AuditRequest, 
-  AuditResult, 
-  ServerConfig, 
-  AuditorConfig,
+import {
+  ModelManager,
+  DefaultModelSelectionStrategy,
+} from './ollama/models.js';
+import { AuditorFactory, BaseAuditor } from './auditors/index.js';
+import type {
+  AuditRequest,
+  AuditResult,
+  ServerConfig,
   AuditType,
   HealthCheckResult,
-  AuditError
+  ModelConfig,
+  AuditorConfig,
 } from './types.js';
+
+// Internal interfaces for tool responses
+interface ModelListResponse {
+  models: Array<
+    ModelConfig & {
+      available: boolean;
+      metrics: Record<string, unknown> | null;
+    }
+  >;
+}
+
+interface ConfigUpdateArgs {
+  auditors?: Record<string, Partial<AuditorConfig>>;
+  ollama?: Record<string, unknown>;
+}
+
+interface ConfigUpdateResponse {
+  message: string;
+}
 
 /**
  * Default server configuration
@@ -35,7 +57,7 @@ const DEFAULT_CONFIG: ServerConfig = {
     timeout: 30000,
     retryAttempts: 3,
     retryDelay: 1000,
-    healthCheckInterval: 60000
+    healthCheckInterval: 60000,
   },
   models: {},
   auditors: {
@@ -43,62 +65,62 @@ const DEFAULT_CONFIG: ServerConfig = {
       enabled: true,
       severity: ['critical', 'high', 'medium'],
       rules: {},
-      thresholds: {}
+      thresholds: {},
     },
     completeness: {
       enabled: true,
       severity: ['critical', 'high', 'medium'],
       rules: {},
-      thresholds: {}
+      thresholds: {},
     },
     performance: {
       enabled: true,
       severity: ['critical', 'high', 'medium'],
       rules: {},
-      thresholds: {}
+      thresholds: {},
     },
     quality: {
       enabled: true,
       severity: ['high', 'medium', 'low'],
       rules: {},
-      thresholds: {}
+      thresholds: {},
     },
     architecture: {
       enabled: true,
       severity: ['high', 'medium', 'low'],
       rules: {},
-      thresholds: {}
+      thresholds: {},
     },
     testing: {
       enabled: true,
       severity: ['high', 'medium', 'low'],
       rules: {},
-      thresholds: {}
+      thresholds: {},
     },
     documentation: {
       enabled: true,
       severity: ['medium', 'low', 'info'],
       rules: {},
-      thresholds: {}
+      thresholds: {},
     },
     all: {
       enabled: true,
       severity: ['critical', 'high', 'medium', 'low'],
       rules: {},
-      thresholds: {}
-    }
+      thresholds: {},
+    },
   },
   languages: {},
   logging: {
     level: 'info',
     enableMetrics: true,
-    enableTracing: false
+    enableTracing: false,
   },
   performance: {
     maxConcurrentAudits: 3,
     cacheEnabled: false,
-    cacheTtl: 300
-  }
+    cacheTtl: 300,
+  },
 };
 
 /**
@@ -109,7 +131,10 @@ export class CodeAuditServer {
   private config: ServerConfig;
   private ollamaClient: OllamaClient;
   private modelManager: ModelManager;
-  private auditors: Record<AuditType, any> = {} as Record<AuditType, any>;
+  private auditors: Record<AuditType, BaseAuditor> = {} as Record<
+    AuditType,
+    BaseAuditor
+  >;
   private activeAudits = new Map<string, Promise<AuditResult>>();
 
   constructor(config: Partial<ServerConfig> = {}) {
@@ -128,7 +153,7 @@ export class CodeAuditServer {
 
     this.ollamaClient = new OllamaClient(this.config.ollama);
     this.modelManager = new ModelManager(new DefaultModelSelectionStrategy());
-    
+
     this.setupToolHandlers();
     this.setupErrorHandling();
   }
@@ -139,25 +164,26 @@ export class CodeAuditServer {
   async initialize(): Promise<void> {
     try {
       console.log('Initializing Code Audit MCP Server...');
-      
+
       // Initialize Ollama client
       await this.ollamaClient.initialize();
-      
+
       // Create auditors
       this.auditors = AuditorFactory.createAllAuditors(
         this.config.auditors,
         this.ollamaClient,
         this.modelManager
       );
-      
-      console.log(`Server initialized with ${Object.keys(this.auditors).length} auditors`);
-      
+
+      console.log(
+        `Server initialized with ${Object.keys(this.auditors).length} auditors`
+      );
+
       // Perform initial health check
       const health = await this.healthCheck();
       if (health.status === 'unhealthy') {
         console.warn('Server initialized but health check failed');
       }
-      
     } catch (error) {
       console.error('Failed to initialize server:', error);
       throw error;
@@ -187,9 +213,18 @@ export class CodeAuditServer {
                 },
                 auditType: {
                   type: 'string',
-                  enum: ['security', 'completeness', 'performance', 'quality', 'architecture', 'testing', 'documentation', 'all'],
+                  enum: [
+                    'security',
+                    'completeness',
+                    'performance',
+                    'quality',
+                    'architecture',
+                    'testing',
+                    'documentation',
+                    'all',
+                  ],
                   description: 'Type of audit to perform',
-                  default: 'all'
+                  default: 'all',
                 },
                 file: {
                   type: 'string',
@@ -200,36 +235,44 @@ export class CodeAuditServer {
                   description: 'Additional context for the audit',
                   properties: {
                     framework: { type: 'string' },
-                    environment: { 
+                    environment: {
                       type: 'string',
-                      enum: ['production', 'development', 'testing']
+                      enum: ['production', 'development', 'testing'],
                     },
                     performanceCritical: { type: 'boolean' },
                     teamSize: { type: 'number' },
-                    projectType: { 
+                    projectType: {
                       type: 'string',
-                      enum: ['web', 'api', 'cli', 'library', 'mobile', 'desktop']
-                    }
-                  }
+                      enum: [
+                        'web',
+                        'api',
+                        'cli',
+                        'library',
+                        'mobile',
+                        'desktop',
+                      ],
+                    },
+                  },
                 },
                 priority: {
                   type: 'string',
                   enum: ['fast', 'thorough'],
-                  description: 'Audit priority (fast = security + completeness only)',
-                  default: 'thorough'
+                  description:
+                    'Audit priority (fast = security + completeness only)',
+                  default: 'thorough',
                 },
                 maxIssues: {
                   type: 'number',
                   description: 'Maximum number of issues to return',
-                  default: 50
+                  default: 50,
                 },
                 includeFixSuggestions: {
                   type: 'boolean',
                   description: 'Include fix suggestions in the response',
-                  default: true
-                }
+                  default: true,
+                },
               },
-              required: ['code', 'language']
+              required: ['code', 'language'],
             },
           },
           {
@@ -256,15 +299,15 @@ export class CodeAuditServer {
               properties: {
                 auditors: {
                   type: 'object',
-                  description: 'Auditor configurations to update'
+                  description: 'Auditor configurations to update',
                 },
                 ollama: {
                   type: 'object',
-                  description: 'Ollama client configuration'
-                }
-              }
+                  description: 'Ollama client configuration',
+                },
+              },
             },
-          }
+          },
         ],
       };
     });
@@ -276,16 +319,16 @@ export class CodeAuditServer {
         switch (name) {
           case 'audit_code':
             return await this.handleAuditCode(args as unknown as AuditRequest);
-          
+
           case 'health_check':
             return await this.handleHealthCheck();
-          
+
           case 'list_models':
             return await this.handleListModels();
-          
+
           case 'update_config':
             return await this.handleUpdateConfig(args);
-          
+
           default:
             throw new McpError(
               ErrorCode.MethodNotFound,
@@ -294,11 +337,11 @@ export class CodeAuditServer {
         }
       } catch (error) {
         console.error(`Tool ${name} failed:`, error);
-        
+
         if (error instanceof McpError) {
           throw error;
         }
-        
+
         throw new McpError(
           ErrorCode.InternalError,
           `Tool execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -310,10 +353,12 @@ export class CodeAuditServer {
   /**
    * Handle audit_code tool requests
    */
-  private async handleAuditCode(request: AuditRequest): Promise<{ content: AuditResult[] }> {
+  private async handleAuditCode(
+    request: AuditRequest
+  ): Promise<{ content: AuditResult[] }> {
     // Validate request
     this.validateAuditRequest(request);
-    
+
     // Check for duplicate audits
     const requestKey = this.generateRequestKey(request);
     if (this.activeAudits.has(requestKey)) {
@@ -339,7 +384,7 @@ export class CodeAuditServer {
    */
   private async performAudit(request: AuditRequest): Promise<AuditResult> {
     const startTime = Date.now();
-    
+
     try {
       // Handle 'all' audit type
       if (request.auditType === 'all') {
@@ -358,12 +403,11 @@ export class CodeAuditServer {
       }
 
       const result = await auditor.audit(request);
-      
+
       // Log metrics
       this.logAuditMetrics(request, result, Date.now() - startTime);
-      
-      return result;
 
+      return result;
     } catch (error) {
       console.error('Audit failed:', error);
       throw error;
@@ -373,8 +417,18 @@ export class CodeAuditServer {
   /**
    * Perform multiple audits for 'all' type
    */
-  private async performMultipleAudits(request: AuditRequest): Promise<AuditResult> {
-    const auditTypes: AuditType[] = ['security', 'completeness', 'performance', 'quality', 'architecture', 'testing', 'documentation'];
+  private async performMultipleAudits(
+    request: AuditRequest
+  ): Promise<AuditResult> {
+    const auditTypes: AuditType[] = [
+      'security',
+      'completeness',
+      'performance',
+      'quality',
+      'architecture',
+      'testing',
+      'documentation',
+    ];
     const results: AuditResult[] = [];
 
     // Run audits in parallel (up to maxConcurrentAudits)
@@ -392,7 +446,9 @@ export class CodeAuditServer {
       });
 
       const chunkResults = await Promise.all(chunkPromises);
-      results.push(...chunkResults.filter(result => result !== null) as AuditResult[]);
+      results.push(
+        ...(chunkResults.filter((result) => result !== null) as AuditResult[])
+      );
     }
 
     // Merge results
@@ -402,14 +458,20 @@ export class CodeAuditServer {
   /**
    * Perform fast mode audit (security + completeness only)
    */
-  private async performFastModeAudit(request: AuditRequest): Promise<AuditResult> {
+  private async performFastModeAudit(
+    request: AuditRequest
+  ): Promise<AuditResult> {
     const fastAuditTypes: AuditType[] = ['security', 'completeness'];
     const results: AuditResult[] = [];
 
     for (const auditType of fastAuditTypes) {
       const auditor = this.auditors[auditType];
       if (auditor) {
-        const auditRequest = { ...request, auditType, priority: 'fast' as const };
+        const auditRequest = {
+          ...request,
+          auditType,
+          priority: 'fast' as const,
+        };
         const result = await auditor.audit(auditRequest);
         results.push(result);
       }
@@ -429,15 +491,15 @@ export class CodeAuditServer {
   /**
    * Handle list_models tool requests
    */
-  private async handleListModels(): Promise<{ content: any[] }> {
+  private async handleListModels(): Promise<{ content: ModelListResponse[] }> {
     const availableModels = this.ollamaClient.getAvailableModels();
     const allModels = this.modelManager.getAllModels();
     const modelMetrics = this.ollamaClient.getAllMetrics();
 
-    const modelInfo = allModels.map(config => ({
+    const modelInfo = allModels.map((config) => ({
       ...config,
       available: availableModels.includes(config.name),
-      metrics: modelMetrics[config.name] || null
+      metrics: modelMetrics[config.name] || null,
     }));
 
     return { content: [{ models: modelInfo }] };
@@ -446,7 +508,9 @@ export class CodeAuditServer {
   /**
    * Handle update_config tool requests
    */
-  private async handleUpdateConfig(args: any): Promise<{ content: any[] }> {
+  private async handleUpdateConfig(
+    args: ConfigUpdateArgs
+  ): Promise<{ content: ConfigUpdateResponse[] }> {
     try {
       if (args.auditors) {
         for (const [auditType, config] of Object.entries(args.auditors)) {
@@ -475,7 +539,10 @@ export class CodeAuditServer {
    */
   private validateAuditRequest(request: AuditRequest): void {
     if (!request.code?.trim()) {
-      throw new McpError(ErrorCode.InvalidParams, 'Code is required and cannot be empty');
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        'Code is required and cannot be empty'
+      );
     }
 
     if (!request.language?.trim()) {
@@ -483,12 +550,27 @@ export class CodeAuditServer {
     }
 
     if (request.code.length > 100000) {
-      throw new McpError(ErrorCode.InvalidParams, 'Code size exceeds limit (100KB)');
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        'Code size exceeds limit (100KB)'
+      );
     }
 
-    const validAuditTypes: AuditType[] = ['security', 'completeness', 'performance', 'quality', 'architecture', 'testing', 'documentation', 'all'];
+    const validAuditTypes: AuditType[] = [
+      'security',
+      'completeness',
+      'performance',
+      'quality',
+      'architecture',
+      'testing',
+      'documentation',
+      'all',
+    ];
     if (!validAuditTypes.includes(request.auditType)) {
-      throw new McpError(ErrorCode.InvalidParams, `Invalid audit type: ${request.auditType}`);
+      throw new McpError(
+        ErrorCode.InvalidParams,
+        `Invalid audit type: ${request.auditType}`
+      );
     }
   }
 
@@ -507,7 +589,7 @@ export class CodeAuditServer {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash).toString(36);
@@ -527,7 +609,10 @@ export class CodeAuditServer {
   /**
    * Merge multiple audit results
    */
-  private mergeAuditResults(results: AuditResult[], request: AuditRequest): AuditResult {
+  private mergeAuditResults(
+    results: AuditResult[],
+    request: AuditRequest
+  ): AuditResult {
     if (results.length === 0) {
       throw new Error('No audit results to merge');
     }
@@ -547,35 +632,35 @@ export class CodeAuditServer {
         low: 0,
         info: 0,
         byCategory: {} as Record<AuditType, number>,
-        byType: {}
+        byType: {},
       },
       coverage: {
         linesAnalyzed: 0,
         functionsAnalyzed: 0,
         classesAnalyzed: 0,
-        complexity: 0
+        complexity: 0,
       },
       suggestions: {
         autoFixable: [],
         priorityFixes: [],
         quickWins: [],
-        technicalDebt: []
+        technicalDebt: [],
       },
       metrics: {
         duration: 0,
         modelResponseTime: 0,
         parsingTime: 0,
-        postProcessingTime: 0
+        postProcessingTime: 0,
       },
-      model: results.map(r => r.model).join(', '),
+      model: results.map((r) => r.model).join(', '),
       timestamp: new Date().toISOString(),
-      version: results[0].version
+      version: results[0].version,
     };
 
     // Merge all issues
     for (const result of results) {
       merged.issues.push(...result.issues);
-      
+
       // Update summary
       merged.summary.total += result.summary.total;
       merged.summary.critical += result.summary.critical;
@@ -585,21 +670,28 @@ export class CodeAuditServer {
       merged.summary.info += result.summary.info;
 
       // Merge categories
-      for (const [category, count] of Object.entries(result.summary.byCategory)) {
-        merged.summary.byCategory[category as AuditType] = 
+      for (const [category, count] of Object.entries(
+        result.summary.byCategory
+      )) {
+        merged.summary.byCategory[category as AuditType] =
           (merged.summary.byCategory[category as AuditType] || 0) + count;
       }
 
       // Merge types
       for (const [type, count] of Object.entries(result.summary.byType)) {
-        merged.summary.byType[type] = (merged.summary.byType[type] || 0) + count;
+        merged.summary.byType[type] =
+          (merged.summary.byType[type] || 0) + count;
       }
 
       // Merge suggestions
       merged.suggestions.autoFixable.push(...result.suggestions.autoFixable);
-      merged.suggestions.priorityFixes.push(...result.suggestions.priorityFixes);
+      merged.suggestions.priorityFixes.push(
+        ...result.suggestions.priorityFixes
+      );
       merged.suggestions.quickWins.push(...result.suggestions.quickWins);
-      merged.suggestions.technicalDebt.push(...result.suggestions.technicalDebt);
+      merged.suggestions.technicalDebt.push(
+        ...result.suggestions.technicalDebt
+      );
 
       // Update metrics
       merged.metrics.duration += result.metrics.duration;
@@ -608,16 +700,35 @@ export class CodeAuditServer {
       merged.metrics.postProcessingTime += result.metrics.postProcessingTime;
 
       // Use max coverage values
-      merged.coverage.linesAnalyzed = Math.max(merged.coverage.linesAnalyzed, result.coverage.linesAnalyzed);
-      merged.coverage.functionsAnalyzed = Math.max(merged.coverage.functionsAnalyzed, result.coverage.functionsAnalyzed);
-      merged.coverage.classesAnalyzed = Math.max(merged.coverage.classesAnalyzed, result.coverage.classesAnalyzed);
-      merged.coverage.complexity = Math.max(merged.coverage.complexity, result.coverage.complexity);
+      merged.coverage.linesAnalyzed = Math.max(
+        merged.coverage.linesAnalyzed,
+        result.coverage.linesAnalyzed
+      );
+      merged.coverage.functionsAnalyzed = Math.max(
+        merged.coverage.functionsAnalyzed,
+        result.coverage.functionsAnalyzed
+      );
+      merged.coverage.classesAnalyzed = Math.max(
+        merged.coverage.classesAnalyzed,
+        result.coverage.classesAnalyzed
+      );
+      merged.coverage.complexity = Math.max(
+        merged.coverage.complexity,
+        result.coverage.complexity
+      );
     }
 
     // Sort merged issues by severity and line number
     merged.issues.sort((a, b) => {
-      const severityOrder = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
-      const severityDiff = severityOrder[a.severity] - severityOrder[b.severity];
+      const severityOrder = {
+        critical: 0,
+        high: 1,
+        medium: 2,
+        low: 3,
+        info: 4,
+      };
+      const severityDiff =
+        severityOrder[a.severity] - severityOrder[b.severity];
       if (severityDiff !== 0) return severityDiff;
       return a.location.line - b.location.line;
     });
@@ -635,7 +746,7 @@ export class CodeAuditServer {
    */
   private async healthCheck(): Promise<HealthCheckResult> {
     const health = await this.ollamaClient.healthCheck();
-    
+
     // Add auditor health checks
     for (const [auditType, auditor] of Object.entries(this.auditors)) {
       health.checks.auditors[auditType as AuditType] = auditor !== undefined;
@@ -647,12 +758,18 @@ export class CodeAuditServer {
   /**
    * Log audit metrics
    */
-  private logAuditMetrics(request: AuditRequest, result: AuditResult, totalTime: number): void {
+  private logAuditMetrics(
+    request: AuditRequest,
+    result: AuditResult,
+    totalTime: number
+  ): void {
     if (!this.config.logging.enableMetrics) {
       return;
     }
 
-    console.log(`Audit completed: ${request.auditType} (${request.language}) - ${result.issues.length} issues found in ${totalTime}ms`);
+    console.log(
+      `Audit completed: ${request.auditType} (${request.language}) - ${result.issues.length} issues found in ${totalTime}ms`
+    );
   }
 
   /**
@@ -681,10 +798,10 @@ export class CodeAuditServer {
    */
   async start(): Promise<void> {
     await this.initialize();
-    
+
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    
+
     console.log('Code Audit MCP Server is running');
   }
 

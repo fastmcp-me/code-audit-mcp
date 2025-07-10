@@ -3,11 +3,11 @@
  */
 
 import { Ollama } from 'ollama';
-import type { 
-  ModelConfig, 
-  OllamaConfig, 
+import type {
+  ModelConfig,
+  OllamaConfig,
   AuditError,
-  HealthCheckResult 
+  HealthCheckResult,
 } from '../types.js';
 
 export interface OllamaResponse {
@@ -37,12 +37,15 @@ export class OllamaClient {
   private client: Ollama;
   private config: OllamaConfig;
   private availableModels = new Set<string>();
-  private modelMetrics = new Map<string, {
-    requests: number;
-    failures: number;
-    avgResponseTime: number;
-    lastUsed: Date;
-  }>();
+  private modelMetrics = new Map<
+    string,
+    {
+      requests: number;
+      failures: number;
+      avgResponseTime: number;
+      lastUsed: Date;
+    }
+  >();
   private lastHealthCheck = 0;
   private isHealthy = false;
 
@@ -60,10 +63,14 @@ export class OllamaClient {
     try {
       await this.refreshAvailableModels();
       this.isHealthy = true;
-      console.log(`Ollama client initialized with ${this.availableModels.size} models`);
+      console.log(
+        `Ollama client initialized with ${this.availableModels.size} models`
+      );
     } catch (error) {
       this.isHealthy = false;
-      throw new Error(`Failed to initialize Ollama client: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to initialize Ollama client: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -72,7 +79,7 @@ export class OllamaClient {
    */
   async healthCheck(): Promise<HealthCheckResult> {
     const now = Date.now();
-    
+
     // Skip if checked recently
     if (now - this.lastHealthCheck < this.config.healthCheckInterval) {
       return {
@@ -81,7 +88,7 @@ export class OllamaClient {
           ollama: {
             status: this.isHealthy,
             models: Array.from(this.availableModels),
-            lastCheck: new Date().toISOString()
+            lastCheck: new Date().toISOString(),
           },
           auditors: {
             security: true,
@@ -91,16 +98,16 @@ export class OllamaClient {
             architecture: true,
             testing: true,
             documentation: true,
-            all: true
+            all: true,
           },
           system: {
             memory: 0,
-            disk: 0
-          }
+            disk: 0,
+          },
         },
         version: '1.0.0',
         timestamp: new Date().toISOString(),
-        uptime: now - this.lastHealthCheck
+        uptime: now - this.lastHealthCheck,
       };
     }
 
@@ -109,19 +116,19 @@ export class OllamaClient {
     try {
       // Test basic connectivity
       await this.client.list();
-      
+
       // Refresh available models
       await this.refreshAvailableModels();
-      
+
       this.isHealthy = true;
-      
+
       return {
         status: 'healthy',
         checks: {
           ollama: {
             status: true,
             models: Array.from(this.availableModels),
-            lastCheck: new Date().toISOString()
+            lastCheck: new Date().toISOString(),
           },
           auditors: {
             security: true,
@@ -131,28 +138,28 @@ export class OllamaClient {
             architecture: true,
             testing: true,
             documentation: true,
-            all: true
+            all: true,
           },
           system: {
             memory: 0,
-            disk: 0
-          }
+            disk: 0,
+          },
         },
         version: '1.0.0',
         timestamp: new Date().toISOString(),
-        uptime: now
+        uptime: now,
       };
     } catch (error) {
       this.isHealthy = false;
       console.error('Ollama health check failed:', error);
-      
+
       return {
         status: 'unhealthy',
         checks: {
           ollama: {
             status: false,
             models: Array.from(this.availableModels),
-            lastCheck: new Date().toISOString()
+            lastCheck: new Date().toISOString(),
           },
           auditors: {
             security: true,
@@ -162,16 +169,16 @@ export class OllamaClient {
             architecture: true,
             testing: true,
             documentation: true,
-            all: true
+            all: true,
           },
           system: {
             memory: 0,
-            disk: 0
-          }
+            disk: 0,
+          },
         },
         version: '1.0.0',
         timestamp: new Date().toISOString(),
-        uptime: now
+        uptime: now,
       };
     }
   }
@@ -183,12 +190,18 @@ export class OllamaClient {
     if (!this.isHealthy) {
       await this.healthCheck();
       if (!this.isHealthy) {
-        throw this.createError('OLLAMA_UNAVAILABLE', 'Ollama service is not available');
+        throw this.createError(
+          'OLLAMA_UNAVAILABLE',
+          'Ollama service is not available'
+        );
       }
     }
 
     if (!this.availableModels.has(request.model)) {
-      throw this.createError('MODEL_NOT_FOUND', `Model '${request.model}' is not available`);
+      throw this.createError(
+        'MODEL_NOT_FOUND',
+        `Model '${request.model}' is not available`
+      );
     }
 
     const startTime = Date.now();
@@ -197,31 +210,34 @@ export class OllamaClient {
     for (let attempt = 1; attempt <= this.config.retryAttempts; attempt++) {
       try {
         const response = await this.executeGenerate(request);
-        
+
         // Update metrics
         this.updateModelMetrics(request.model, Date.now() - startTime, false);
-        
+
         return response;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Unknown error');
-        
+
         // Update failure metrics
         this.updateModelMetrics(request.model, Date.now() - startTime, true);
-        
+
         if (attempt === this.config.retryAttempts) {
           break;
         }
-        
+
         // Wait before retry with exponential backoff
         const delay = this.config.retryDelay * Math.pow(2, attempt - 1);
         await this.sleep(delay);
-        
-        console.warn(`Ollama request failed (attempt ${attempt}/${this.config.retryAttempts}), retrying in ${delay}ms:`, lastError.message);
+
+        console.warn(
+          `Ollama request failed (attempt ${attempt}/${this.config.retryAttempts}), retrying in ${delay}ms:`,
+          lastError.message
+        );
       }
     }
 
     throw this.createError(
-      'GENERATION_FAILED', 
+      'GENERATION_FAILED',
       `Failed to generate response after ${this.config.retryAttempts} attempts: ${lastError?.message}`
     );
   }
@@ -229,7 +245,9 @@ export class OllamaClient {
   /**
    * Execute the actual generation request
    */
-  private async executeGenerate(request: OllamaGenerateRequest): Promise<OllamaResponse> {
+  private async executeGenerate(
+    request: OllamaGenerateRequest
+  ): Promise<OllamaResponse> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
 
@@ -270,14 +288,19 @@ export class OllamaClient {
     try {
       const models = await this.client.list();
       this.availableModels.clear();
-      
+
       for (const model of models.models) {
         this.availableModels.add(model.name);
       }
-      
-      console.log(`Found ${this.availableModels.size} available models:`, Array.from(this.availableModels));
+
+      console.log(
+        `Found ${this.availableModels.size} available models:`,
+        Array.from(this.availableModels)
+      );
     } catch (error) {
-      throw new Error(`Failed to refresh model list: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to refresh model list: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -306,10 +329,10 @@ export class OllamaClient {
     try {
       console.log(`Pulling model: ${modelName}`);
       await this.client.pull({ model: modelName });
-      
+
       // Refresh model list
       await this.refreshAvailableModels();
-      
+
       return this.isModelAvailable(modelName);
     } catch (error) {
       console.error(`Failed to pull model ${modelName}:`, error);
@@ -321,12 +344,14 @@ export class OllamaClient {
    * Get model performance metrics
    */
   getModelMetrics(modelName: string) {
-    return this.modelMetrics.get(modelName) || {
-      requests: 0,
-      failures: 0,
-      avgResponseTime: 0,
-      lastUsed: new Date(0)
-    };
+    return (
+      this.modelMetrics.get(modelName) || {
+        requests: 0,
+        failures: 0,
+        avgResponseTime: 0,
+        lastUsed: new Date(0),
+      }
+    );
   }
 
   /**
@@ -337,7 +362,10 @@ export class OllamaClient {
     for (const [model, data] of this.modelMetrics.entries()) {
       metrics[model] = {
         ...data,
-        successRate: data.requests > 0 ? ((data.requests - data.failures) / data.requests) : 0
+        successRate:
+          data.requests > 0
+            ? (data.requests - data.failures) / data.requests
+            : 0,
       };
     }
     return metrics;
@@ -346,9 +374,14 @@ export class OllamaClient {
   /**
    * Select the best available model from a list of candidates
    */
-  selectBestModel(candidates: string[], considerPerformance = true): string | null {
-    const available = candidates.filter(model => this.isModelAvailable(model));
-    
+  selectBestModel(
+    candidates: string[],
+    considerPerformance = true
+  ): string | null {
+    const available = candidates.filter((model) =>
+      this.isModelAvailable(model)
+    );
+
     if (available.length === 0) {
       return null;
     }
@@ -372,9 +405,10 @@ export class OllamaClient {
         continue;
       }
 
-      const successRate = (metrics.requests - metrics.failures) / metrics.requests;
-      const responseScore = Math.max(0, 1 - (metrics.avgResponseTime / 30000)); // 30s baseline
-      const score = (successRate * 0.7) + (responseScore * 0.3);
+      const successRate =
+        (metrics.requests - metrics.failures) / metrics.requests;
+      const responseScore = Math.max(0, 1 - metrics.avgResponseTime / 30000); // 30s baseline
+      const score = successRate * 0.7 + responseScore * 0.3;
 
       if (score > bestScore) {
         bestModel = model;
@@ -388,26 +422,31 @@ export class OllamaClient {
   /**
    * Update model performance metrics
    */
-  private updateModelMetrics(modelName: string, responseTime: number, failed: boolean): void {
+  private updateModelMetrics(
+    modelName: string,
+    responseTime: number,
+    failed: boolean
+  ): void {
     const current = this.modelMetrics.get(modelName) || {
       requests: 0,
       failures: 0,
       avgResponseTime: 0,
-      lastUsed: new Date()
+      lastUsed: new Date(),
     };
 
     current.requests++;
     if (failed) {
       current.failures++;
     }
-    
+
     // Update average response time (exponential moving average)
-    current.avgResponseTime = current.avgResponseTime === 0 
-      ? responseTime 
-      : (current.avgResponseTime * 0.8) + (responseTime * 0.2);
-    
+    current.avgResponseTime =
+      current.avgResponseTime === 0
+        ? responseTime
+        : current.avgResponseTime * 0.8 + responseTime * 0.2;
+
     current.lastUsed = new Date();
-    
+
     this.modelMetrics.set(modelName, current);
   }
 
@@ -418,7 +457,8 @@ export class OllamaClient {
     const status: Record<string, boolean> = {};
     for (const model of this.availableModels) {
       const metrics = this.getModelMetrics(model);
-      status[model] = metrics.requests === 0 || (metrics.failures / metrics.requests) < 0.5;
+      status[model] =
+        metrics.requests === 0 || metrics.failures / metrics.requests < 0.5;
     }
     return status;
   }
@@ -426,13 +466,17 @@ export class OllamaClient {
   /**
    * Create standardized error
    */
-  private createError(code: string, message: string, details?: unknown): AuditError {
+  private createError(
+    code: string,
+    message: string,
+    details?: unknown
+  ): AuditError {
     return {
       code,
       message,
       details,
       recoverable: code !== 'OLLAMA_UNAVAILABLE',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
@@ -440,7 +484,7 @@ export class OllamaClient {
    * Sleep utility for retry delays
    */
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**

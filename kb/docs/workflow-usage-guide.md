@@ -3,7 +3,7 @@
 **Document Type:** User Guide  
 **Target Audience:** Developers and Release Managers  
 **Package:** `@moikas/code-audit-mcp`  
-**Created:** 2025-07-10  
+**Created:** 2025-07-10
 
 ## 📋 Overview
 
@@ -29,13 +29,15 @@ This guide explains how to use the GitHub Actions workflow to automatically publ
 The workflow is triggered by tags matching the pattern: `v4.*`
 
 **Valid Tag Examples:**
+
 - `v4.0.0` - Major release
-- `v4.1.0` - Minor release  
+- `v4.1.0` - Minor release
 - `v4.0.1` - Patch release
 - `v4.1.2-beta.1` - Pre-release
 - `v4.2.0-alpha.3` - Alpha release
 
 **Invalid Tags (Will NOT trigger workflow):**
+
 - `v3.0.0` - Version 3.x (not supported)
 - `v5.0.0` - Version 5.x (not yet supported)
 - `4.0.0` - Missing 'v' prefix
@@ -256,7 +258,7 @@ The workflow tests on multiple Node.js versions to ensure compatibility:
 Cross-platform testing ensures the CLI works everywhere:
 
 - **Ubuntu Latest** - Linux environments
-- **Windows Latest** - Windows environments  
+- **Windows Latest** - Windows environments
 - **macOS Latest** - macOS environments
 
 ### Quality Gates

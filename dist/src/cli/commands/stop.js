@@ -30,7 +30,7 @@ export async function stopCommand() {
             // Try graceful shutdown first
             process.kill(pid, 'SIGTERM');
             // Wait a bit for graceful shutdown
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise((resolve) => setTimeout(resolve, 2000));
             // Check if process is still running
             try {
                 process.kill(pid, 0);
@@ -38,7 +38,7 @@ export async function stopCommand() {
                 spinner.text = 'Force stopping server...';
                 process.kill(pid, 'SIGKILL');
                 // Wait a bit more
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise((resolve) => setTimeout(resolve, 1000));
             }
             catch (error) {
                 // Process is dead, that's what we want

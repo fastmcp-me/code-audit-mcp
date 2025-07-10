@@ -81,9 +81,9 @@ export class PerformanceAuditor extends BaseAuditor {
             /\bwhile\s*\(/,
             /\.forEach\s*\(/,
             /\.map\s*\(/,
-            /\.filter\s*\(/
+            /\.filter\s*\(/,
         ];
-        if (!loopPatterns.some(pattern => pattern.test(line))) {
+        if (!loopPatterns.some((pattern) => pattern.test(line))) {
             return false;
         }
         // Look for another loop within a reasonable distance
@@ -95,7 +95,7 @@ export class PerformanceAuditor extends BaseAuditor {
             braceCount -= (currentLine.match(/}/g) || []).length;
             if (braceCount < 0)
                 break;
-            if (loopPatterns.some(pattern => pattern.test(currentLine))) {
+            if (loopPatterns.some((pattern) => pattern.test(currentLine))) {
                 foundNestedLoop = true;
                 break;
             }
@@ -129,9 +129,9 @@ export class PerformanceAuditor extends BaseAuditor {
             /UPDATE\s+/i,
             /DELETE\s+/i,
             /\.find\s*\(/,
-            /\.save\s*\(/
+            /\.save\s*\(/,
         ];
-        if (!queryPatterns.some(pattern => pattern.test(line))) {
+        if (!queryPatterns.some((pattern) => pattern.test(line))) {
             return false;
         }
         // Check if we're inside a loop
@@ -153,9 +153,9 @@ export class PerformanceAuditor extends BaseAuditor {
                 /fs\.readFileSync/,
                 /fs\.writeFileSync/,
                 /fs\.existsSync/,
-                /fs\.statSync/
+                /fs\.statSync/,
             ];
-            return syncPatterns.some(pattern => pattern.test(line));
+            return syncPatterns.some((pattern) => pattern.test(line));
         }
         return false;
     }
@@ -167,9 +167,9 @@ export class PerformanceAuditor extends BaseAuditor {
             /new\s+\w+\s*\(/,
             /\{\s*\w+:/,
             /\[\s*\w+/,
-            /Object\.create/
+            /Object\.create/,
         ];
-        if (!objectPatterns.some(pattern => pattern.test(line))) {
+        if (!objectPatterns.some((pattern) => pattern.test(line))) {
             return false;
         }
         // Check if we're inside a loop
@@ -193,9 +193,9 @@ export class PerformanceAuditor extends BaseAuditor {
             /\w+\.match\(/,
             /\w+\.replace\(/,
             /fetch\(/,
-            /axios\./
+            /axios\./,
         ];
-        return expensiveOperations.some(pattern => pattern.test(line));
+        return expensiveOperations.some((pattern) => pattern.test(line));
     }
     /**
      * Check for inefficient array operations
@@ -207,9 +207,9 @@ export class PerformanceAuditor extends BaseAuditor {
                 /\.indexOf\s*\([^)]+\)\s*!\s*=\s*-1/, // Use includes() instead
                 /\.splice\s*\(\s*0\s*,\s*1\s*\)/, // Use shift() instead
                 /\.slice\s*\(\s*0\s*,\s*-1\s*\)/, // Use pop() instead
-                /for\s*\(.*\.length\s*\)/ // Cache length
+                /for\s*\(.*\.length\s*\)/, // Cache length
             ];
-            return inefficientPatterns.some(pattern => pattern.test(line));
+            return inefficientPatterns.some((pattern) => pattern.test(line));
         }
         return false;
     }
@@ -222,9 +222,9 @@ export class PerformanceAuditor extends BaseAuditor {
                 /addEventListener\s*\((?!.*removeEventListener)/,
                 /setInterval\s*\((?!.*clearInterval)/,
                 /setTimeout\s*\((?!.*clearTimeout)/,
-                /new\s+EventSource\s*\((?!.*close)/
+                /new\s+EventSource\s*\((?!.*close)/,
             ];
-            return leakPatterns.some(pattern => pattern.test(line));
+            return leakPatterns.some((pattern) => pattern.test(line));
         }
         return false;
     }
@@ -239,9 +239,9 @@ export class PerformanceAuditor extends BaseAuditor {
             /fs\.readFileSync/,
             /fs\.writeFileSync/,
             /JSON\.parse\(.*large/i,
-            /while\s*\(true\)/
+            /while\s*\(true\)/,
         ];
-        if (!blockingPatterns.some(pattern => pattern.test(line))) {
+        if (!blockingPatterns.some((pattern) => pattern.test(line))) {
             return false;
         }
         // Check if we're in an async function
@@ -265,9 +265,9 @@ export class PerformanceAuditor extends BaseAuditor {
             /document\.getElementById.*for/,
             /querySelector.*for/,
             /innerHTML\s*\+=/, // Use textContent or createElement
-            /document\.createElement.*for/
+            /document\.createElement.*for/,
         ];
-        return inefficientDOMPatterns.some(pattern => pattern.test(line));
+        return inefficientDOMPatterns.some((pattern) => pattern.test(line));
     }
     /**
      * Create performance issue objects
@@ -285,7 +285,7 @@ export class PerformanceAuditor extends BaseAuditor {
             confidence: 0.9,
             fixable: true,
             ruleId: 'PERF001',
-            effort: 'medium'
+            effort: 'medium',
         };
     }
     createStringConcatenationIssue(line, lineNumber) {
@@ -301,7 +301,7 @@ export class PerformanceAuditor extends BaseAuditor {
             confidence: 0.8,
             fixable: true,
             ruleId: 'PERF002',
-            effort: 'low'
+            effort: 'low',
         };
     }
     createQueryInLoopIssue(line, lineNumber) {
@@ -317,7 +317,7 @@ export class PerformanceAuditor extends BaseAuditor {
             confidence: 0.9,
             fixable: true,
             ruleId: 'PERF003',
-            effort: 'medium'
+            effort: 'medium',
         };
     }
     createSyncFileOperationIssue(line, lineNumber) {
@@ -333,7 +333,7 @@ export class PerformanceAuditor extends BaseAuditor {
             confidence: 0.9,
             fixable: true,
             ruleId: 'PERF004',
-            effort: 'low'
+            effort: 'low',
         };
     }
     createObjectCreationInLoopIssue(line, lineNumber) {
@@ -349,7 +349,7 @@ export class PerformanceAuditor extends BaseAuditor {
             confidence: 0.7,
             fixable: true,
             ruleId: 'PERF005',
-            effort: 'medium'
+            effort: 'medium',
         };
     }
     createMissingCachingIssue(line, lineNumber) {
@@ -365,7 +365,7 @@ export class PerformanceAuditor extends BaseAuditor {
             confidence: 0.6,
             fixable: true,
             ruleId: 'PERF006',
-            effort: 'medium'
+            effort: 'medium',
         };
     }
     createInefficientArrayOperationIssue(line, lineNumber) {
@@ -381,7 +381,7 @@ export class PerformanceAuditor extends BaseAuditor {
             confidence: 0.8,
             fixable: true,
             ruleId: 'PERF007',
-            effort: 'low'
+            effort: 'low',
         };
     }
     createMemoryLeakIssue(line, lineNumber) {
@@ -397,7 +397,7 @@ export class PerformanceAuditor extends BaseAuditor {
             confidence: 0.7,
             fixable: true,
             ruleId: 'PERF008',
-            effort: 'low'
+            effort: 'low',
         };
     }
     createBlockingOperationIssue(line, lineNumber) {
@@ -413,7 +413,7 @@ export class PerformanceAuditor extends BaseAuditor {
             confidence: 0.9,
             fixable: true,
             ruleId: 'PERF009',
-            effort: 'medium'
+            effort: 'medium',
         };
     }
     createDOMOperationIssue(line, lineNumber) {
@@ -429,7 +429,7 @@ export class PerformanceAuditor extends BaseAuditor {
             confidence: 0.8,
             fixable: true,
             ruleId: 'PERF010',
-            effort: 'medium'
+            effort: 'medium',
         };
     }
     /**
@@ -439,7 +439,7 @@ export class PerformanceAuditor extends BaseAuditor {
         if (!context?.performanceCritical) {
             return issues;
         }
-        return issues.map(issue => {
+        return issues.map((issue) => {
             // Increase severity for performance-critical code
             if (issue.severity === 'low') {
                 issue.severity = 'medium';
@@ -456,7 +456,7 @@ export class PerformanceAuditor extends BaseAuditor {
      */
     deduplicateIssues(issues) {
         const seen = new Set();
-        return issues.filter(issue => {
+        return issues.filter((issue) => {
             const key = `${issue.location.line}_${issue.type}`;
             if (seen.has(key)) {
                 return false;

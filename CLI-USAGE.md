@@ -84,6 +84,7 @@ Options:
 ```
 
 **What it does:**
+
 - Checks prerequisites (Node.js, Ollama)
 - Guides model selection and installation
 - Creates configuration files
@@ -103,6 +104,7 @@ Options:
 ```
 
 **Examples:**
+
 ```bash
 # Start in foreground (good for testing)
 code-audit start
@@ -135,6 +137,7 @@ Options:
 ```
 
 **Health Checks:**
+
 - ✅ Ollama installation and service status
 - ✅ AI model availability and health
 - ✅ Configuration validity
@@ -158,6 +161,7 @@ Options:
 ```
 
 **Examples:**
+
 ```bash
 # List all installed models
 code-audit models --list
@@ -190,6 +194,7 @@ Options:
 ```
 
 **Examples:**
+
 ```bash
 # Show current configuration
 code-audit config --show
@@ -220,6 +225,7 @@ Options:
 ```
 
 **Examples:**
+
 ```bash
 # Check for updates
 code-audit update --check
@@ -236,14 +242,18 @@ code-audit update --force
 ### Recommended Model Sets
 
 #### Essential (~4GB)
+
 Best for: Getting started, limited resources
+
 ```bash
 code-audit models --pull codellama:7b
 code-audit models --pull granite-code:8b
 ```
 
-#### Comprehensive (~15GB)  
+#### Comprehensive (~15GB)
+
 Best for: Most users, balanced performance/accuracy
+
 ```bash
 code-audit models --pull codellama:7b
 code-audit models --pull granite-code:8b
@@ -253,7 +263,9 @@ code-audit models --pull qwen2.5-coder:7b
 ```
 
 #### Full Setup (~50GB)
+
 Best for: Maximum accuracy, high-end systems
+
 ```bash
 # Includes all comprehensive models plus:
 code-audit models --pull codellama:13b
@@ -264,25 +276,27 @@ code-audit models --pull llama3.1:8b
 
 ### Model Specializations
 
-| Model | Best For | Size | RAM Required |
-|-------|----------|------|--------------|
-| `codellama:7b` | General purpose, fast analysis | ~4GB | 8GB+ |
-| `granite-code:8b` | Security analysis | ~5GB | 8GB+ |
-| `deepseek-coder:6.7b` | Performance optimization | ~4GB | 8GB+ |
-| `starcoder2:7b` | Testing and quality | ~4GB | 8GB+ |
-| `qwen2.5-coder:7b` | Documentation analysis | ~4GB | 8GB+ |
-| `codellama:13b` | Higher accuracy general | ~7GB | 16GB+ |
-| `deepseek-coder:33b` | Maximum accuracy | ~20GB | 32GB+ |
+| Model                 | Best For                       | Size  | RAM Required |
+| --------------------- | ------------------------------ | ----- | ------------ |
+| `codellama:7b`        | General purpose, fast analysis | ~4GB  | 8GB+         |
+| `granite-code:8b`     | Security analysis              | ~5GB  | 8GB+         |
+| `deepseek-coder:6.7b` | Performance optimization       | ~4GB  | 8GB+         |
+| `starcoder2:7b`       | Testing and quality            | ~4GB  | 8GB+         |
+| `qwen2.5-coder:7b`    | Documentation analysis         | ~4GB  | 8GB+         |
+| `codellama:13b`       | Higher accuracy general        | ~7GB  | 16GB+        |
+| `deepseek-coder:33b`  | Maximum accuracy               | ~20GB | 32GB+        |
 
 ## ⚙️ Configuration
 
 ### Configuration Files
 
 Global configuration is stored in:
+
 - **macOS/Linux**: `~/.code-audit/config.json`
 - **Windows**: `%USERPROFILE%\.code-audit\config.json`
 
 Project-specific overrides can be placed in:
+
 - `.code-audit.json` (project root)
 - `.code-audit/config.json` (project directory)
 - `package.json` (in `codeAudit` section)
@@ -345,6 +359,7 @@ Analyze this code for security issues:
 ```
 
 The MCP server will automatically:
+
 1. ✅ Detect the programming language
 2. ✅ Select the appropriate AI model
 3. ✅ Perform comprehensive analysis
@@ -355,6 +370,7 @@ The MCP server will automatically:
 ### Common Issues
 
 #### Ollama Not Found
+
 ```bash
 # Check if Ollama is installed
 ollama --version
@@ -365,6 +381,7 @@ code-audit setup --force
 ```
 
 #### Models Not Downloading
+
 ```bash
 # Check disk space
 df -h
@@ -377,6 +394,7 @@ ollama pull codellama:7b
 ```
 
 #### Permission Errors
+
 ```bash
 # For global installation issues
 sudo npm install -g code-audit-mcp
@@ -386,6 +404,7 @@ chmod 755 ~/.code-audit/
 ```
 
 #### Server Won't Start
+
 ```bash
 # Check if already running
 code-audit stop

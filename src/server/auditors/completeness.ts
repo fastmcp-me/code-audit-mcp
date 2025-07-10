@@ -8,7 +8,11 @@ import type { OllamaClient } from '../ollama/client.js';
 import { ModelManager } from '../ollama/models.js';
 
 export class CompletenessAuditor extends BaseAuditor {
-  constructor(config: AuditorConfig, ollamaClient: OllamaClient, modelManager: ModelManager) {
+  constructor(
+    config: AuditorConfig,
+    ollamaClient: OllamaClient,
+    modelManager: ModelManager
+  ) {
     super(config, ollamaClient, modelManager);
     this.auditType = 'completeness';
   }
@@ -22,10 +26,13 @@ export class CompletenessAuditor extends BaseAuditor {
     language: string
   ): Promise<AuditIssue[]> {
     const issues = await super.postProcessIssues(rawIssues, request, language);
-    
+
     // Add static pattern detection for common completeness issues
-    const patternIssues = this.detectCompletenessPatterns(request.code, language);
-    
+    const patternIssues = this.detectCompletenessPatterns(
+      request.code,
+      language
+    );
+
     // Merge and deduplicate
     const allIssues = [...issues, ...patternIssues];
     return this.deduplicateIssues(allIssues);
@@ -34,7 +41,10 @@ export class CompletenessAuditor extends BaseAuditor {
   /**
    * Detect completeness patterns using static analysis
    */
-  private detectCompletenessPatterns(code: string, language: string): AuditIssue[] {
+  private detectCompletenessPatterns(
+    code: string,
+    language: string
+  ): AuditIssue[] {
     const issues: AuditIssue[] = [];
     const lines = code.split('\n');
 
@@ -95,9 +105,9 @@ export class CompletenessAuditor extends BaseAuditor {
       /\/\/.*todo/i,
       /\/\*.*todo.*\*\//i,
       /#.*todo/i,
-      /<!--.*todo.*-->/i
+      /<!--.*todo.*-->/i,
     ];
-    return todoPatterns.some(pattern => pattern.test(line));
+    return todoPatterns.some((pattern) => pattern.test(line));
   }
 
   /**
@@ -108,9 +118,9 @@ export class CompletenessAuditor extends BaseAuditor {
       /\/\/.*fixme/i,
       /\/\*.*fixme.*\*\//i,
       /#.*fixme/i,
-      /<!--.*fixme.*-->/i
+      /<!--.*fixme.*-->/i,
     ];
-    return fixmePatterns.some(pattern => pattern.test(line));
+    return fixmePatterns.some((pattern) => pattern.test(line));
   }
 
   /**
@@ -121,15 +131,20 @@ export class CompletenessAuditor extends BaseAuditor {
       /\/\/.*hack/i,
       /\/\*.*hack.*\*\//i,
       /#.*hack/i,
-      /<!--.*hack.*-->/i
+      /<!--.*hack.*-->/i,
     ];
-    return hackPatterns.some(pattern => pattern.test(line));
+    return hackPatterns.some((pattern) => pattern.test(line));
   }
 
   /**
    * Check if line represents an empty function
    */
-  private isEmptyFunction(line: string, lines: string[], index: number, language: string): boolean {
+  private isEmptyFunction(
+    line: string,
+    lines: string[],
+    index: number,
+    language: string
+  ): boolean {
     const functionPatterns = {
       javascript: /function\s+\w+\s*\([^)]*\)\s*{/,
       typescript: /function\s+\w+\s*\([^)]*\)\s*:\s*\w+\s*{/,
@@ -137,7 +152,7 @@ export class CompletenessAuditor extends BaseAuditor {
       java: /\w+\s+\w+\s*\([^)]*\)\s*{/,
       csharp: /\w+\s+\w+\s*\([^)]*\)\s*{/,
       go: /func\s+\w+\s*\([^)]*\)\s*\w*\s*{/,
-      rust: /fn\s+\w+\s*\([^)]*\)\s*->\s*\w+\s*{/
+      rust: /fn\s+\w+\s*\([^)]*\)\s*->\s*\w+\s*{/,
     };
 
     const pattern = functionPatterns[language as keyof typeof functionPatterns];
@@ -151,7 +166,7 @@ export class CompletenessAuditor extends BaseAuditor {
 
     for (let i = index; i < lines.length; i++) {
       const currentLine = lines[i].trim();
-      
+
       braceCount += (currentLine.match(/{/g) || []).length;
       braceCount -= (currentLine.match(/}/g) || []).length;
 
@@ -160,7 +175,12 @@ export class CompletenessAuditor extends BaseAuditor {
       }
 
       // Check for actual content (not comments or empty lines)
-      if (currentLine && !currentLine.startsWith('//') && !currentLine.startsWith('/*') && !currentLine.startsWith('#')) {
+      if (
+        currentLine &&
+        !currentLine.startsWith('//') &&
+        !currentLine.startsWith('/*') &&
+        !currentLine.startsWith('#')
+      ) {
         const contentLine = currentLine.replace(/[{}]/g, '').trim();
         if (contentLine) {
           hasContent = true;
@@ -174,13 +194,23 @@ export class CompletenessAuditor extends BaseAuditor {
   /**
    * Check if function is missing return statement
    */
-  private isMissingReturn(line: string, lines: string[], index: number, language: string): boolean {
+  private isMissingReturn(
+    line: string,
+    lines: string[],
+    index: number,
+    language: string
+  ): boolean {
     // Only check for languages that require explicit returns
-    if (!['javascript', 'typescript', 'java', 'csharp', 'go', 'rust'].includes(language)) {
+    if (
+      !['javascript', 'typescript', 'java', 'csharp', 'go', 'rust'].includes(
+        language
+      )
+    ) {
       return false;
     }
 
-    const functionPattern = /function\s+\w+\s*\([^)]*\)\s*:\s*\w+|def\s+\w+\s*\([^)]*\)\s*->/;
+    const functionPattern =
+      /function\s+\w+\s*\([^)]*\)\s*:\s*\w+|def\s+\w+\s*\([^)]*\)\s*->/;
     if (!functionPattern.test(line) || line.includes('void')) {
       return false;
     }
@@ -191,7 +221,7 @@ export class CompletenessAuditor extends BaseAuditor {
 
     for (let i = index; i < lines.length; i++) {
       const currentLine = lines[i].trim();
-      
+
       braceCount += (currentLine.match(/{/g) || []).length;
       braceCount -= (currentLine.match(/}/g) || []).length;
 
@@ -219,15 +249,20 @@ export class CompletenessAuditor extends BaseAuditor {
       /panic\("not implemented"\)/i,
       /unimplemented!/i,
       /\/\/ implementation/i,
-      /\/\/ placeholder/i
+      /\/\/ placeholder/i,
     ];
-    return placeholderPatterns.some(pattern => pattern.test(line));
+    return placeholderPatterns.some((pattern) => pattern.test(line));
   }
 
   /**
    * Check if line is missing error handling
    */
-  private isMissingErrorHandling(line: string, lines: string[], index: number, language: string): boolean {
+  private isMissingErrorHandling(
+    line: string,
+    lines: string[],
+    index: number,
+    language: string
+  ): boolean {
     // Look for risky operations without try-catch
     const riskyPatterns = [
       /JSON\.parse/,
@@ -237,10 +272,10 @@ export class CompletenessAuditor extends BaseAuditor {
       /fs\.readFileSync/,
       /fs\.writeFileSync/,
       /parseInt/,
-      /parseFloat/
+      /parseFloat/,
     ];
 
-    if (!riskyPatterns.some(pattern => pattern.test(line))) {
+    if (!riskyPatterns.some((pattern) => pattern.test(line))) {
       return false;
     }
 
@@ -264,13 +299,15 @@ export class CompletenessAuditor extends BaseAuditor {
 
     const promisePatterns = [
       /\w+\.\w+\([^)]*\)(?!\s*\.(then|catch|finally))/,
-      /await\s+\w+\([^)]*\)/ // await without try-catch is checked elsewhere
+      /await\s+\w+\([^)]*\)/, // await without try-catch is checked elsewhere
     ];
 
-    return promisePatterns.some(pattern => pattern.test(line)) && 
-           !line.includes('.then') && 
-           !line.includes('.catch') && 
-           !line.includes('await');
+    return (
+      promisePatterns.some((pattern) => pattern.test(line)) &&
+      !line.includes('.then') &&
+      !line.includes('.catch') &&
+      !line.includes('await')
+    );
   }
 
   /**
@@ -285,10 +322,11 @@ export class CompletenessAuditor extends BaseAuditor {
       category: 'completeness',
       title: 'TODO comment indicates incomplete implementation',
       description: `Found TODO comment: ${line.trim()}`,
-      suggestion: 'Implement the missing functionality or remove the TODO comment',
+      suggestion:
+        'Implement the missing functionality or remove the TODO comment',
       confidence: 1.0,
       fixable: false,
-      ruleId: 'COMP001'
+      ruleId: 'COMP001',
     };
   }
 
@@ -307,7 +345,7 @@ export class CompletenessAuditor extends BaseAuditor {
       suggestion: 'Fix the issue mentioned in the FIXME comment',
       confidence: 1.0,
       fixable: false,
-      ruleId: 'COMP002'
+      ruleId: 'COMP002',
     };
   }
 
@@ -326,14 +364,17 @@ export class CompletenessAuditor extends BaseAuditor {
       suggestion: 'Replace the hack with a proper implementation',
       confidence: 1.0,
       fixable: false,
-      ruleId: 'COMP003'
+      ruleId: 'COMP003',
     };
   }
 
   /**
    * Create empty function issue
    */
-  private createEmptyFunctionIssue(line: string, lineNumber: number): AuditIssue {
+  private createEmptyFunctionIssue(
+    line: string,
+    lineNumber: number
+  ): AuditIssue {
     return {
       id: `empty_function_${lineNumber}`,
       location: { line: lineNumber },
@@ -342,17 +383,21 @@ export class CompletenessAuditor extends BaseAuditor {
       category: 'completeness',
       title: 'Empty function body',
       description: 'Function has no implementation',
-      suggestion: 'Implement the function body or add appropriate error handling',
+      suggestion:
+        'Implement the function body or add appropriate error handling',
       confidence: 0.9,
       fixable: false,
-      ruleId: 'COMP004'
+      ruleId: 'COMP004',
     };
   }
 
   /**
    * Create missing return issue
    */
-  private createMissingReturnIssue(line: string, lineNumber: number): AuditIssue {
+  private createMissingReturnIssue(
+    line: string,
+    lineNumber: number
+  ): AuditIssue {
     return {
       id: `missing_return_${lineNumber}`,
       location: { line: lineNumber },
@@ -360,11 +405,13 @@ export class CompletenessAuditor extends BaseAuditor {
       type: 'missing_return',
       category: 'completeness',
       title: 'Function missing return statement',
-      description: 'Function declares a return type but has no return statement',
-      suggestion: 'Add appropriate return statement or change return type to void',
+      description:
+        'Function declares a return type but has no return statement',
+      suggestion:
+        'Add appropriate return statement or change return type to void',
       confidence: 0.8,
       fixable: false,
-      ruleId: 'COMP005'
+      ruleId: 'COMP005',
     };
   }
 
@@ -383,14 +430,17 @@ export class CompletenessAuditor extends BaseAuditor {
       suggestion: 'Replace placeholder with actual implementation',
       confidence: 1.0,
       fixable: false,
-      ruleId: 'COMP006'
+      ruleId: 'COMP006',
     };
   }
 
   /**
    * Create missing error handling issue
    */
-  private createMissingErrorHandlingIssue(line: string, lineNumber: number): AuditIssue {
+  private createMissingErrorHandlingIssue(
+    line: string,
+    lineNumber: number
+  ): AuditIssue {
     return {
       id: `missing_error_handling_${lineNumber}`,
       location: { line: lineNumber },
@@ -398,18 +448,22 @@ export class CompletenessAuditor extends BaseAuditor {
       type: 'missing_error_handling',
       category: 'completeness',
       title: 'Missing error handling for risky operation',
-      description: 'Operation that can throw errors is not wrapped in try-catch',
+      description:
+        'Operation that can throw errors is not wrapped in try-catch',
       suggestion: 'Add appropriate error handling (try-catch block)',
       confidence: 0.7,
       fixable: true,
-      ruleId: 'COMP007'
+      ruleId: 'COMP007',
     };
   }
 
   /**
    * Create unhandled promise issue
    */
-  private createUnhandledPromiseIssue(line: string, lineNumber: number): AuditIssue {
+  private createUnhandledPromiseIssue(
+    line: string,
+    lineNumber: number
+  ): AuditIssue {
     return {
       id: `unhandled_promise_${lineNumber}`,
       location: { line: lineNumber },
@@ -421,7 +475,7 @@ export class CompletenessAuditor extends BaseAuditor {
       suggestion: 'Add .catch() handler or wrap in try-catch if using await',
       confidence: 0.8,
       fixable: true,
-      ruleId: 'COMP008'
+      ruleId: 'COMP008',
     };
   }
 
@@ -430,7 +484,7 @@ export class CompletenessAuditor extends BaseAuditor {
    */
   private deduplicateIssues(issues: AuditIssue[]): AuditIssue[] {
     const seen = new Set<string>();
-    return issues.filter(issue => {
+    return issues.filter((issue) => {
       const key = `${issue.location.line}_${issue.type}`;
       if (seen.has(key)) {
         return false;

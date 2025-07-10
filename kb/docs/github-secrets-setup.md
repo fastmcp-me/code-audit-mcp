@@ -3,7 +3,7 @@
 **Document Type:** Setup Documentation  
 **Target Audience:** Repository Administrators  
 **Package:** `@moikas/code-audit-mcp`  
-**Created:** 2025-07-10  
+**Created:** 2025-07-10
 
 ## 📋 Overview
 
@@ -76,11 +76,13 @@ Your npm account must have the following permissions:
 ### Verifying Organization Access
 
 1. **Check Organization Membership:**
+
    ```bash
    npm org ls @moikas
    ```
 
 2. **Verify Package Permissions:**
+
    ```bash
    npm access ls-packages @moikas
    ```
@@ -112,11 +114,12 @@ Your npm account must have the following permissions:
 ### Secret Management
 
 1. **Never Expose Secrets:**
+
    ```yaml
    # ❌ WRONG - Never do this
    - name: Debug
      run: echo "Token is ${{ secrets.NPM_TOKEN }}"
-   
+
    # ✅ CORRECT - Use secrets securely
    - name: Publish
      run: npm publish
@@ -157,14 +160,15 @@ Your npm account must have the following permissions:
    - Contains alphanumeric characters
 
 3. **Test Token Locally (Optional):**
+
    ```bash
    # Set token temporarily
    export NPM_TOKEN="your_token_here"
    echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-   
+
    # Test authentication
    npm whoami
-   
+
    # Clean up
    rm ~/.npmrc
    unset NPM_TOKEN

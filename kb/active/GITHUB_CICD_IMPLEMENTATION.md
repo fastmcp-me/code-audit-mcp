@@ -12,35 +12,45 @@ Create complete GitHub Actions CI/CD pipeline for automated publishing of `@moik
 ## 👥 Team Composition (5 Agents)
 
 ### Agent 1: Workflow Architect
+
 **Responsibility:** Main GitHub Actions workflow file
+
 - Create `.github/workflows/publish.yml`
 - Configure v4+ tag triggers
 - Set up workflow orchestration
 - Handle error management and logging
 
 ### Agent 2: Testing Specialist
+
 **Responsibility:** Multi-platform testing matrix
+
 - Configure Node.js matrix (18.x, 20.x, 22.x)
 - Set up OS matrix (Ubuntu, Windows, macOS)
 - Integrate existing test suite (`npm run test-local`)
 - Ensure cross-platform compatibility
 
 ### Agent 3: Publishing Expert
+
 **Responsibility:** NPM publishing automation
+
 - Configure npm authentication with NPM_TOKEN
 - Set up scoped package publishing (`@moikas/code-audit-mcp`)
 - Handle publishing permissions and security
 - Implement publishing safeguards
 
 ### Agent 4: Release Manager
+
 **Responsibility:** GitHub releases and artifacts
+
 - Create automated GitHub releases
 - Generate and attach build artifacts
 - Create release notes from commits
 - Manage version tagging workflow
 
 ### Agent 5: Documentation Specialist
+
 **Responsibility:** Setup instructions and secrets
+
 - Document required GitHub secrets
 - Create setup instructions for NPM_TOKEN
 - Write workflow usage documentation
@@ -49,6 +59,7 @@ Create complete GitHub Actions CI/CD pipeline for automated publishing of `@moik
 ## 📋 Technical Requirements
 
 ### Workflow Specifications
+
 - **Trigger Pattern:** `v4.*` tags (v4.0.0, v4.1.0, v4.2.0, etc.)
 - **Package Name:** `@moikas/code-audit-mcp`
 - **Registry:** npmjs.org (public)
@@ -56,12 +67,14 @@ Create complete GitHub Actions CI/CD pipeline for automated publishing of `@moik
 - **Platforms:** ubuntu-latest, windows-latest, macos-latest
 
 ### Security Requirements
+
 - NPM_TOKEN GitHub secret for authentication
 - Scoped package publishing permissions
 - Secure credential handling
 - No secret exposure in logs
 
 ### Quality Gates
+
 - All tests must pass on all platforms
 - Package creation must succeed
 - No TypeScript compilation errors

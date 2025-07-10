@@ -5,7 +5,11 @@
 import chalk from 'chalk';
 import ora from 'ora';
 import boxen from 'boxen';
-import { checkOllamaHealth, getInstalledModels, getModelHealth } from '../utils/ollama.js';
+import {
+  checkOllamaHealth,
+  getInstalledModels,
+  getModelHealth,
+} from '../utils/ollama.js';
 import { getConfig } from '../utils/config.js';
 
 interface HealthOptions {
@@ -49,13 +53,15 @@ export async function healthCommand(options: HealthOptions): Promise<void> {
     checks: {
       ollama: false,
       models: {},
-      config: false
+      config: false,
     },
     details: {},
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 
-  const spinner = options.json ? null : ora('Checking system health...').start();
+  const spinner = options.json
+    ? null
+    : ora('Checking system health...').start();
 
   try {
     // Check configuration
@@ -75,7 +81,7 @@ export async function healthCommand(options: HealthOptions): Promise<void> {
       result.checks.ollama = true;
       result.details.ollama = {
         host: config.ollama.host,
-        models: ollamaInfo.models || []
+        models: ollamaInfo.models || [],
       };
       if (spinner) spinner.text = 'Ollama ✓';
     } catch (error) {
@@ -89,11 +95,11 @@ export async function healthCommand(options: HealthOptions): Promise<void> {
       try {
         const installedModels = await getInstalledModels();
         const modelHealth = await getModelHealth();
-        
-        result.details.models = installedModels.map(model => ({
+
+        result.details.models = installedModels.map((model) => ({
           name: model.name,
           status: modelHealth[model.name] ? 'healthy' : 'unknown',
-          size: model.size
+          size: model.size,
         }));
 
         for (const model of installedModels) {
@@ -101,8 +107,8 @@ export async function healthCommand(options: HealthOptions): Promise<void> {
         }
 
         const essentialModels = ['codellama:7b', 'granite-code:8b'];
-        const hasEssentialModels = essentialModels.some(model => 
-          installedModels.some(installed => installed.name === model)
+        const hasEssentialModels = essentialModels.some((model) =>
+          installedModels.some((installed) => installed.name === model)
         );
 
         if (!hasEssentialModels) {
@@ -125,11 +131,12 @@ export async function healthCommand(options: HealthOptions): Promise<void> {
         spinner.fail('Health check found issues');
       }
     }
-
   } catch (error) {
     result.status = 'unhealthy';
     if (spinner) {
-      spinner.fail(`Health check failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      spinner.fail(
+        `Health check failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -148,27 +155,52 @@ function displayHealthResults(result: HealthResult, detailed?: boolean): void {
   console.log();
 
   // Overall status
-  const statusIcon = result.status === 'healthy' ? '✅' : 
-                    result.status === 'degraded' ? '⚠️' : '❌';
-  const statusColor = result.status === 'healthy' ? chalk.green : 
-                     result.status === 'degraded' ? chalk.yellow : chalk.red;
+  const statusIcon =
+    result.status === 'healthy'
+      ? '✅'
+      : result.status === 'degraded'
+        ? '⚠️'
+        : '❌';
+  const statusColor =
+    result.status === 'healthy'
+      ? chalk.green
+      : result.status === 'degraded'
+        ? chalk.yellow
+        : chalk.red;
 
-  console.log(boxen(
-    `${statusIcon} Overall Status: ${statusColor.bold(result.status.toUpperCase())}`,
-    { padding: 1, borderColor: result.status === 'healthy' ? 'green' : 
-                              result.status === 'degraded' ? 'yellow' : 'red' }
-  ));
+  console.log(
+    boxen(
+      `${statusIcon} Overall Status: ${statusColor.bold(result.status.toUpperCase())}`,
+      {
+        padding: 1,
+        borderColor:
+          result.status === 'healthy'
+            ? 'green'
+            : result.status === 'degraded'
+              ? 'yellow'
+              : 'red',
+      }
+    )
+  );
 
   console.log();
 
   // Component status
   console.log(chalk.bold('Component Status:'));
-  console.log(`  Configuration: ${result.checks.config ? chalk.green('✓') : chalk.red('✗')}`);
-  console.log(`  Ollama Service: ${result.checks.ollama ? chalk.green('✓') : chalk.red('✗')}`);
-  
+  console.log(
+    `  Configuration: ${result.checks.config ? chalk.green('✓') : chalk.red('✗')}`
+  );
+  console.log(
+    `  Ollama Service: ${result.checks.ollama ? chalk.green('✓') : chalk.red('✗')}`
+  );
+
   const modelCount = Object.keys(result.checks.models).length;
-  const healthyModels = Object.values(result.checks.models).filter(Boolean).length;
-  console.log(`  AI Models: ${modelCount > 0 ? chalk.green(`✓ (${healthyModels}/${modelCount})`) : chalk.red('✗')}`);
+  const healthyModels = Object.values(result.checks.models).filter(
+    Boolean
+  ).length;
+  console.log(
+    `  AI Models: ${modelCount > 0 ? chalk.green(`✓ (${healthyModels}/${modelCount})`) : chalk.red('✗')}`
+  );
 
   if (detailed) {
     console.log();
@@ -177,14 +209,19 @@ function displayHealthResults(result: HealthResult, detailed?: boolean): void {
     if (result.details.ollama) {
       console.log(chalk.cyan('  Ollama:'));
       console.log(`    Host: ${result.details.ollama.host}`);
-      console.log(`    Available Models: ${result.details.ollama.models.length}`);
+      console.log(
+        `    Available Models: ${result.details.ollama.models.length}`
+      );
     }
 
     if (result.details.models && result.details.models.length > 0) {
       console.log(chalk.cyan('  Models:'));
       for (const model of result.details.models) {
-        const status = model.status === 'healthy' ? chalk.green('✓') : chalk.yellow('?');
-        console.log(`    ${status} ${model.name} ${model.size ? chalk.gray(`(${model.size})`) : ''}`);
+        const status =
+          model.status === 'healthy' ? chalk.green('✓') : chalk.yellow('?');
+        console.log(
+          `    ${status} ${model.name} ${model.size ? chalk.gray(`(${model.size})`) : ''}`
+        );
       }
     }
   }
@@ -195,7 +232,9 @@ function displayHealthResults(result: HealthResult, detailed?: boolean): void {
     console.log(chalk.bold('Recommendations:'));
 
     if (!result.checks.config) {
-      console.log(chalk.yellow('  • Run "code-audit setup" to configure the system'));
+      console.log(
+        chalk.yellow('  • Run "code-audit setup" to configure the system')
+      );
     }
 
     if (!result.checks.ollama) {
@@ -204,10 +243,18 @@ function displayHealthResults(result: HealthResult, detailed?: boolean): void {
     }
 
     if (Object.keys(result.checks.models).length === 0) {
-      console.log(chalk.yellow('  • Run "code-audit models --pull codellama:7b" to install essential models'));
+      console.log(
+        chalk.yellow(
+          '  • Run "code-audit models --pull codellama:7b" to install essential models'
+        )
+      );
     }
   }
 
   console.log();
-  console.log(chalk.gray(`Health check completed at ${new Date(result.timestamp).toLocaleString()}`));
+  console.log(
+    chalk.gray(
+      `Health check completed at ${new Date(result.timestamp).toLocaleString()}`
+    )
+  );
 }

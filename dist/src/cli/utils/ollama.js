@@ -14,7 +14,7 @@ export async function checkOllamaHealth(host) {
             headers: {
                 'Content-Type': 'application/json',
             },
-            signal: AbortSignal.timeout(config.ollama.timeout)
+            signal: AbortSignal.timeout(config.ollama.timeout),
         });
         if (!response.ok) {
             throw new Error(`Ollama API returned ${response.status}: ${response.statusText}`);
@@ -23,7 +23,7 @@ export async function checkOllamaHealth(host) {
         const models = data.models ? data.models.map((m) => m.name) : [];
         return {
             models,
-            version: data.version || 'unknown'
+            version: data.version || 'unknown',
         };
     }
     catch (error) {
@@ -44,7 +44,7 @@ export async function getInstalledModels() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            signal: AbortSignal.timeout(config.ollama.timeout)
+            signal: AbortSignal.timeout(config.ollama.timeout),
         });
         if (!response.ok) {
             throw new Error(`Ollama API returned ${response.status}: ${response.statusText}`);
@@ -81,7 +81,7 @@ export async function pullModel(modelName) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ name: modelName }),
-            signal: AbortSignal.timeout(300000) // 5 minutes for model pull
+            signal: AbortSignal.timeout(300000), // 5 minutes for model pull
         });
         if (!response.ok) {
             throw new Error(`Failed to pull model: ${response.statusText}`);
@@ -114,7 +114,7 @@ export async function removeModel(modelName) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ name: modelName }),
-            signal: AbortSignal.timeout(config.ollama.timeout)
+            signal: AbortSignal.timeout(config.ollama.timeout),
         });
         if (!response.ok) {
             throw new Error(`Failed to remove model: ${response.statusText}`);
@@ -130,13 +130,10 @@ export async function removeModel(modelName) {
 export async function ensureRequiredModels() {
     const config = await getConfig();
     const installedModels = await getInstalledModels();
-    const installedModelNames = installedModels.map(m => m.name);
+    const installedModelNames = installedModels.map((m) => m.name);
     // Essential models that should be available
-    const requiredModels = [
-        'codellama:7b',
-        'granite-code:8b'
-    ];
-    const missingModels = requiredModels.filter(model => !installedModelNames.some(installed => installed.includes(model)));
+    const requiredModels = ['codellama:7b', 'granite-code:8b'];
+    const missingModels = requiredModels.filter((model) => !installedModelNames.some((installed) => installed.includes(model)));
     if (missingModels.length > 0) {
         console.warn(`Warning: Missing required models: ${missingModels.join(', ')}`);
         console.warn('Server will start but may have limited functionality.');

@@ -5,8 +5,6 @@
 
 import { test, describe, mock, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
-import { exec } from 'child_process';
-import * as fs from 'fs/promises';
 import { promisify } from 'util';
 
 // Mock external dependencies
@@ -39,21 +37,15 @@ mock.module('ollama', () => ({
 
 // Import after mocking
 import {
-  OllamaUtils,
   checkOllamaHealth,
   getInstalledModels,
   pullModel,
   removeModel,
-  getModelHealth,
-  ensureRequiredModels,
-  detectOllamaInstallation,
-  type OllamaHealth,
-  type ModelInfo,
-  type InstallationInfo,
-  type ProgressInfo,
+  // getModelHealth,
+  // ensureRequiredModels,
 } from '../src/cli/utils/ollama.js';
 
-const execAsync = promisify(mockExec);
+// const execAsync = promisify(mockExec);
 
 describe('OllamaUtils', () => {
   let ollamaUtils: OllamaUtils;
@@ -86,7 +78,7 @@ describe('OllamaUtils', () => {
       mockFsAccess.mock.mockImplementationOnce(() => Promise.resolve());
 
       // Mock version command
-      mockExec.mock.mockImplementationOnce(() => 
+      mockExec.mock.mockImplementationOnce(() =>
         Promise.resolve({ stdout: 'ollama version 0.1.0\n', stderr: '' })
       );
 
@@ -110,7 +102,7 @@ describe('OllamaUtils', () => {
       });
 
       // Mock file access - all paths fail
-      mockFsAccess.mock.mockImplementation(() => 
+      mockFsAccess.mock.mockImplementation(() =>
         Promise.reject(new Error('ENOENT'))
       );
 
@@ -141,12 +133,12 @@ describe('OllamaUtils', () => {
   describe('checkOllamaHealth', () => {
     test('should return healthy status when service is running', async () => {
       // Mock successful list call
-      mockOllamaClient.list.mock.mockImplementationOnce(() => 
+      mockOllamaClient.list.mock.mockImplementationOnce(() =>
         Promise.resolve({ models: [] })
       );
 
       // Mock version command
-      mockExec.mock.mockImplementationOnce(() => 
+      mockExec.mock.mockImplementationOnce(() =>
         Promise.resolve({ stdout: 'ollama version 0.1.0\n', stderr: '' })
       );
 
@@ -161,7 +153,7 @@ describe('OllamaUtils', () => {
 
     test('should return unhealthy status when service fails', async () => {
       // Mock failed list call
-      mockOllamaClient.list.mock.mockImplementationOnce(() => 
+      mockOllamaClient.list.mock.mockImplementationOnce(() =>
         Promise.reject(new Error('Connection refused'))
       );
 
@@ -175,7 +167,7 @@ describe('OllamaUtils', () => {
 
     test('should handle custom host', async () => {
       // Mock successful list call
-      mockOllamaClient.list.mock.mockImplementationOnce(() => 
+      mockOllamaClient.list.mock.mockImplementationOnce(() =>
         Promise.resolve({ models: [] })
       );
 
@@ -209,7 +201,7 @@ describe('OllamaUtils', () => {
         },
       ];
 
-      mockOllamaClient.list.mock.mockImplementationOnce(() => 
+      mockOllamaClient.list.mock.mockImplementationOnce(() =>
         Promise.resolve({ models: mockModels })
       );
 
@@ -224,7 +216,7 @@ describe('OllamaUtils', () => {
     });
 
     test('should handle empty model list', async () => {
-      mockOllamaClient.list.mock.mockImplementationOnce(() => 
+      mockOllamaClient.list.mock.mockImplementationOnce(() =>
         Promise.resolve({ models: [] })
       );
 
@@ -234,7 +226,7 @@ describe('OllamaUtils', () => {
     });
 
     test('should throw error on client failure', async () => {
-      mockOllamaClient.list.mock.mockImplementationOnce(() => 
+      mockOllamaClient.list.mock.mockImplementationOnce(() =>
         Promise.reject(new Error('Connection failed'))
       );
 
@@ -276,7 +268,7 @@ describe('OllamaUtils', () => {
     });
 
     test('should handle pull failure', async () => {
-      mockOllamaClient.pull.mock.mockImplementationOnce(() => 
+      mockOllamaClient.pull.mock.mockImplementationOnce(() =>
         Promise.reject(new Error('Model not found'))
       );
 
@@ -289,7 +281,7 @@ describe('OllamaUtils', () => {
 
   describe('removeModel', () => {
     test('should remove model successfully', async () => {
-      mockOllamaClient.delete.mock.mockImplementationOnce(() => 
+      mockOllamaClient.delete.mock.mockImplementationOnce(() =>
         Promise.resolve()
       );
 
@@ -297,13 +289,13 @@ describe('OllamaUtils', () => {
 
       assert.strictEqual(mockOllamaClient.delete.mock.callCount(), 1);
       assert.deepStrictEqual(
-        mockOllamaClient.delete.mock.calls[0].arguments[0], 
+        mockOllamaClient.delete.mock.calls[0].arguments[0],
         { model: 'llama2:7b' }
       );
     });
 
     test('should handle remove failure', async () => {
-      mockOllamaClient.delete.mock.mockImplementationOnce(() => 
+      mockOllamaClient.delete.mock.mockImplementationOnce(() =>
         Promise.reject(new Error('Model not found'))
       );
 
@@ -317,21 +309,36 @@ describe('OllamaUtils', () => {
   describe('getModelHealth', () => {
     test('should check health of specific models', async () => {
       // Mock list call
-      mockOllamaClient.list.mock.mockImplementationOnce(() => 
+      mockOllamaClient.list.mock.mockImplementationOnce(() =>
         Promise.resolve({
           models: [
-            { name: 'llama2:7b', size: 1000, digest: 'abc', modified_at: '2024-01-01' },
-            { name: 'codellama:13b', size: 2000, digest: 'def', modified_at: '2024-01-02' },
+            {
+              name: 'llama2:7b',
+              size: 1000,
+              digest: 'abc',
+              modified_at: '2024-01-01',
+            },
+            {
+              name: 'codellama:13b',
+              size: 2000,
+              digest: 'def',
+              modified_at: '2024-01-02',
+            },
           ],
         })
       );
 
       // Mock generate calls - first succeeds, second fails
-      mockOllamaClient.generate
-        .mock.mockImplementationOnce(() => Promise.resolve({ response: 'test' }))
-        .mock.mockImplementationOnce(() => Promise.reject(new Error('Model error')));
+      mockOllamaClient.generate.mock
+        .mockImplementationOnce(() => Promise.resolve({ response: 'test' }))
+        .mock.mockImplementationOnce(() =>
+          Promise.reject(new Error('Model error'))
+        );
 
-      const result = await ollamaUtils.getModelHealth(['llama2:7b', 'codellama:13b']);
+      const result = await ollamaUtils.getModelHealth([
+        'llama2:7b',
+        'codellama:13b',
+      ]);
 
       assert.strictEqual(result['llama2:7b'], true);
       assert.strictEqual(result['codellama:13b'], false);
@@ -339,16 +346,21 @@ describe('OllamaUtils', () => {
 
     test('should check health of all installed models', async () => {
       // Mock list call
-      mockOllamaClient.list.mock.mockImplementationOnce(() => 
+      mockOllamaClient.list.mock.mockImplementationOnce(() =>
         Promise.resolve({
           models: [
-            { name: 'llama2:7b', size: 1000, digest: 'abc', modified_at: '2024-01-01' },
+            {
+              name: 'llama2:7b',
+              size: 1000,
+              digest: 'abc',
+              modified_at: '2024-01-01',
+            },
           ],
         })
       );
 
       // Mock successful generate call
-      mockOllamaClient.generate.mock.mockImplementationOnce(() => 
+      mockOllamaClient.generate.mock.mockImplementationOnce(() =>
         Promise.resolve({ response: 'test' })
       );
 
@@ -361,11 +373,21 @@ describe('OllamaUtils', () => {
   describe('ensureRequiredModels', () => {
     test('should skip if all models are installed', async () => {
       // Mock list call
-      mockOllamaClient.list.mock.mockImplementationOnce(() => 
+      mockOllamaClient.list.mock.mockImplementationOnce(() =>
         Promise.resolve({
           models: [
-            { name: 'llama2:7b', size: 1000, digest: 'abc', modified_at: '2024-01-01' },
-            { name: 'codellama:13b', size: 2000, digest: 'def', modified_at: '2024-01-02' },
+            {
+              name: 'llama2:7b',
+              size: 1000,
+              digest: 'abc',
+              modified_at: '2024-01-01',
+            },
+            {
+              name: 'codellama:13b',
+              size: 2000,
+              digest: 'def',
+              modified_at: '2024-01-02',
+            },
           ],
         })
       );
@@ -375,7 +397,10 @@ describe('OllamaUtils', () => {
         progressUpdates.push(progress);
       };
 
-      await ollamaUtils.ensureRequiredModels(['llama2:7b', 'codellama:13b'], onProgress);
+      await ollamaUtils.ensureRequiredModels(
+        ['llama2:7b', 'codellama:13b'],
+        onProgress
+      );
 
       // Should not have called pull since models exist
       assert.strictEqual(mockOllamaClient.pull.mock.callCount(), 0);
@@ -384,10 +409,15 @@ describe('OllamaUtils', () => {
 
     test('should pull missing models', async () => {
       // Mock list call
-      mockOllamaClient.list.mock.mockImplementationOnce(() => 
+      mockOllamaClient.list.mock.mockImplementationOnce(() =>
         Promise.resolve({
           models: [
-            { name: 'llama2:7b', size: 1000, digest: 'abc', modified_at: '2024-01-01' },
+            {
+              name: 'llama2:7b',
+              size: 1000,
+              digest: 'abc',
+              modified_at: '2024-01-01',
+            },
           ],
         })
       );
@@ -404,12 +434,15 @@ describe('OllamaUtils', () => {
         progressUpdates.push(progress);
       };
 
-      await ollamaUtils.ensureRequiredModels(['llama2:7b', 'codellama:13b'], onProgress);
+      await ollamaUtils.ensureRequiredModels(
+        ['llama2:7b', 'codellama:13b'],
+        onProgress
+      );
 
       // Should have called pull for missing model
       assert.strictEqual(mockOllamaClient.pull.mock.callCount(), 1);
       assert.ok(progressUpdates.length > 0);
-      assert.ok(progressUpdates.some(p => p.status.includes('missing')));
+      assert.ok(progressUpdates.some((p) => p.status.includes('missing')));
     });
   });
 
@@ -423,24 +456,29 @@ describe('OllamaUtils', () => {
 
       // Mock installation detection
       mockFsAccess.mock.mockImplementationOnce(() => Promise.resolve());
-      mockExec.mock.mockImplementationOnce(() => 
+      mockExec.mock.mockImplementationOnce(() =>
         Promise.resolve({ stdout: 'ollama version 0.1.0\n', stderr: '' })
       );
       mockExec.mock.mockImplementationOnce(() => Promise.resolve());
 
       // Mock health check
-      mockOllamaClient.list.mock.mockImplementationOnce(() => 
+      mockOllamaClient.list.mock.mockImplementationOnce(() =>
         Promise.resolve({ models: [] })
       );
-      mockExec.mock.mockImplementationOnce(() => 
+      mockExec.mock.mockImplementationOnce(() =>
         Promise.resolve({ stdout: 'ollama version 0.1.0\n', stderr: '' })
       );
 
       // Mock model list
-      mockOllamaClient.list.mock.mockImplementationOnce(() => 
+      mockOllamaClient.list.mock.mockImplementationOnce(() =>
         Promise.resolve({
           models: [
-            { name: 'llama2:7b', size: 1000, digest: 'abc', modified_at: '2024-01-01' },
+            {
+              name: 'llama2:7b',
+              size: 1000,
+              digest: 'abc',
+              modified_at: '2024-01-01',
+            },
           ],
         })
       );
@@ -471,7 +509,7 @@ describe('Convenience Functions', () => {
   });
 
   test('checkOllamaHealth should work as standalone function', async () => {
-    mockOllamaClient.list.mock.mockImplementationOnce(() => 
+    mockOllamaClient.list.mock.mockImplementationOnce(() =>
       Promise.resolve({ models: [] })
     );
 
@@ -481,10 +519,15 @@ describe('Convenience Functions', () => {
   });
 
   test('getInstalledModels should work as standalone function', async () => {
-    mockOllamaClient.list.mock.mockImplementationOnce(() => 
+    mockOllamaClient.list.mock.mockImplementationOnce(() =>
       Promise.resolve({
         models: [
-          { name: 'llama2:7b', size: 1000, digest: 'abc', modified_at: '2024-01-01' },
+          {
+            name: 'llama2:7b',
+            size: 1000,
+            digest: 'abc',
+            modified_at: '2024-01-01',
+          },
         ],
       })
     );
@@ -508,7 +551,9 @@ describe('Convenience Functions', () => {
   });
 
   test('removeModel should work as standalone function', async () => {
-    mockOllamaClient.delete.mock.mockImplementationOnce(() => Promise.resolve());
+    mockOllamaClient.delete.mock.mockImplementationOnce(() =>
+      Promise.resolve()
+    );
 
     await removeModel('llama2:7b');
 
@@ -521,7 +566,7 @@ describe('Convenience Functions', () => {
       configurable: true,
     });
 
-    mockFsAccess.mock.mockImplementation(() => 
+    mockFsAccess.mock.mockImplementation(() =>
       Promise.reject(new Error('ENOENT'))
     );
 
@@ -548,7 +593,7 @@ describe('Error Handling', () => {
   });
 
   test('should provide helpful error messages', async () => {
-    mockOllamaClient.list.mock.mockImplementationOnce(() => 
+    mockOllamaClient.list.mock.mockImplementationOnce(() =>
       Promise.reject(new Error('ECONNREFUSED'))
     );
 
@@ -563,8 +608,8 @@ describe('Error Handling', () => {
     const utils = new OllamaUtils({ timeout: 100 });
 
     // Mock a slow response
-    mockOllamaClient.list.mock.mockImplementationOnce(() => 
-      new Promise((resolve) => setTimeout(resolve, 200))
+    mockOllamaClient.list.mock.mockImplementationOnce(
+      () => new Promise((resolve) => setTimeout(resolve, 200))
     );
 
     const result = await utils.checkOllamaHealth();
@@ -579,7 +624,7 @@ describe('Error Handling', () => {
       configurable: true,
     });
 
-    mockFsAccess.mock.mockImplementation(() => 
+    mockFsAccess.mock.mockImplementation(() =>
       Promise.reject(new Error('ENOENT'))
     );
 
@@ -587,6 +632,6 @@ describe('Error Handling', () => {
 
     assert.strictEqual(result.isInstalled, false);
     assert.ok(result.suggestions);
-    assert.ok(result.suggestions.some(s => s.includes('administrator')));
+    assert.ok(result.suggestions.some((s) => s.includes('administrator')));
   });
 });

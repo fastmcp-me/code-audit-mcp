@@ -3,6 +3,7 @@
 Create a complete TypeScript MCP (Model Context Protocol) server that audits code for completeness and security using local Ollama models. The server should integrate with Claude Code workflows to validate AI-generated code.
 
 ## Project Structure
+
 ```
 code-audit-mcp/
 ├── package.json
@@ -36,6 +37,7 @@ code-audit-mcp/
 ## Requirements
 
 ### Dependencies
+
 - `@modelcontextprotocol/sdk` - MCP SDK
 - `commander` - CLI framework
 - `chalk` - Terminal colors
@@ -44,6 +46,7 @@ code-audit-mcp/
 ### Core Functionality
 
 #### 1. MCP Server (src/server.ts)
+
 - Implement MCP server with tools for code auditing
 - Handle `audit_code` tool requests
 - Support multiple audit types: security, completeness, performance, quality, architecture, testing, documentation, all
@@ -52,6 +55,7 @@ code-audit-mcp/
 - Return structured audit results with actionable suggestions
 
 #### 2. Ollama Integration (src/ollama/client.ts)
+
 - HTTP client for Ollama API (localhost:11434)
 - Model specialization: CodeLlama (general), Deepseek-Coder (performance), Starcoder2 (testing)
 - Intelligent model selection based on audit type and code complexity
@@ -60,6 +64,7 @@ code-audit-mcp/
 - Performance optimization with request batching
 
 #### 3. Audit Prompts (src/ollama/prompts.ts)
+
 - **Security audit**: SQL injection, XSS, hardcoded secrets, unsafe operations, authentication flaws
 - **Completeness audit**: TODOs, empty functions, missing implementations, unhandled edge cases
 - **Performance audit**: Algorithmic efficiency, memory management, database performance, caching opportunities
@@ -70,12 +75,14 @@ code-audit-mcp/
 - Return structured JSON responses with line numbers, severity, and actionable suggestions
 
 #### 4. Base Auditor (src/auditors/base.ts)
+
 - Abstract class with common audit functionality
 - Language detection
 - Result formatting
 - Error handling
 
 #### 5. Specific Auditors
+
 - **Completeness Auditor**: Detect incomplete implementations, TODOs, placeholders, missing error handling
 - **Security Auditor**: Find vulnerabilities using AI analysis with OWASP Top 10 focus
 - **Performance Auditor**: Identify algorithmic inefficiencies, memory leaks, database performance issues
@@ -85,15 +92,24 @@ code-audit-mcp/
 - **Documentation Auditor**: API docs, code comments, compliance requirements
 
 #### 6. Types (src/types.ts)
+
 ```typescript
 interface AuditRequest {
   code: string;
   language: string;
-  auditType: 'security' | 'completeness' | 'performance' | 'quality' | 'architecture' | 'testing' | 'documentation' | 'all';
+  auditType:
+    | 'security'
+    | 'completeness'
+    | 'performance'
+    | 'quality'
+    | 'architecture'
+    | 'testing'
+    | 'documentation'
+    | 'all';
   file?: string;
   context?: {
-    framework?: string;        // React, Express, Django, etc.
-    environment?: string;      // production, development, testing
+    framework?: string; // React, Express, Django, etc.
+    environment?: string; // production, development, testing
     performanceCritical?: boolean;
     teamSize?: number;
     projectType?: 'web' | 'api' | 'cli' | 'library';
@@ -106,12 +122,12 @@ interface AuditIssue {
   column?: number;
   severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
   type: string;
-  category: string;          // security, performance, quality, etc.
+  category: string; // security, performance, quality, etc.
   description: string;
   suggestion?: string;
   codeSnippet?: string;
-  confidence: number;        // 0-1 confidence score from AI
-  fixable: boolean;          // Can be auto-fixed
+  confidence: number; // 0-1 confidence score from AI
+  fixable: boolean; // Can be auto-fixed
 }
 
 interface AuditResult {
@@ -147,12 +163,14 @@ interface ModelConfig {
 ```
 
 #### 7. CLI Setup (cli/setup.ts)
+
 - Check if Ollama is installed and running
 - Download recommended models (codellama:7b, deepseek-coder:6.7b)
 - Test MCP server connectivity
 - Generate example configuration
 
 ### CLI Commands
+
 ```bash
 # Setup and install models
 npm run setup
@@ -168,6 +186,7 @@ npm run build
 ```
 
 ### Package.json Scripts
+
 - `dev`: Start server in development mode with nodemon
 - `build`: Compile TypeScript
 - `start`: Run compiled server
@@ -175,18 +194,22 @@ npm run build
 - `test-audit`: Test audit functionality with sample code
 
 ### Configuration
+
 - Support for custom Ollama endpoint
 - Configurable model preferences
 - Audit rule customization
 - Logging levels
 
 ### Error Handling
+
 - Graceful handling of Ollama connection issues
 - Timeout handling for model responses
 - Proper error formatting for MCP responses
 
 ### Sample Usage
+
 The server should handle requests like:
+
 ```json
 {
   "method": "tools/call",
@@ -209,6 +232,7 @@ The server should handle requests like:
 ```
 
 Expected response with multiple issue types:
+
 ```json
 {
   "issues": [
@@ -257,6 +281,7 @@ Expected response with multiple issue types:
 ```
 
 ## Additional Features
+
 - Support for 10+ programming languages with language-specific rules
 - Configurable severity thresholds and custom rule sets
 - Integration helpers for VS Code, Claude Code, and other editors
@@ -281,6 +306,7 @@ Expected response with multiple issue types:
   - Fallback strategies for model failures
 
 ## Recommended Audit Workflow for Vibe Coding
+
 1. **Immediate**: Security + Completeness (blocks dangerous/broken code)
 2. **Fast feedback**: Performance issues for critical paths
 3. **Background**: Quality + Architecture analysis

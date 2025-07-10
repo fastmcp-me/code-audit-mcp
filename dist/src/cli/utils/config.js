@@ -15,8 +15,8 @@ const DEFAULT_CONFIG = {
         timeout: 30000,
         models: {
             primary: 'codellama:7b',
-            fallback: ['granite-code:8b', 'qwen2.5-coder:7b']
-        }
+            fallback: ['granite-code:8b', 'qwen2.5-coder:7b'],
+        },
     },
     audit: {
         rules: {
@@ -26,12 +26,12 @@ const DEFAULT_CONFIG = {
             documentation: true,
             testing: true,
             architecture: true,
-            completeness: true
+            completeness: true,
         },
         output: {
             format: 'json',
             includeMetrics: true,
-            verbosity: 'normal'
+            verbosity: 'normal',
         },
         filters: {
             excludePatterns: [
@@ -41,7 +41,7 @@ const DEFAULT_CONFIG = {
                 '**/*.min.js',
                 '**/*.d.ts',
                 'coverage/**',
-                '.git/**'
+                '.git/**',
             ],
             includePatterns: [
                 '**/*.ts',
@@ -51,25 +51,25 @@ const DEFAULT_CONFIG = {
                 '**/*.py',
                 '**/*.java',
                 '**/*.go',
-                '**/*.rs'
+                '**/*.rs',
             ],
-            maxFileSize: 1048576 // 1MB
-        }
+            maxFileSize: 1048576, // 1MB
+        },
     },
     server: {
         port: 3000,
         transport: 'stdio',
-        logLevel: 'info'
+        logLevel: 'info',
     },
     updates: {
         checkInterval: 86400000, // 24 hours
         autoUpdate: false,
-        prerelease: false
+        prerelease: false,
     },
     telemetry: {
         enabled: false,
-        anonymousId: ''
-    }
+        anonymousId: '',
+    },
 };
 /**
  * Configuration manager class
@@ -87,7 +87,7 @@ class ConfigManager {
             defaults: DEFAULT_CONFIG,
             configName: 'config',
             configFileMode: 0o600, // Secure file permissions
-            serialize: (value) => JSON.stringify(value, null, 2)
+            serialize: (value) => JSON.stringify(value, null, 2),
             // Note: schema validation disabled for now due to complexity
         });
         this.initializeGlobalConfig();
@@ -109,12 +109,12 @@ class ConfigManager {
                             type: 'object',
                             properties: {
                                 primary: { type: 'string' },
-                                fallback: { type: 'array', items: { type: 'string' } }
+                                fallback: { type: 'array', items: { type: 'string' } },
                             },
-                            required: ['primary', 'fallback']
-                        }
+                            required: ['primary', 'fallback'],
+                        },
                     },
-                    required: ['host', 'timeout', 'models']
+                    required: ['host', 'timeout', 'models'],
                 },
                 audit: {
                     type: 'object',
@@ -128,13 +128,21 @@ class ConfigManager {
                                 documentation: { type: 'boolean' },
                                 testing: { type: 'boolean' },
                                 architecture: { type: 'boolean' },
-                                completeness: { type: 'boolean' }
+                                completeness: { type: 'boolean' },
                             },
-                            required: ['security', 'performance', 'quality', 'documentation', 'testing', 'architecture', 'completeness']
-                        }
-                    }
-                }
-            }
+                            required: [
+                                'security',
+                                'performance',
+                                'quality',
+                                'documentation',
+                                'testing',
+                                'architecture',
+                                'completeness',
+                            ],
+                        },
+                    },
+                },
+            },
         };
     }
     /**
@@ -155,8 +163,9 @@ class ConfigManager {
      * Generate anonymous telemetry ID
      */
     generateAnonymousId() {
-        return 'audit_' + Math.random().toString(36).substring(2, 15) +
-            Math.random().toString(36).substring(2, 15);
+        return ('audit_' +
+            Math.random().toString(36).substring(2, 15) +
+            Math.random().toString(36).substring(2, 15));
     }
     /**
      * Detect project-specific configuration
@@ -166,7 +175,7 @@ class ConfigManager {
         const possiblePaths = [
             join(cwd, '.code-audit.json'),
             join(cwd, '.code-audit', 'config.json'),
-            join(cwd, 'package.json') // Check for config in package.json
+            join(cwd, 'package.json'), // Check for config in package.json
         ];
         for (const configPath of possiblePaths) {
             if (existsSync(configPath)) {
@@ -239,7 +248,7 @@ class ConfigManager {
     getConfigPaths() {
         return {
             global: this.globalConfig.path,
-            ...(this.projectConfigPath && { project: this.projectConfigPath })
+            ...(this.projectConfigPath && { project: this.projectConfigPath }),
         };
     }
     /**
@@ -267,10 +276,12 @@ class ConfigManager {
     mergeConfigs(global, project) {
         const result = { ...global };
         for (const [key, value] of Object.entries(project)) {
-            if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+            if (typeof value === 'object' &&
+                value !== null &&
+                !Array.isArray(value)) {
                 result[key] = {
                     ...result[key],
-                    ...value
+                    ...value,
                 };
             }
             else {
@@ -317,7 +328,7 @@ class ConfigManager {
     exportConfig() {
         return {
             global: this.globalConfig.store,
-            ...(this.projectConfig && { project: this.projectConfig })
+            ...(this.projectConfig && { project: this.projectConfig }),
         };
     }
     /**
@@ -348,7 +359,8 @@ class ConfigManager {
             if (config.ollama?.timeout && config.ollama.timeout < 1000) {
                 errors.push('ollama.timeout must be at least 1000ms');
             }
-            if (config.server?.port && (config.server.port < 1 || config.server.port > 65535)) {
+            if (config.server?.port &&
+                (config.server.port < 1 || config.server.port > 65535)) {
                 errors.push('server.port must be between 1 and 65535');
             }
         }
@@ -357,7 +369,7 @@ class ConfigManager {
         }
         return {
             isValid: errors.length === 0,
-            errors
+            errors,
         };
     }
 }

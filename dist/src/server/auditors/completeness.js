@@ -71,9 +71,9 @@ export class CompletenessAuditor extends BaseAuditor {
             /\/\/.*todo/i,
             /\/\*.*todo.*\*\//i,
             /#.*todo/i,
-            /<!--.*todo.*-->/i
+            /<!--.*todo.*-->/i,
         ];
-        return todoPatterns.some(pattern => pattern.test(line));
+        return todoPatterns.some((pattern) => pattern.test(line));
     }
     /**
      * Check if line contains FIXME comment
@@ -83,9 +83,9 @@ export class CompletenessAuditor extends BaseAuditor {
             /\/\/.*fixme/i,
             /\/\*.*fixme.*\*\//i,
             /#.*fixme/i,
-            /<!--.*fixme.*-->/i
+            /<!--.*fixme.*-->/i,
         ];
-        return fixmePatterns.some(pattern => pattern.test(line));
+        return fixmePatterns.some((pattern) => pattern.test(line));
     }
     /**
      * Check if line contains HACK comment
@@ -95,9 +95,9 @@ export class CompletenessAuditor extends BaseAuditor {
             /\/\/.*hack/i,
             /\/\*.*hack.*\*\//i,
             /#.*hack/i,
-            /<!--.*hack.*-->/i
+            /<!--.*hack.*-->/i,
         ];
-        return hackPatterns.some(pattern => pattern.test(line));
+        return hackPatterns.some((pattern) => pattern.test(line));
     }
     /**
      * Check if line represents an empty function
@@ -110,7 +110,7 @@ export class CompletenessAuditor extends BaseAuditor {
             java: /\w+\s+\w+\s*\([^)]*\)\s*{/,
             csharp: /\w+\s+\w+\s*\([^)]*\)\s*{/,
             go: /func\s+\w+\s*\([^)]*\)\s*\w*\s*{/,
-            rust: /fn\s+\w+\s*\([^)]*\)\s*->\s*\w+\s*{/
+            rust: /fn\s+\w+\s*\([^)]*\)\s*->\s*\w+\s*{/,
         };
         const pattern = functionPatterns[language];
         if (!pattern || !pattern.test(line)) {
@@ -127,7 +127,10 @@ export class CompletenessAuditor extends BaseAuditor {
                 break;
             }
             // Check for actual content (not comments or empty lines)
-            if (currentLine && !currentLine.startsWith('//') && !currentLine.startsWith('/*') && !currentLine.startsWith('#')) {
+            if (currentLine &&
+                !currentLine.startsWith('//') &&
+                !currentLine.startsWith('/*') &&
+                !currentLine.startsWith('#')) {
                 const contentLine = currentLine.replace(/[{}]/g, '').trim();
                 if (contentLine) {
                     hasContent = true;
@@ -176,9 +179,9 @@ export class CompletenessAuditor extends BaseAuditor {
             /panic\("not implemented"\)/i,
             /unimplemented!/i,
             /\/\/ implementation/i,
-            /\/\/ placeholder/i
+            /\/\/ placeholder/i,
         ];
-        return placeholderPatterns.some(pattern => pattern.test(line));
+        return placeholderPatterns.some((pattern) => pattern.test(line));
     }
     /**
      * Check if line is missing error handling
@@ -193,9 +196,9 @@ export class CompletenessAuditor extends BaseAuditor {
             /fs\.readFileSync/,
             /fs\.writeFileSync/,
             /parseInt/,
-            /parseFloat/
+            /parseFloat/,
         ];
-        if (!riskyPatterns.some(pattern => pattern.test(line))) {
+        if (!riskyPatterns.some((pattern) => pattern.test(line))) {
             return false;
         }
         // Check if it's already in a try-catch block
@@ -215,12 +218,12 @@ export class CompletenessAuditor extends BaseAuditor {
         }
         const promisePatterns = [
             /\w+\.\w+\([^)]*\)(?!\s*\.(then|catch|finally))/,
-            /await\s+\w+\([^)]*\)/ // await without try-catch is checked elsewhere
+            /await\s+\w+\([^)]*\)/, // await without try-catch is checked elsewhere
         ];
-        return promisePatterns.some(pattern => pattern.test(line)) &&
+        return (promisePatterns.some((pattern) => pattern.test(line)) &&
             !line.includes('.then') &&
             !line.includes('.catch') &&
-            !line.includes('await');
+            !line.includes('await'));
     }
     /**
      * Create TODO issue
@@ -237,7 +240,7 @@ export class CompletenessAuditor extends BaseAuditor {
             suggestion: 'Implement the missing functionality or remove the TODO comment',
             confidence: 1.0,
             fixable: false,
-            ruleId: 'COMP001'
+            ruleId: 'COMP001',
         };
     }
     /**
@@ -255,7 +258,7 @@ export class CompletenessAuditor extends BaseAuditor {
             suggestion: 'Fix the issue mentioned in the FIXME comment',
             confidence: 1.0,
             fixable: false,
-            ruleId: 'COMP002'
+            ruleId: 'COMP002',
         };
     }
     /**
@@ -273,7 +276,7 @@ export class CompletenessAuditor extends BaseAuditor {
             suggestion: 'Replace the hack with a proper implementation',
             confidence: 1.0,
             fixable: false,
-            ruleId: 'COMP003'
+            ruleId: 'COMP003',
         };
     }
     /**
@@ -291,7 +294,7 @@ export class CompletenessAuditor extends BaseAuditor {
             suggestion: 'Implement the function body or add appropriate error handling',
             confidence: 0.9,
             fixable: false,
-            ruleId: 'COMP004'
+            ruleId: 'COMP004',
         };
     }
     /**
@@ -309,7 +312,7 @@ export class CompletenessAuditor extends BaseAuditor {
             suggestion: 'Add appropriate return statement or change return type to void',
             confidence: 0.8,
             fixable: false,
-            ruleId: 'COMP005'
+            ruleId: 'COMP005',
         };
     }
     /**
@@ -327,7 +330,7 @@ export class CompletenessAuditor extends BaseAuditor {
             suggestion: 'Replace placeholder with actual implementation',
             confidence: 1.0,
             fixable: false,
-            ruleId: 'COMP006'
+            ruleId: 'COMP006',
         };
     }
     /**
@@ -345,7 +348,7 @@ export class CompletenessAuditor extends BaseAuditor {
             suggestion: 'Add appropriate error handling (try-catch block)',
             confidence: 0.7,
             fixable: true,
-            ruleId: 'COMP007'
+            ruleId: 'COMP007',
         };
     }
     /**
@@ -363,7 +366,7 @@ export class CompletenessAuditor extends BaseAuditor {
             suggestion: 'Add .catch() handler or wrap in try-catch if using await',
             confidence: 0.8,
             fixable: true,
-            ruleId: 'COMP008'
+            ruleId: 'COMP008',
         };
     }
     /**
@@ -371,7 +374,7 @@ export class CompletenessAuditor extends BaseAuditor {
      */
     deduplicateIssues(issues) {
         const seen = new Set();
-        return issues.filter(issue => {
+        return issues.filter((issue) => {
             const key = `${issue.location.line}_${issue.type}`;
             if (seen.has(key)) {
                 return false;

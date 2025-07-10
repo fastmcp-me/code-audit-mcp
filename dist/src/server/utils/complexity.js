@@ -39,35 +39,14 @@ export class CyclomaticComplexityCalculator {
             /\bfinally\b/,
             /&&/,
             /\|\|/,
-            /\?/ // Ternary operator
+            /\?/, // Ternary operator
         ];
         const languageSpecific = {
-            python: [
-                ...basePatterns,
-                /\belif\b/,
-                /\bexcept\b/,
-                /\band\b/,
-                /\bor\b/
-            ],
-            javascript: [
-                ...basePatterns,
-                /\.then\b/,
-                /\.catch\b/
-            ],
-            typescript: [
-                ...basePatterns,
-                /\.then\b/,
-                /\.catch\b/
-            ],
-            java: [
-                ...basePatterns,
-                /\bthrows\b/
-            ],
-            go: [
-                ...basePatterns,
-                /\bselect\b/,
-                /\bdefer\b/
-            ]
+            python: [...basePatterns, /\belif\b/, /\bexcept\b/, /\band\b/, /\bor\b/],
+            javascript: [...basePatterns, /\.then\b/, /\.catch\b/],
+            typescript: [...basePatterns, /\.then\b/, /\.catch\b/],
+            java: [...basePatterns, /\bthrows\b/],
+            go: [...basePatterns, /\bselect\b/, /\bdefer\b/],
         };
         return languageSpecific[language] || basePatterns;
     }
@@ -135,7 +114,7 @@ export class CognitiveComplexityCalculator {
             { pattern: /\?.*:/, score: 1 }, // Ternary
             { pattern: /\bgoto\b/, score: 2 }, // Higher penalty for goto
             { pattern: /\bbreak\b/, score: 1 },
-            { pattern: /\bcontinue\b/, score: 1 }
+            { pattern: /\bcontinue\b/, score: 1 },
         ];
         let totalScore = 0;
         for (const { pattern, score } of patterns) {
@@ -223,7 +202,7 @@ export class HalsteadComplexityCalculator {
             difficulty,
             effort,
             timeRequiredToProgram,
-            deliveredBugs
+            deliveredBugs,
         };
     }
     /**
@@ -259,13 +238,36 @@ export class HalsteadComplexityCalculator {
      */
     static getOperatorPatterns(language) {
         return [
-            /\+/g, /-/g, /\*/g, /\//g, /%/g,
-            /==/g, /!=/g, /</g, />/g, /<=/g, />=/g,
-            /&&/g, /\|\|/g, /!/g,
-            /&/g, /\|/g, /\^/g, /~/g, /<</g, />>/g,
-            /=/g, /\+=/g, /-=/g, /\*=/g, /\/=/g,
-            /\+\+/g, /--/g,
-            /\./g, /->/g, /::/g
+            /\+/g,
+            /-/g,
+            /\*/g,
+            /\//g,
+            /%/g,
+            /==/g,
+            /!=/g,
+            /</g,
+            />/g,
+            /<=/g,
+            />=/g,
+            /&&/g,
+            /\|\|/g,
+            /!/g,
+            /&/g,
+            /\|/g,
+            /\^/g,
+            /~/g,
+            /<</g,
+            />>/g,
+            /=/g,
+            /\+=/g,
+            /-=/g,
+            /\*=/g,
+            /\/=/g,
+            /\+\+/g,
+            /--/g,
+            /\./g,
+            /->/g,
+            /::/g,
         ];
     }
     /**
@@ -277,7 +279,7 @@ export class HalsteadComplexityCalculator {
             /\b\d+\b/g, // Numbers
             /"[^"]*"/g, // String literals
             /'[^']*'/g, // Character literals
-            /`[^`]*`/g // Template literals
+            /`[^`]*`/g, // Template literals
         ];
     }
 }
@@ -291,10 +293,13 @@ export class MaintainabilityIndexCalculator {
      * Where HV = Halstead Volume, CC = Cyclomatic Complexity, LOC = Lines of Code
      */
     static calculate(halsteadVolume, cyclomaticComplexity, linesOfCode, commentRatio = 0) {
-        const base = 171 - 5.2 * Math.log(halsteadVolume) - 0.23 * cyclomaticComplexity - 16.2 * Math.log(linesOfCode);
+        const base = 171 -
+            5.2 * Math.log(halsteadVolume) -
+            0.23 * cyclomaticComplexity -
+            16.2 * Math.log(linesOfCode);
         // Add comment bonus
         const commentBonus = 50 * Math.sin(Math.sqrt(2.4 * commentRatio));
-        const mi = Math.max(0, (base + commentBonus) * 100 / 171);
+        const mi = Math.max(0, ((base + commentBonus) * 100) / 171);
         return Math.round(mi);
     }
 }
@@ -307,7 +312,7 @@ export class ComplexityAnalyzer {
      */
     static analyze(code, language) {
         const lines = code.split('\n');
-        const linesOfCode = lines.filter(line => line.trim().length > 0).length;
+        const linesOfCode = lines.filter((line) => line.trim().length > 0).length;
         const cyclomaticComplexity = CyclomaticComplexityCalculator.calculate(code, language);
         const cognitiveComplexity = CognitiveComplexityCalculator.calculate(code, language);
         const nestingDepth = NestingDepthCalculator.calculate(code, language);
@@ -322,7 +327,7 @@ export class ComplexityAnalyzer {
             nestingDepth,
             linesOfCode,
             maintainabilityIndex,
-            halsteadMetrics
+            halsteadMetrics,
         };
     }
     /**
@@ -357,7 +362,7 @@ export class ComplexityAnalyzer {
             rust: [/^\/\//, /^\/\*/, /^\*/],
             php: [/^\/\//, /^\/\*/, /^#/],
             ruby: [/^#/],
-            sql: [/^--/, /^\/\*/]
+            sql: [/^--/, /^\/\*/],
         };
         return patterns[language] || [/^\/\//, /^#/];
     }

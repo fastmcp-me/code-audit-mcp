@@ -3,13 +3,15 @@
 Welcome to your knowledge base!
 
 ## Structure
+
 - `docs/` - Documentation files
-- `notes/` - Meeting notes and quick thoughts  
+- `notes/` - Meeting notes and quick thoughts
 - `references/` - Reference materials and specs
 - `guides/` - How-to guides and tutorials
 - `archive/` - Archived content
 
 ## Usage
+
 ```bash
 # Read a file
 kb read docs/example.md
@@ -36,6 +38,7 @@ kb db status   # Check database status
 ```
 
 ## CLI Commands
+
 - `kb init` - Initialize a new knowledge base
 - `kb read <path>` - Read a file
 - `kb write <path> <content>` - Write content to a file

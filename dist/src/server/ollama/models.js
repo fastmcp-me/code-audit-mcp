@@ -16,8 +16,8 @@ export const DEFAULT_MODELS = {
         performance: {
             speed: 'fast',
             accuracy: 'medium',
-            resourceUsage: 'medium'
-        }
+            resourceUsage: 'medium',
+        },
     },
     'codellama:13b': {
         name: 'codellama:13b',
@@ -30,8 +30,8 @@ export const DEFAULT_MODELS = {
         performance: {
             speed: 'medium',
             accuracy: 'high',
-            resourceUsage: 'medium'
-        }
+            resourceUsage: 'medium',
+        },
     },
     'deepseek-coder:6.7b': {
         name: 'deepseek-coder:6.7b',
@@ -44,8 +44,8 @@ export const DEFAULT_MODELS = {
         performance: {
             speed: 'medium',
             accuracy: 'high',
-            resourceUsage: 'medium'
-        }
+            resourceUsage: 'medium',
+        },
     },
     'deepseek-coder:33b': {
         name: 'deepseek-coder:33b',
@@ -58,8 +58,8 @@ export const DEFAULT_MODELS = {
         performance: {
             speed: 'slow',
             accuracy: 'high',
-            resourceUsage: 'high'
-        }
+            resourceUsage: 'high',
+        },
     },
     'starcoder2:7b': {
         name: 'starcoder2:7b',
@@ -72,8 +72,8 @@ export const DEFAULT_MODELS = {
         performance: {
             speed: 'fast',
             accuracy: 'medium',
-            resourceUsage: 'medium'
-        }
+            resourceUsage: 'medium',
+        },
     },
     'starcoder2:15b': {
         name: 'starcoder2:15b',
@@ -86,8 +86,8 @@ export const DEFAULT_MODELS = {
         performance: {
             speed: 'medium',
             accuracy: 'high',
-            resourceUsage: 'high'
-        }
+            resourceUsage: 'high',
+        },
     },
     'qwen2.5-coder:7b': {
         name: 'qwen2.5-coder:7b',
@@ -100,8 +100,8 @@ export const DEFAULT_MODELS = {
         performance: {
             speed: 'fast',
             accuracy: 'medium',
-            resourceUsage: 'medium'
-        }
+            resourceUsage: 'medium',
+        },
     },
     'llama3.1:8b': {
         name: 'llama3.1:8b',
@@ -114,8 +114,8 @@ export const DEFAULT_MODELS = {
         performance: {
             speed: 'fast',
             accuracy: 'medium',
-            resourceUsage: 'medium'
-        }
+            resourceUsage: 'medium',
+        },
     },
     'granite-code:8b': {
         name: 'granite-code:8b',
@@ -128,9 +128,9 @@ export const DEFAULT_MODELS = {
         performance: {
             speed: 'fast',
             accuracy: 'medium',
-            resourceUsage: 'medium'
-        }
-    }
+            resourceUsage: 'medium',
+        },
+    },
 };
 /**
  * Priority order for models by audit type (best to worst)
@@ -141,21 +141,21 @@ export const MODEL_PRIORITY = {
         'codellama:13b',
         'codellama:7b',
         'deepseek-coder:6.7b',
-        'qwen2.5-coder:7b'
+        'qwen2.5-coder:7b',
     ],
     completeness: [
         'codellama:13b',
         'qwen2.5-coder:7b',
         'starcoder2:7b',
         'codellama:7b',
-        'granite-code:8b'
+        'granite-code:8b',
     ],
     performance: [
         'deepseek-coder:33b',
         'deepseek-coder:6.7b',
         'codellama:13b',
         'granite-code:8b',
-        'codellama:7b'
+        'codellama:7b',
     ],
     quality: [
         'deepseek-coder:33b',
@@ -163,28 +163,28 @@ export const MODEL_PRIORITY = {
         'codellama:13b',
         'qwen2.5-coder:7b',
         'starcoder2:15b',
-        'granite-code:8b'
+        'granite-code:8b',
     ],
     architecture: [
         'deepseek-coder:33b',
         'starcoder2:15b',
         'codellama:13b',
         'deepseek-coder:6.7b',
-        'llama3.1:8b'
+        'llama3.1:8b',
     ],
     testing: [
         'starcoder2:15b',
         'starcoder2:7b',
         'deepseek-coder:6.7b',
         'codellama:13b',
-        'qwen2.5-coder:7b'
+        'qwen2.5-coder:7b',
     ],
     documentation: [
         'deepseek-coder:33b',
         'llama3.1:8b',
         'qwen2.5-coder:7b',
         'starcoder2:15b',
-        'codellama:13b'
+        'codellama:13b',
     ],
     all: [
         'deepseek-coder:33b',
@@ -192,8 +192,8 @@ export const MODEL_PRIORITY = {
         'deepseek-coder:6.7b',
         'starcoder2:15b',
         'granite-code:8b',
-        'codellama:7b'
-    ]
+        'codellama:7b',
+    ],
 };
 /**
  * Fast mode models (prioritize speed for rapid feedback)
@@ -203,7 +203,7 @@ export const FAST_MODE_MODELS = [
     'granite-code:8b',
     'starcoder2:7b',
     'qwen2.5-coder:7b',
-    'deepseek-coder:6.7b'
+    'deepseek-coder:6.7b',
 ];
 /**
  * Thorough mode models (prioritize accuracy over speed)
@@ -212,7 +212,7 @@ export const THOROUGH_MODE_MODELS = [
     'deepseek-coder:33b',
     'codellama:13b',
     'starcoder2:15b',
-    'deepseek-coder:6.7b'
+    'deepseek-coder:6.7b',
 ];
 /**
  * Language-specific model preferences
@@ -238,7 +238,7 @@ export const LANGUAGE_MODEL_PREFERENCES = {
     shell: ['codellama:13b', 'granite-code:8b', 'deepseek-coder:6.7b'],
     yaml: ['qwen2.5-coder:7b', 'codellama:7b', 'granite-code:8b'],
     json: ['qwen2.5-coder:7b', 'codellama:7b', 'deepseek-coder:6.7b'],
-    dockerfile: ['granite-code:8b', 'codellama:13b', 'deepseek-coder:6.7b']
+    dockerfile: ['granite-code:8b', 'codellama:13b', 'deepseek-coder:6.7b'],
 };
 /**
  * Default model selection strategy
@@ -291,7 +291,7 @@ export class DefaultModelSelectionStrategy {
 export class PerformanceModelSelectionStrategy {
     selectModel(auditType, language, priority, availableModels) {
         // Always prefer fastest models for performance optimization
-        const fastModels = FAST_MODE_MODELS.filter(model => availableModels.includes(model));
+        const fastModels = FAST_MODE_MODELS.filter((model) => availableModels.includes(model));
         if (fastModels.length > 0) {
             // Still consider audit type for fast models
             const auditTypeModels = MODEL_PRIORITY[auditType] || [];
@@ -303,7 +303,7 @@ export class PerformanceModelSelectionStrategy {
             return fastModels[0];
         }
         // Fallback to default strategy
-        return new DefaultModelSelectionStrategy().selectModel(auditType, language, priority, availableModels) || null;
+        return (new DefaultModelSelectionStrategy().selectModel(auditType, language, priority, availableModels) || null);
     }
 }
 /**
@@ -312,7 +312,7 @@ export class PerformanceModelSelectionStrategy {
 export class QualityModelSelectionStrategy {
     selectModel(auditType, language, priority, availableModels) {
         // Always prefer highest quality models regardless of speed
-        const qualityModels = THOROUGH_MODE_MODELS.filter(model => availableModels.includes(model));
+        const qualityModels = THOROUGH_MODE_MODELS.filter((model) => availableModels.includes(model));
         if (qualityModels.length > 0) {
             const auditTypeModels = MODEL_PRIORITY[auditType] || [];
             for (const model of auditTypeModels) {
@@ -323,7 +323,7 @@ export class QualityModelSelectionStrategy {
             return qualityModels[0];
         }
         // Fallback to default strategy
-        return new DefaultModelSelectionStrategy().selectModel(auditType, language, priority, availableModels) || null;
+        return (new DefaultModelSelectionStrategy().selectModel(auditType, language, priority, availableModels) || null);
     }
 }
 /**
@@ -344,7 +344,7 @@ export class ModelManager {
      * Select the best model for given criteria
      */
     selectModel(auditType, language, priority, availableModels) {
-        return this.strategy.selectModel(auditType, language, priority, availableModels) || null;
+        return (this.strategy.selectModel(auditType, language, priority, availableModels) || null);
     }
     /**
      * Get configuration for a specific model
@@ -367,8 +367,12 @@ export class ModelManager {
                 specialization: [],
                 maxTokens: 4096,
                 temperature: 0.1,
-                performance: { speed: 'medium', accuracy: 'medium', resourceUsage: 'medium' },
-                ...config
+                performance: {
+                    speed: 'medium',
+                    accuracy: 'medium',
+                    resourceUsage: 'medium',
+                },
+                ...config,
             });
         }
     }
@@ -382,7 +386,7 @@ export class ModelManager {
      * Get models specialized for specific audit type
      */
     getModelsForAuditType(auditType) {
-        return this.getAllModels().filter(config => config.specialization.includes(auditType));
+        return this.getAllModels().filter((config) => config.specialization.includes(auditType));
     }
     /**
      * Get recommended models to download
@@ -392,7 +396,7 @@ export class ModelManager {
             'codellama:7b', // Fast, good general purpose
             'deepseek-coder:6.7b', // Good performance analysis
             'granite-code:8b', // Good security analysis
-            'starcoder2:7b' // Good testing analysis
+            'starcoder2:7b', // Good testing analysis
         ];
     }
     /**

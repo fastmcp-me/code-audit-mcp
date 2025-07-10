@@ -5,7 +5,7 @@ import chalk from 'chalk';
 import ora from 'ora';
 import boxen from 'boxen';
 import inquirer from 'inquirer';
-import { getConfig, getConfigValue, setConfigValue, resetConfig, getConfigManager } from '../utils/config.js';
+import { getConfig, getConfigValue, setConfigValue, resetConfig, getConfigManager, } from '../utils/config.js';
 /**
  * Config command handler
  */
@@ -69,7 +69,7 @@ async function showConfiguration() {
         console.log(`${statusIcon} Status: ${statusColor(validation.isValid ? 'Valid' : 'Invalid')}`);
         if (!validation.isValid) {
             console.log(chalk.red('  Errors:'));
-            validation.errors.forEach(error => {
+            validation.errors.forEach((error) => {
                 console.log(chalk.red(`    • ${error}`));
             });
         }
@@ -133,8 +133,8 @@ async function resetConfiguration() {
             type: 'confirm',
             name: 'confirmed',
             message: 'Are you sure you want to reset the configuration?',
-            default: false
-        }
+            default: false,
+        },
     ]);
     if (!confirmed) {
         console.log(chalk.gray('Reset cancelled.'));
@@ -209,7 +209,7 @@ function parseConfigValue(value) {
         const arrayContent = trimmed.slice(1, -1);
         if (arrayContent.trim() === '')
             return [];
-        return arrayContent.split(',').map(item => item.trim());
+        return arrayContent.split(',').map((item) => item.trim());
     }
     // Objects (simple JSON)
     if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
@@ -264,9 +264,9 @@ async function interactiveConfig() {
                 { name: 'Server settings', value: 'server' },
                 { name: 'Reset to defaults', value: 'reset' },
                 { name: 'Export configuration', value: 'export' },
-                { name: 'Cancel', value: 'cancel' }
-            ]
-        }
+                { name: 'Cancel', value: 'cancel' },
+            ],
+        },
     ]);
     switch (action) {
         case 'show':
@@ -316,22 +316,22 @@ async function configureOllama() {
                 catch {
                     return 'Invalid URL format';
                 }
-            }
+            },
         },
         {
             type: 'number',
             name: 'timeout',
             message: 'Timeout (milliseconds):',
             default: config.ollama.timeout,
-            validate: (input) => (input && input >= 1000) || 'Timeout must be at least 1000ms'
+            validate: (input) => (input && input >= 1000) || 'Timeout must be at least 1000ms',
         },
         {
             type: 'input',
             name: 'primary',
             message: 'Primary model:',
             default: config.ollama.models.primary,
-            validate: (input) => input.trim() ? true : 'Primary model is required'
-        }
+            validate: (input) => (input.trim() ? true : 'Primary model is required'),
+        },
     ]);
     const spinner = ora('Updating Ollama configuration...').start();
     try {
@@ -360,15 +360,43 @@ async function configureAudit() {
             name: 'rules',
             message: 'Select audit rules to enable:',
             choices: [
-                { name: 'Security Analysis', value: 'security', checked: config.audit.rules.security },
-                { name: 'Performance Analysis', value: 'performance', checked: config.audit.rules.performance },
-                { name: 'Code Quality', value: 'quality', checked: config.audit.rules.quality },
-                { name: 'Documentation Check', value: 'documentation', checked: config.audit.rules.documentation },
-                { name: 'Test Coverage', value: 'testing', checked: config.audit.rules.testing },
-                { name: 'Architecture Review', value: 'architecture', checked: config.audit.rules.architecture },
-                { name: 'Completeness Check', value: 'completeness', checked: config.audit.rules.completeness }
-            ]
-        }
+                {
+                    name: 'Security Analysis',
+                    value: 'security',
+                    checked: config.audit.rules.security,
+                },
+                {
+                    name: 'Performance Analysis',
+                    value: 'performance',
+                    checked: config.audit.rules.performance,
+                },
+                {
+                    name: 'Code Quality',
+                    value: 'quality',
+                    checked: config.audit.rules.quality,
+                },
+                {
+                    name: 'Documentation Check',
+                    value: 'documentation',
+                    checked: config.audit.rules.documentation,
+                },
+                {
+                    name: 'Test Coverage',
+                    value: 'testing',
+                    checked: config.audit.rules.testing,
+                },
+                {
+                    name: 'Architecture Review',
+                    value: 'architecture',
+                    checked: config.audit.rules.architecture,
+                },
+                {
+                    name: 'Completeness Check',
+                    value: 'completeness',
+                    checked: config.audit.rules.completeness,
+                },
+            ],
+        },
     ]);
     const outputSettings = await inquirer.prompt([
         {
@@ -376,26 +404,34 @@ async function configureAudit() {
             name: 'format',
             message: 'Output format:',
             choices: ['json', 'markdown', 'html'],
-            default: config.audit.output.format
+            default: config.audit.output.format,
         },
         {
             type: 'list',
             name: 'verbosity',
             message: 'Verbosity level:',
             choices: ['minimal', 'normal', 'detailed'],
-            default: config.audit.output.verbosity
+            default: config.audit.output.verbosity,
         },
         {
             type: 'confirm',
             name: 'includeMetrics',
             message: 'Include metrics in output:',
-            default: config.audit.output.includeMetrics
-        }
+            default: config.audit.output.includeMetrics,
+        },
     ]);
     const spinner = ora('Updating audit configuration...').start();
     try {
         // Update audit rules
-        for (const rule of ['security', 'performance', 'quality', 'documentation', 'testing', 'architecture', 'completeness']) {
+        for (const rule of [
+            'security',
+            'performance',
+            'quality',
+            'documentation',
+            'testing',
+            'architecture',
+            'completeness',
+        ]) {
             await setConfigValue(`audit.rules.${rule}`, auditRules.rules.includes(rule));
         }
         // Update output settings
@@ -425,9 +461,9 @@ async function configureServer() {
             message: 'Transport method:',
             choices: [
                 { name: 'Standard I/O (recommended)', value: 'stdio' },
-                { name: 'HTTP', value: 'http' }
+                { name: 'HTTP', value: 'http' },
             ],
-            default: config.server.transport
+            default: config.server.transport,
         },
         {
             type: 'number',
@@ -435,15 +471,16 @@ async function configureServer() {
             message: 'HTTP port (if using HTTP transport):',
             default: config.server.port,
             when: (answers) => answers.transport === 'http',
-            validate: (input) => (input && input >= 1 && input <= 65535) || 'Port must be between 1 and 65535'
+            validate: (input) => (input && input >= 1 && input <= 65535) ||
+                'Port must be between 1 and 65535',
         },
         {
             type: 'list',
             name: 'logLevel',
             message: 'Log level:',
             choices: ['error', 'warn', 'info', 'debug'],
-            default: config.server.logLevel
-        }
+            default: config.server.logLevel,
+        },
     ]);
     const spinner = ora('Updating server configuration...').start();
     try {
@@ -476,7 +513,7 @@ async function exportConfiguration() {
             padding: 1,
             borderColor: 'cyan',
             title: 'Configuration Data',
-            titleAlignment: 'center'
+            titleAlignment: 'center',
         }));
         console.log();
         console.log(chalk.gray('Copy this data to backup or transfer your configuration.'));

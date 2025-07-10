@@ -27,21 +27,28 @@ import { DocumentationAuditor } from './documentation.js';
  * Constructor interface for auditor classes
  */
 interface AuditorConstructor {
-  new (config: AuditorConfig, ollamaClient: OllamaClient, modelManager: ModelManager): BaseAuditor;
+  new (
+    config: AuditorConfig,
+    ollamaClient: OllamaClient,
+    modelManager: ModelManager
+  ): BaseAuditor;
 }
 
 /**
  * Factory for creating auditor instances
  */
 export class AuditorFactory {
-  private static auditorClasses: Record<Exclude<AuditType, 'all'>, AuditorConstructor> = {
+  private static auditorClasses: Record<
+    Exclude<AuditType, 'all'>,
+    AuditorConstructor
+  > = {
     security: SecurityAuditor,
     completeness: CompletenessAuditor,
     performance: PerformanceAuditor,
     quality: QualityAuditor,
     architecture: ArchitectureAuditor,
     testing: TestingAuditor,
-    documentation: DocumentationAuditor
+    documentation: DocumentationAuditor,
   };
 
   static createAuditor(
@@ -51,10 +58,13 @@ export class AuditorFactory {
     modelManager: ModelManager
   ): BaseAuditor {
     if (auditType === 'all') {
-      throw new Error('Cannot create auditor for type "all". Use specific audit types.');
+      throw new Error(
+        'Cannot create auditor for type "all". Use specific audit types.'
+      );
     }
 
-    const AuditorClass = this.auditorClasses[auditType as Exclude<AuditType, 'all'>];
+    const AuditorClass =
+      this.auditorClasses[auditType as Exclude<AuditType, 'all'>];
     if (!AuditorClass) {
       throw new Error(`Unknown audit type: ${auditType}`);
     }
@@ -71,18 +81,23 @@ export class AuditorFactory {
 
     const auditTypes: AuditType[] = [
       'security',
-      'completeness', 
+      'completeness',
       'performance',
       'quality',
       'architecture',
       'testing',
-      'documentation'
+      'documentation',
     ];
 
     for (const auditType of auditTypes) {
       const config = configs[auditType];
       if (config && config.enabled) {
-        auditors[auditType] = this.createAuditor(auditType, config, ollamaClient, modelManager);
+        auditors[auditType] = this.createAuditor(
+          auditType,
+          config,
+          ollamaClient,
+          modelManager
+        );
       }
     }
 
@@ -90,6 +105,8 @@ export class AuditorFactory {
   }
 
   static getSupportedAuditTypes(): AuditType[] {
-    return Object.keys(this.auditorClasses).filter(type => type !== 'all') as AuditType[];
+    return Object.keys(this.auditorClasses).filter(
+      (type) => type !== 'all'
+    ) as AuditType[];
   }
 }

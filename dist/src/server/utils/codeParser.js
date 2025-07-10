@@ -13,7 +13,7 @@ export class LanguageDetector {
             /var\s+\w+\s*=/,
             /=>\s*{?/,
             /require\s*\(/,
-            /module\.exports/
+            /module\.exports/,
         ],
         typescript: [
             /interface\s+\w+/,
@@ -22,7 +22,7 @@ export class LanguageDetector {
             /:\s*\w+\s*[=;]/,
             /import.*from/,
             /export.*{/,
-            /as\s+\w+/
+            /as\s+\w+/,
         ],
         python: [
             /def\s+\w+\s*\(/,
@@ -30,7 +30,7 @@ export class LanguageDetector {
             /import\s+\w+/,
             /from\s+\w+\s+import/,
             /if\s+__name__\s*==\s*['""]__main__['""]:/,
-            /#\s*.+$/m
+            /#\s*.+$/m,
         ],
         java: [
             /public\s+class\s+\w+/,
@@ -38,7 +38,7 @@ export class LanguageDetector {
             /public\s+static\s+void\s+main/,
             /@\w+/,
             /import\s+\w+\.\w+/,
-            /package\s+\w+/
+            /package\s+\w+/,
         ],
         csharp: [
             /using\s+\w+/,
@@ -46,7 +46,7 @@ export class LanguageDetector {
             /public\s+class\s+\w+/,
             /\[.+\]/,
             /Console\.WriteLine/,
-            /var\s+\w+\s*=/
+            /var\s+\w+\s*=/,
         ],
         go: [
             /package\s+\w+/,
@@ -54,7 +54,7 @@ export class LanguageDetector {
             /func\s+\w+/,
             /type\s+\w+\s+struct/,
             /fmt\.Print/,
-            /go\s+\w+/
+            /go\s+\w+/,
         ],
         rust: [
             /fn\s+\w+/,
@@ -62,7 +62,7 @@ export class LanguageDetector {
             /struct\s+\w+/,
             /impl\s+\w+/,
             /use\s+\w+::/,
-            /println!/
+            /println!/,
         ],
         php: [
             /<\?php/,
@@ -70,7 +70,7 @@ export class LanguageDetector {
             /function\s+\w+/,
             /class\s+\w+/,
             /echo\s+/,
-            /include\s+/
+            /include\s+/,
         ],
         ruby: [
             /def\s+\w+/,
@@ -78,7 +78,7 @@ export class LanguageDetector {
             /module\s+\w+/,
             /require\s+/,
             /puts\s+/,
-            /@\w+/
+            /@\w+/,
         ],
         swift: [
             /func\s+\w+/,
@@ -86,7 +86,7 @@ export class LanguageDetector {
             /struct\s+\w+/,
             /var\s+\w+:/,
             /let\s+\w+:/,
-            /import\s+\w+/
+            /import\s+\w+/,
         ],
         kotlin: [
             /fun\s+\w+/,
@@ -94,23 +94,16 @@ export class LanguageDetector {
             /val\s+\w+/,
             /var\s+\w+/,
             /import\s+\w+/,
-            /package\s+\w+/
+            /package\s+\w+/,
         ],
-        html: [
-            /<html/i,
-            /<head/i,
-            /<body/i,
-            /<div/i,
-            /<script/i,
-            /<style/i
-        ],
+        html: [/<html/i, /<head/i, /<body/i, /<div/i, /<script/i, /<style/i],
         css: [
             /\.\w+\s*{/,
             /#\w+\s*{/,
             /@media/,
             /@import/,
             /:\s*\w+;/,
-            /font-family:/
+            /font-family:/,
         ],
         sql: [
             /SELECT\s+/i,
@@ -118,28 +111,18 @@ export class LanguageDetector {
             /WHERE\s+/i,
             /INSERT\s+INTO/i,
             /UPDATE\s+/i,
-            /DELETE\s+FROM/i
+            /DELETE\s+FROM/i,
         ],
-        yaml: [
-            /^\s*\w+:\s*$/m,
-            /^\s*-\s+/m,
-            /^\s*\|\s*$/m,
-            /^\s*>\s*$/m
-        ],
-        json: [
-            /^\s*{/,
-            /^\s*\[/,
-            /"\w+":\s*/,
-            /"\w+"\s*,/
-        ],
+        yaml: [/^\s*\w+:\s*$/m, /^\s*-\s+/m, /^\s*\|\s*$/m, /^\s*>\s*$/m],
+        json: [/^\s*{/, /^\s*\[/, /"\w+":\s*/, /"\w+"\s*,/],
         dockerfile: [
             /^FROM\s+/m,
             /^RUN\s+/m,
             /^COPY\s+/m,
             /^ADD\s+/m,
             /^WORKDIR\s+/m,
-            /^EXPOSE\s+/m
-        ]
+            /^EXPOSE\s+/m,
+        ],
     };
     /**
      * Detect programming language from code content
@@ -196,7 +179,7 @@ export class LanguageDetector {
             yaml: 'yaml',
             yml: 'yaml',
             json: 'json',
-            dockerfile: 'dockerfile'
+            dockerfile: 'dockerfile',
         };
         return ext ? extensionMap[ext] || null : null;
     }
@@ -224,7 +207,7 @@ export class CodeParser {
             exports: this.extractExports(code, language),
             comments: this.extractComments(code, language),
             lineCount: lines.length,
-            complexity: this.calculateComplexity(code, language)
+            complexity: this.calculateComplexity(code, language),
         };
     }
     /**
@@ -313,7 +296,7 @@ export class CodeParser {
                     comments.push({
                         line: i + 1,
                         type: 'single',
-                        content: match[0]
+                        content: match[0],
                     });
                 }
             }
@@ -323,11 +306,13 @@ export class CodeParser {
             const matches = code.match(new RegExp(pattern.source, 'gms'));
             if (matches) {
                 for (const match of matches) {
-                    const lineNum = code.substring(0, code.indexOf(match)).split('\n').length;
+                    const lineNum = code
+                        .substring(0, code.indexOf(match))
+                        .split('\n').length;
                     comments.push({
                         line: lineNum,
                         type: 'multi',
-                        content: match
+                        content: match,
                     });
                 }
             }
@@ -357,25 +342,17 @@ export class CodeParser {
                 /function\s+(\w+)\s*\([^)]*\)/,
                 /(\w+)\s*:\s*function\s*\([^)]*\)/,
                 /(\w+)\s*=>\s*/,
-                /(\w+)\s*=\s*function\s*\([^)]*\)/
+                /(\w+)\s*=\s*function\s*\([^)]*\)/,
             ],
             typescript: [
                 /function\s+(\w+)\s*\([^)]*\)/,
                 /(\w+)\s*\([^)]*\)\s*:\s*\w+/,
-                /(\w+)\s*=>\s*/
+                /(\w+)\s*=>\s*/,
             ],
-            python: [
-                /def\s+(\w+)\s*\([^)]*\)/
-            ],
-            java: [
-                /\w+\s+(\w+)\s*\([^)]*\)\s*{/
-            ],
-            go: [
-                /func\s+(\w+)\s*\([^)]*\)/
-            ],
-            rust: [
-                /fn\s+(\w+)\s*\([^)]*\)/
-            ]
+            python: [/def\s+(\w+)\s*\([^)]*\)/],
+            java: [/\w+\s+(\w+)\s*\([^)]*\)\s*{/],
+            go: [/func\s+(\w+)\s*\([^)]*\)/],
+            rust: [/fn\s+(\w+)\s*\([^)]*\)/],
         };
         return patterns[language] || [];
     }
@@ -384,32 +361,13 @@ export class CodeParser {
      */
     static getClassPatterns(language) {
         const patterns = {
-            javascript: [
-                /class\s+(\w+)/
-            ],
-            typescript: [
-                /class\s+(\w+)/,
-                /interface\s+(\w+)/
-            ],
-            python: [
-                /class\s+(\w+)/
-            ],
-            java: [
-                /class\s+(\w+)/,
-                /interface\s+(\w+)/
-            ],
-            csharp: [
-                /class\s+(\w+)/,
-                /interface\s+(\w+)/
-            ],
-            go: [
-                /type\s+(\w+)\s+struct/
-            ],
-            rust: [
-                /struct\s+(\w+)/,
-                /enum\s+(\w+)/,
-                /trait\s+(\w+)/
-            ]
+            javascript: [/class\s+(\w+)/],
+            typescript: [/class\s+(\w+)/, /interface\s+(\w+)/],
+            python: [/class\s+(\w+)/],
+            java: [/class\s+(\w+)/, /interface\s+(\w+)/],
+            csharp: [/class\s+(\w+)/, /interface\s+(\w+)/],
+            go: [/type\s+(\w+)\s+struct/],
+            rust: [/struct\s+(\w+)/, /enum\s+(\w+)/, /trait\s+(\w+)/],
         };
         return patterns[language] || [];
     }
@@ -418,23 +376,11 @@ export class CodeParser {
      */
     static getImportPatterns(language) {
         const patterns = {
-            javascript: [
-                /import.*from.*/,
-                /require\s*\(.*/
-            ],
-            typescript: [
-                /import.*from.*/
-            ],
-            python: [
-                /import\s+.*/,
-                /from\s+.*\s+import.*/
-            ],
-            java: [
-                /import\s+.*;/
-            ],
-            go: [
-                /import\s+.*/
-            ]
+            javascript: [/import.*from.*/, /require\s*\(.*/],
+            typescript: [/import.*from.*/],
+            python: [/import\s+.*/, /from\s+.*\s+import.*/],
+            java: [/import\s+.*;/],
+            go: [/import\s+.*/],
         };
         return patterns[language] || [];
     }
@@ -443,13 +389,8 @@ export class CodeParser {
      */
     static getExportPatterns(language) {
         const patterns = {
-            javascript: [
-                /export\s+.*/,
-                /module\.exports\s*=.*/
-            ],
-            typescript: [
-                /export\s+.*/
-            ]
+            javascript: [/export\s+.*/, /module\.exports\s*=.*/],
+            typescript: [/export\s+.*/],
         };
         return patterns[language] || [];
     }
@@ -460,20 +401,20 @@ export class CodeParser {
         const patterns = {
             javascript: {
                 single: [/\/\/.*/],
-                multi: [/\/\*[\s\S]*?\*\//]
+                multi: [/\/\*[\s\S]*?\*\//],
             },
             typescript: {
                 single: [/\/\/.*/],
-                multi: [/\/\*[\s\S]*?\*\//]
+                multi: [/\/\*[\s\S]*?\*\//],
             },
             python: {
                 single: [/#.*/],
-                multi: [/"""[\s\S]*?"""/]
+                multi: [/"""[\s\S]*?"""/],
             },
             java: {
                 single: [/\/\/.*/],
-                multi: [/\/\*[\s\S]*?\*\//]
-            }
+                multi: [/\/\*[\s\S]*?\*\//],
+            },
         };
         return patterns[language] || { single: [], multi: [] };
     }
@@ -494,7 +435,7 @@ export class CodeParser {
             /\bor\b/,
             /&&/,
             /\|\|/,
-            /\?.*:/
+            /\?.*:/,
         ];
     }
     /**
@@ -510,7 +451,7 @@ export class CodeParser {
             parameters: this.extractParameters(line),
             complexity: 1,
             isAsync: line.includes('async'),
-            isExported: line.includes('export')
+            isExported: line.includes('export'),
         };
     }
     /**
@@ -536,8 +477,8 @@ export class CodeParser {
         }
         return paramMatch[1]
             .split(',')
-            .map(param => param.trim())
-            .filter(param => param.length > 0);
+            .map((param) => param.trim())
+            .filter((param) => param.length > 0);
     }
 }
 //# sourceMappingURL=codeParser.js.map

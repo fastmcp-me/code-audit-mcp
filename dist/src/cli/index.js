@@ -26,7 +26,7 @@ function getPackageInfo() {
         const packageJson = JSON.parse(readFileSync(packagePath, 'utf8'));
         return packageJson;
     }
-    catch (error) {
+    catch {
         return { name: 'code-audit-mcp', version: '1.0.0' };
     }
 }
@@ -36,7 +36,7 @@ function getPackageInfo() {
 function checkForUpdates(pkg) {
     const notifier = updateNotifier({
         pkg,
-        updateCheckInterval: 1000 * 60 * 60 * 24 // 24 hours
+        updateCheckInterval: 1000 * 60 * 60 * 24, // 24 hours
     });
     if (notifier.update) {
         console.log(chalk.yellow(`
@@ -92,7 +92,7 @@ export async function cli() {
     program
         .command('update')
         .description('Check for and install updates')
-        .option('--check', 'Only check for updates, don\'t install')
+        .option('--check', "Only check for updates, don't install")
         .option('--force', 'Force update even if no new version')
         .action(updateCommand);
     program
@@ -135,26 +135,42 @@ For more information, visit: https://github.com/warrengates/code-audit-mcp
         await program.parseAsync(process.argv);
     }
     catch (error) {
-        if (error.code === 'commander.version') {
-            // Version flag was used, exit normally
-            process.exit(0);
+        // Type guard for Commander.js errors
+        const isCommanderError = (err) => {
+            return (typeof err === 'object' &&
+                err !== null &&
+                'code' in err &&
+                'message' in err);
+        };
+        // Type guard for Error objects
+        const isError = (err) => {
+            return err instanceof Error;
+        };
+        if (isCommanderError(error)) {
+            if (error.code === 'commander.version') {
+                // Version flag was used, exit normally
+                process.exit(0);
+            }
+            else if (error.code === 'commander.help') {
+                // Help flag was used, exit normally
+                process.exit(0);
+            }
+            else if (error.code === 'commander.unknownCommand') {
+                console.error(chalk.red(`Unknown command: ${error.message}`));
+                console.log(chalk.gray('Run "code-audit --help" for available commands.'));
+                process.exit(1);
+            }
         }
-        else if (error.code === 'commander.help') {
-            // Help flag was used, exit normally
-            process.exit(0);
-        }
-        else if (error.code === 'commander.unknownCommand') {
-            console.error(chalk.red(`Unknown command: ${error.message}`));
-            console.log(chalk.gray('Run "code-audit --help" for available commands.'));
-            process.exit(1);
-        }
-        else {
+        if (isError(error)) {
             console.error(chalk.red('An error occurred:'), error.message);
             if (program.opts().verbose) {
                 console.error(error.stack);
             }
-            process.exit(1);
         }
+        else {
+            console.error(chalk.red('An unknown error occurred:'), String(error));
+        }
+        process.exit(1);
     }
 }
 // Handle unhandled promise rejections

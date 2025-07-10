@@ -37,13 +37,15 @@ export class Logger {
    */
   static getInstance(config?: LoggerConfig): Logger {
     if (!Logger.instance) {
-      Logger.instance = new Logger(config || {
-        level: 'info',
-        enableMetrics: false,
-        enableTracing: false,
-        enableTimestamps: true,
-        enableColors: false
-      });
+      Logger.instance = new Logger(
+        config || {
+          level: 'info',
+          enableMetrics: false,
+          enableTracing: false,
+          enableTimestamps: true,
+          enableColors: false,
+        }
+      );
     }
     return Logger.instance;
   }
@@ -58,57 +60,96 @@ export class Logger {
   /**
    * Log debug message
    */
-  debug(message: string, metadata?: Record<string, unknown>, requestId?: string): void {
+  debug(
+    message: string,
+    metadata?: Record<string, unknown>,
+    requestId?: string
+  ): void {
     this.log('debug', message, metadata, requestId);
   }
 
   /**
    * Log info message
    */
-  info(message: string, metadata?: Record<string, unknown>, requestId?: string): void {
+  info(
+    message: string,
+    metadata?: Record<string, unknown>,
+    requestId?: string
+  ): void {
     this.log('info', message, metadata, requestId);
   }
 
   /**
    * Log warning message
    */
-  warn(message: string, metadata?: Record<string, unknown>, requestId?: string): void {
+  warn(
+    message: string,
+    metadata?: Record<string, unknown>,
+    requestId?: string
+  ): void {
     this.log('warn', message, metadata, requestId);
   }
 
   /**
    * Log error message
    */
-  error(message: string, metadata?: Record<string, unknown>, requestId?: string): void {
+  error(
+    message: string,
+    metadata?: Record<string, unknown>,
+    requestId?: string
+  ): void {
     this.log('error', message, metadata, requestId);
   }
 
   /**
    * Log audit metrics
    */
-  metrics(category: string, metrics: Record<string, number>, requestId?: string): void {
+  metrics(
+    category: string,
+    metrics: Record<string, number>,
+    requestId?: string
+  ): void {
     if (!this.config.enableMetrics) {
       return;
     }
 
-    this.log('info', `Metrics: ${category}`, { metrics, category: 'metrics' }, requestId);
+    this.log(
+      'info',
+      `Metrics: ${category}`,
+      { metrics, category: 'metrics' },
+      requestId
+    );
   }
 
   /**
    * Log trace information
    */
-  trace(operation: string, metadata?: Record<string, unknown>, requestId?: string): void {
+  trace(
+    operation: string,
+    metadata?: Record<string, unknown>,
+    requestId?: string
+  ): void {
     if (!this.config.enableTracing) {
       return;
     }
 
-    this.log('debug', `Trace: ${operation}`, { ...metadata, category: 'trace' }, requestId);
+    this.log(
+      'debug',
+      `Trace: ${operation}`,
+      { ...metadata, category: 'trace' },
+      requestId
+    );
   }
 
   /**
    * Core logging method
    */
-  private log(level: LogLevel, message: string, metadata?: Record<string, unknown>, requestId?: string): void {
+  private log(
+    level: LogLevel,
+    message: string,
+    metadata?: Record<string, unknown>,
+    requestId?: string
+  ): void {
     if (!this.shouldLog(level)) {
       return;
     }
@@ -119,7 +160,7 @@ export class Logger {
       message,
       metadata,
       requestId,
-      category: metadata?.category as string
+      category: metadata?.category as string,
     };
 
     const formatted = this.formatLogEntry(entry);
@@ -134,7 +175,7 @@ export class Logger {
       debug: 0,
       info: 1,
       warn: 2,
-      error: 3
+      error: 3,
     };
 
     return levels[level] >= levels[this.config.level];
@@ -152,7 +193,9 @@ export class Logger {
     }
 
     // Level
-    const levelStr = this.config.enableColors ? this.colorize(entry.level) : entry.level.toUpperCase();
+    const levelStr = this.config.enableColors
+      ? this.colorize(entry.level)
+      : entry.level.toUpperCase();
     parts.push(`[${levelStr}]`);
 
     // Request ID
@@ -187,9 +230,9 @@ export class Logger {
 
     const colors = {
       debug: '\x1b[36m', // Cyan
-      info: '\x1b[32m',  // Green
-      warn: '\x1b[33m',  // Yellow
-      error: '\x1b[31m'  // Red
+      info: '\x1b[32m', // Green
+      warn: '\x1b[33m', // Yellow
+      error: '\x1b[31m', // Red
     };
 
     const reset = '\x1b[0m';
@@ -246,9 +289,9 @@ export class PerformanceTimer {
     const metadata = {
       category: 'performance',
       timer: this.name,
-      duration
+      duration,
     };
-    
+
     switch (level) {
       case 'debug':
         logger.debug(message, metadata, requestId);
@@ -287,12 +330,16 @@ export class AuditLogger {
    * Log audit start
    */
   auditStarted(auditType: string, language: string, requestId: string): void {
-    this.logger.info(`Audit started: ${auditType} for ${language}`, {
-      category: 'audit',
-      auditType,
-      language,
-      event: 'started'
-    }, requestId);
+    this.logger.info(
+      `Audit started: ${auditType} for ${language}`,
+      {
+        category: 'audit',
+        auditType,
+        language,
+        event: 'started',
+      },
+      requestId
+    );
   }
 
   /**
@@ -305,39 +352,60 @@ export class AuditLogger {
     duration: number,
     requestId: string
   ): void {
-    this.logger.info(`Audit completed: ${auditType} for ${language}`, {
-      category: 'audit',
-      auditType,
-      language,
-      issueCount,
-      duration,
-      event: 'completed'
-    }, requestId);
+    this.logger.info(
+      `Audit completed: ${auditType} for ${language}`,
+      {
+        category: 'audit',
+        auditType,
+        language,
+        issueCount,
+        duration,
+        event: 'completed',
+      },
+      requestId
+    );
   }
 
   /**
    * Log audit failure
    */
-  auditFailed(auditType: string, language: string, error: string, requestId: string): void {
-    this.logger.error(`Audit failed: ${auditType} for ${language}`, {
-      category: 'audit',
-      auditType,
-      language,
-      error,
-      event: 'failed'
-    }, requestId);
+  auditFailed(
+    auditType: string,
+    language: string,
+    error: string,
+    requestId: string
+  ): void {
+    this.logger.error(
+      `Audit failed: ${auditType} for ${language}`,
+      {
+        category: 'audit',
+        auditType,
+        language,
+        error,
+        event: 'failed',
+      },
+      requestId
+    );
   }
 
   /**
    * Log model selection
    */
-  modelSelected(auditType: string, selectedModel: string, requestId: string): void {
-    this.logger.debug(`Model selected: ${selectedModel} for ${auditType}`, {
-      category: 'model',
-      auditType,
-      selectedModel,
-      event: 'selected'
-    }, requestId);
+  modelSelected(
+    auditType: string,
+    selectedModel: string,
+    requestId: string
+  ): void {
+    this.logger.debug(
+      `Model selected: ${selectedModel} for ${auditType}`,
+      {
+        category: 'model',
+        auditType,
+        selectedModel,
+        event: 'selected',
+      },
+      requestId
+    );
   }
 
   /**
@@ -350,14 +418,18 @@ export class AuditLogger {
     reason: string,
     requestId: string
   ): void {
-    this.logger.warn(`Model fallback: ${originalModel} -> ${fallbackModel}`, {
-      category: 'model',
-      auditType,
-      originalModel,
-      fallbackModel,
-      reason,
-      event: 'fallback'
-    }, requestId);
+    this.logger.warn(
+      `Model fallback: ${originalModel} -> ${fallbackModel}`,
+      {
+        category: 'model',
+        auditType,
+        originalModel,
+        fallbackModel,
+        reason,
+        event: 'fallback',
+      },
+      requestId
+    );
   }
 
   /**
@@ -367,7 +439,7 @@ export class AuditLogger {
     this.logger.debug(`Ollama: ${event}`, {
       category: 'ollama',
       event,
-      ...metadata
+      ...metadata,
     });
   }
 
@@ -378,7 +450,7 @@ export class AuditLogger {
     this.logger.info(`Health check: ${status}`, {
       category: 'health',
       status,
-      checks
+      checks,
     });
   }
 }
@@ -392,7 +464,7 @@ export function createLogger(config?: Partial<LoggerConfig>): Logger {
     enableMetrics: true,
     enableTracing: false,
     enableTimestamps: true,
-    enableColors: false
+    enableColors: false,
   };
 
   return new Logger({ ...defaultConfig, ...config });

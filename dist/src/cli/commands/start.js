@@ -79,7 +79,7 @@ export async function startCommand(options) {
         console.log(chalk.gray('Starting server as daemon...'));
         const child = spawn('node', [serverPath], {
             detached: true,
-            stdio: 'ignore'
+            stdio: 'ignore',
         });
         child.unref();
         savePid(child.pid);
@@ -92,7 +92,7 @@ export async function startCommand(options) {
         console.log(chalk.gray('Starting server in foreground...'));
         console.log(chalk.gray('Press Ctrl+C to stop the server\n'));
         const child = spawn('node', [serverPath], {
-            stdio: 'inherit'
+            stdio: 'inherit',
         });
         // Save PID for potential stop command
         savePid(child.pid);

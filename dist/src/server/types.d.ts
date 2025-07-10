@@ -10,9 +10,9 @@ export interface ServerConfig {
     name: string;
     version: string;
     ollama: OllamaConfig;
-    models: Record<string, any>;
+    models: Record<string, ModelConfig>;
     auditors: Record<AuditType, AuditorConfig>;
-    languages: Record<string, any>;
+    languages: Record<string, LanguageConfig>;
     logging: LoggingConfig;
     performance: PerformanceConfig;
 }
@@ -38,6 +38,14 @@ export interface PerformanceConfig {
     maxConcurrentAudits: number;
     cacheEnabled: boolean;
     cacheTtl: number;
+}
+export interface LanguageConfig {
+    name: string;
+    extensions: string[];
+    parser?: string;
+    framework?: string;
+    linter?: string;
+    testFramework?: string;
 }
 export interface ModelConfig {
     name: string;

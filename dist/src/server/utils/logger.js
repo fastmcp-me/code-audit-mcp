@@ -20,7 +20,7 @@ export class Logger {
                 enableMetrics: false,
                 enableTracing: false,
                 enableTimestamps: true,
-                enableColors: false
+                enableColors: false,
             });
         }
         return Logger.instance;
@@ -86,7 +86,7 @@ export class Logger {
             message,
             metadata,
             requestId,
-            category: metadata?.category
+            category: metadata?.category,
         };
         const formatted = this.formatLogEntry(entry);
         this.output(level, formatted);
@@ -99,7 +99,7 @@ export class Logger {
             debug: 0,
             info: 1,
             warn: 2,
-            error: 3
+            error: 3,
         };
         return levels[level] >= levels[this.config.level];
     }
@@ -113,7 +113,9 @@ export class Logger {
             parts.push(`[${entry.timestamp}]`);
         }
         // Level
-        const levelStr = this.config.enableColors ? this.colorize(entry.level) : entry.level.toUpperCase();
+        const levelStr = this.config.enableColors
+            ? this.colorize(entry.level)
+            : entry.level.toUpperCase();
         parts.push(`[${levelStr}]`);
         // Request ID
         if (entry.requestId) {
@@ -143,7 +145,7 @@ export class Logger {
             debug: '\x1b[36m', // Cyan
             info: '\x1b[32m', // Green
             warn: '\x1b[33m', // Yellow
-            error: '\x1b[31m' // Red
+            error: '\x1b[31m', // Red
         };
         const reset = '\x1b[0m';
         return `${colors[level]}${level.toUpperCase()}${reset}`;
@@ -194,7 +196,7 @@ export class PerformanceTimer {
         const metadata = {
             category: 'performance',
             timer: this.name,
-            duration
+            duration,
         };
         switch (level) {
             case 'debug':
@@ -234,7 +236,7 @@ export class AuditLogger {
             category: 'audit',
             auditType,
             language,
-            event: 'started'
+            event: 'started',
         }, requestId);
     }
     /**
@@ -247,7 +249,7 @@ export class AuditLogger {
             language,
             issueCount,
             duration,
-            event: 'completed'
+            event: 'completed',
         }, requestId);
     }
     /**
@@ -259,7 +261,7 @@ export class AuditLogger {
             auditType,
             language,
             error,
-            event: 'failed'
+            event: 'failed',
         }, requestId);
     }
     /**
@@ -270,7 +272,7 @@ export class AuditLogger {
             category: 'model',
             auditType,
             selectedModel,
-            event: 'selected'
+            event: 'selected',
         }, requestId);
     }
     /**
@@ -283,7 +285,7 @@ export class AuditLogger {
             originalModel,
             fallbackModel,
             reason,
-            event: 'fallback'
+            event: 'fallback',
         }, requestId);
     }
     /**
@@ -293,7 +295,7 @@ export class AuditLogger {
         this.logger.debug(`Ollama: ${event}`, {
             category: 'ollama',
             event,
-            ...metadata
+            ...metadata,
         });
     }
     /**
@@ -303,7 +305,7 @@ export class AuditLogger {
         this.logger.info(`Health check: ${status}`, {
             category: 'health',
             status,
-            checks
+            checks,
         });
     }
 }
@@ -316,7 +318,7 @@ export function createLogger(config) {
         enableMetrics: true,
         enableTracing: false,
         enableTimestamps: true,
-        enableColors: false
+        enableColors: false,
     };
     return new Logger({ ...defaultConfig, ...config });
 }

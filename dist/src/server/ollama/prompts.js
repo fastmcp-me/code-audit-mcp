@@ -126,7 +126,7 @@ Analyze the code for:
 6. Testing gaps and testability issues
 7. Documentation deficiencies
 
-Prioritize findings by severity and impact, focusing on the most critical issues first.`
+Prioritize findings by severity and impact, focusing on the most critical issues first.`,
 };
 /**
  * Language-specific prompt additions
@@ -144,7 +144,7 @@ export const LANGUAGE_SPECIFIC_PROMPTS = {
 - Memory leaks with event listeners
 - Bundle size optimization
 - Inefficient DOM manipulations
-- Async/await vs Promise performance`
+- Async/await vs Promise performance`,
     },
     typescript: {
         quality: `Consider TypeScript-specific issues:
@@ -157,7 +157,7 @@ export const LANGUAGE_SPECIFIC_PROMPTS = {
 - Missing type definitions
 - Incomplete interface implementations
 - Unhandled union type cases
-- Missing null/undefined checks`
+- Missing null/undefined checks`,
     },
     python: {
         security: `Focus on Python-specific security issues:
@@ -170,7 +170,7 @@ export const LANGUAGE_SPECIFIC_PROMPTS = {
 - Global Interpreter Lock (GIL) implications
 - List comprehensions vs loops
 - Generator usage opportunities
-- Memory usage with large data structures`
+- Memory usage with large data structures`,
     },
     java: {
         security: `Pay attention to:
@@ -183,7 +183,7 @@ export const LANGUAGE_SPECIFIC_PROMPTS = {
 - Singleton pattern thread safety
 - Factory pattern implementations
 - Dependency injection opportunities
-- Interface segregation principle`
+- Interface segregation principle`,
     },
     go: {
         security: `Focus on Go-specific issues:
@@ -196,7 +196,7 @@ export const LANGUAGE_SPECIFIC_PROMPTS = {
 - Goroutine leak prevention
 - Channel buffer sizing
 - Memory allocation patterns
-- Garbage collection optimization`
+- Garbage collection optimization`,
     },
     rust: {
         security: `Focus on:
@@ -208,8 +208,8 @@ export const LANGUAGE_SPECIFIC_PROMPTS = {
 - Zero-cost abstraction violations
 - Unnecessary allocations
 - Clone vs move semantics
-- Iterator optimization opportunities`
-    }
+- Iterator optimization opportunities`,
+    },
 };
 /**
  * Framework-specific prompt additions
@@ -231,7 +231,7 @@ export const FRAMEWORK_SPECIFIC_PROMPTS = {
 - Hook dependency arrays
 - Component composition over inheritance
 - Prop drilling issues
-- State management patterns`
+- State management patterns`,
     },
     express: {
         security: `Express.js security issues:
@@ -245,7 +245,7 @@ export const FRAMEWORK_SPECIFIC_PROMPTS = {
 - Database connection pooling
 - Response compression
 - Static file serving
-- Caching strategies`
+- Caching strategies`,
     },
     django: {
         security: `Django security concerns:
@@ -258,7 +258,7 @@ export const FRAMEWORK_SPECIFIC_PROMPTS = {
 - Model-View-Template adherence
 - Custom manager usage
 - Signal handler patterns
-- Middleware implementation`
+- Middleware implementation`,
     },
     spring: {
         security: `Spring security issues:
@@ -271,14 +271,14 @@ export const FRAMEWORK_SPECIFIC_PROMPTS = {
 - Dependency injection best practices
 - Bean lifecycle management
 - AOP implementation
-- Configuration management`
-    }
+- Configuration management`,
+    },
 };
 /**
  * Generate a complete prompt for a specific audit context
  */
 export function generatePrompt(context) {
-    const { code, language, auditType, context: auditContext, codeMetrics } = context;
+    const { code, language, auditType, context: auditContext, codeMetrics, } = context;
     let prompt = SYSTEM_PROMPTS[auditType];
     // Add language-specific guidance
     const langPrompts = LANGUAGE_SPECIFIC_PROMPTS[language.toLowerCase()];
@@ -296,20 +296,23 @@ export function generatePrompt(context) {
     if (auditContext) {
         prompt += '\n\nContext considerations:';
         if (auditContext.environment === 'production') {
-            prompt += '\n- This is production code - prioritize security and reliability';
+            prompt +=
+                '\n- This is production code - prioritize security and reliability';
         }
         if (auditContext.performanceCritical) {
-            prompt += '\n- This is performance-critical code - focus on optimization opportunities';
+            prompt +=
+                '\n- This is performance-critical code - focus on optimization opportunities';
         }
         if (auditContext.teamSize && auditContext.teamSize > 5) {
-            prompt += '\n- Large team environment - emphasize maintainability and documentation';
+            prompt +=
+                '\n- Large team environment - emphasize maintainability and documentation';
         }
         if (auditContext.projectType) {
             const typeGuidance = {
                 api: 'API service - focus on security, performance, and error handling',
                 web: 'Web application - consider user experience and security',
                 cli: 'Command-line tool - focus on error handling and user feedback',
-                library: 'Reusable library - emphasize API design and documentation'
+                library: 'Reusable library - emphasize API design and documentation',
             };
             if (typeGuidance[auditContext.projectType]) {
                 prompt += '\n- ' + typeGuidance[auditContext.projectType];
@@ -363,7 +366,7 @@ Important:
 export function generateFastModePrompt(context) {
     const fastContext = {
         ...context,
-        auditType: 'security'
+        auditType: 'security',
     };
     let prompt = SYSTEM_PROMPTS.security + '\n\n' + SYSTEM_PROMPTS.completeness;
     // Add language and framework specifics for both security and completeness
@@ -406,29 +409,29 @@ export const PROMPT_TEMPLATES = {
         template: 'Analyze this code for SQL injection vulnerabilities: {code}',
         variables: ['code'],
         auditTypes: ['security'],
-        languages: ['javascript', 'python', 'php', 'java', 'csharp']
+        languages: ['javascript', 'python', 'php', 'java', 'csharp'],
     },
     xss_detection: {
         name: 'XSS Vulnerability Detection',
         template: 'Check for XSS vulnerabilities in this {language} code: {code}',
         variables: ['code', 'language'],
         auditTypes: ['security'],
-        languages: ['javascript', 'typescript', 'php', 'python']
+        languages: ['javascript', 'typescript', 'php', 'python'],
     },
     performance_optimization: {
         name: 'Performance Optimization',
         template: 'Identify performance bottlenecks and optimization opportunities: {code}',
         variables: ['code'],
         auditTypes: ['performance'],
-        languages: ['javascript', 'python', 'java', 'csharp', 'go', 'rust']
+        languages: ['javascript', 'python', 'java', 'csharp', 'go', 'rust'],
     },
     test_coverage_gaps: {
         name: 'Test Coverage Analysis',
         template: 'Identify areas missing test coverage in this {language} code: {code}',
         variables: ['code', 'language'],
         auditTypes: ['testing'],
-        languages: ['javascript', 'python', 'java', 'csharp', 'go', 'rust']
-    }
+        languages: ['javascript', 'python', 'java', 'csharp', 'go', 'rust'],
+    },
 };
 /**
  * Get severity guidelines for different audit types
@@ -439,61 +442,61 @@ export function getSeverityGuidelines(auditType) {
         high: 'Significant impact on security, performance, or reliability',
         medium: 'Moderate impact on code quality or maintainability',
         low: 'Minor improvements or style issues',
-        info: 'Informational suggestions or best practices'
+        info: 'Informational suggestions or best practices',
     };
     const typeSpecificGuidelines = {
         security: {
             critical: 'Remote code execution, SQL injection, authentication bypass',
             high: 'XSS, CSRF, sensitive data exposure, authorization flaws',
             medium: 'Weak cryptography, input validation gaps, session management',
-            low: 'Security headers, secure coding practices'
+            low: 'Security headers, secure coding practices',
         },
         performance: {
             critical: 'O(n³) or worse complexity, memory leaks, infinite loops',
             high: 'O(n²) complexity, blocking operations, large memory usage',
             medium: 'Suboptimal algorithms, unnecessary computations',
-            low: 'Minor optimizations, caching opportunities'
+            low: 'Minor optimizations, caching opportunities',
         },
         completeness: {
             critical: 'Missing error handling that could crash the system',
             high: 'TODO comments in critical paths, incomplete implementations',
             medium: 'Missing edge case handling, incomplete validation',
-            low: 'Minor TODOs, documentation gaps'
+            low: 'Minor TODOs, documentation gaps',
         },
         quality: {
             critical: 'Code that severely violates coding standards',
             high: 'Poor code structure, major maintainability issues',
             medium: 'Code style violations, moderate maintainability issues',
-            low: 'Minor style issues, small improvements'
+            low: 'Minor style issues, small improvements',
         },
         architecture: {
             critical: 'Design patterns that break system architecture',
             high: 'Significant architectural violations, coupling issues',
             medium: 'Moderate design issues, some coupling problems',
-            low: 'Minor design improvements, refactoring opportunities'
+            low: 'Minor design improvements, refactoring opportunities',
         },
         testing: {
             critical: 'Missing tests for critical functionality',
             high: 'Insufficient test coverage, missing integration tests',
             medium: 'Some missing unit tests, test quality issues',
-            low: 'Minor test improvements, additional edge cases'
+            low: 'Minor test improvements, additional edge cases',
         },
         documentation: {
             critical: 'Missing critical API documentation',
             high: 'Insufficient documentation for complex functionality',
             medium: 'Some missing documentation, unclear comments',
-            low: 'Minor documentation improvements'
+            low: 'Minor documentation improvements',
         },
         all: {
             critical: 'Critical issues across all audit types',
             high: 'High priority issues across multiple areas',
             medium: 'Medium priority issues across multiple areas',
-            low: 'Low priority issues across multiple areas'
-        }
+            low: 'Low priority issues across multiple areas',
+        },
     };
     return {
         ...baseGuidelines,
-        ...typeSpecificGuidelines[auditType]
+        ...typeSpecificGuidelines[auditType],
     };
 }
 //# sourceMappingURL=prompts.js.map

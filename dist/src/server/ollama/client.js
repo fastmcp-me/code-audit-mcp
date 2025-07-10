@@ -42,7 +42,7 @@ export class OllamaClient {
                     ollama: {
                         status: this.isHealthy,
                         models: Array.from(this.availableModels),
-                        lastCheck: new Date().toISOString()
+                        lastCheck: new Date().toISOString(),
                     },
                     auditors: {
                         security: true,
@@ -52,16 +52,16 @@ export class OllamaClient {
                         architecture: true,
                         testing: true,
                         documentation: true,
-                        all: true
+                        all: true,
                     },
                     system: {
                         memory: 0,
-                        disk: 0
-                    }
+                        disk: 0,
+                    },
                 },
                 version: '1.0.0',
                 timestamp: new Date().toISOString(),
-                uptime: now - this.lastHealthCheck
+                uptime: now - this.lastHealthCheck,
             };
         }
         this.lastHealthCheck = now;
@@ -77,7 +77,7 @@ export class OllamaClient {
                     ollama: {
                         status: true,
                         models: Array.from(this.availableModels),
-                        lastCheck: new Date().toISOString()
+                        lastCheck: new Date().toISOString(),
                     },
                     auditors: {
                         security: true,
@@ -87,16 +87,16 @@ export class OllamaClient {
                         architecture: true,
                         testing: true,
                         documentation: true,
-                        all: true
+                        all: true,
                     },
                     system: {
                         memory: 0,
-                        disk: 0
-                    }
+                        disk: 0,
+                    },
                 },
                 version: '1.0.0',
                 timestamp: new Date().toISOString(),
-                uptime: now
+                uptime: now,
             };
         }
         catch (error) {
@@ -108,7 +108,7 @@ export class OllamaClient {
                     ollama: {
                         status: false,
                         models: Array.from(this.availableModels),
-                        lastCheck: new Date().toISOString()
+                        lastCheck: new Date().toISOString(),
                     },
                     auditors: {
                         security: true,
@@ -118,16 +118,16 @@ export class OllamaClient {
                         architecture: true,
                         testing: true,
                         documentation: true,
-                        all: true
+                        all: true,
                     },
                     system: {
                         memory: 0,
-                        disk: 0
-                    }
+                        disk: 0,
+                    },
                 },
                 version: '1.0.0',
                 timestamp: new Date().toISOString(),
-                uptime: now
+                uptime: now,
             };
         }
     }
@@ -254,12 +254,12 @@ export class OllamaClient {
      * Get model performance metrics
      */
     getModelMetrics(modelName) {
-        return this.modelMetrics.get(modelName) || {
+        return (this.modelMetrics.get(modelName) || {
             requests: 0,
             failures: 0,
             avgResponseTime: 0,
-            lastUsed: new Date(0)
-        };
+            lastUsed: new Date(0),
+        });
     }
     /**
      * Get all model metrics
@@ -269,7 +269,9 @@ export class OllamaClient {
         for (const [model, data] of this.modelMetrics.entries()) {
             metrics[model] = {
                 ...data,
-                successRate: data.requests > 0 ? ((data.requests - data.failures) / data.requests) : 0
+                successRate: data.requests > 0
+                    ? (data.requests - data.failures) / data.requests
+                    : 0,
             };
         }
         return metrics;
@@ -278,7 +280,7 @@ export class OllamaClient {
      * Select the best available model from a list of candidates
      */
     selectBestModel(candidates, considerPerformance = true) {
-        const available = candidates.filter(model => this.isModelAvailable(model));
+        const available = candidates.filter((model) => this.isModelAvailable(model));
         if (available.length === 0) {
             return null;
         }
@@ -299,8 +301,8 @@ export class OllamaClient {
                 continue;
             }
             const successRate = (metrics.requests - metrics.failures) / metrics.requests;
-            const responseScore = Math.max(0, 1 - (metrics.avgResponseTime / 30000)); // 30s baseline
-            const score = (successRate * 0.7) + (responseScore * 0.3);
+            const responseScore = Math.max(0, 1 - metrics.avgResponseTime / 30000); // 30s baseline
+            const score = successRate * 0.7 + responseScore * 0.3;
             if (score > bestScore) {
                 bestModel = model;
                 bestScore = score;
@@ -316,16 +318,17 @@ export class OllamaClient {
             requests: 0,
             failures: 0,
             avgResponseTime: 0,
-            lastUsed: new Date()
+            lastUsed: new Date(),
         };
         current.requests++;
         if (failed) {
             current.failures++;
         }
         // Update average response time (exponential moving average)
-        current.avgResponseTime = current.avgResponseTime === 0
-            ? responseTime
-            : (current.avgResponseTime * 0.8) + (responseTime * 0.2);
+        current.avgResponseTime =
+            current.avgResponseTime === 0
+                ? responseTime
+                : current.avgResponseTime * 0.8 + responseTime * 0.2;
         current.lastUsed = new Date();
         this.modelMetrics.set(modelName, current);
     }
@@ -336,7 +339,8 @@ export class OllamaClient {
         const status = {};
         for (const model of this.availableModels) {
             const metrics = this.getModelMetrics(model);
-            status[model] = metrics.requests === 0 || (metrics.failures / metrics.requests) < 0.5;
+            status[model] =
+                metrics.requests === 0 || metrics.failures / metrics.requests < 0.5;
         }
         return status;
     }
@@ -349,14 +353,14 @@ export class OllamaClient {
             message,
             details,
             recoverable: code !== 'OLLAMA_UNAVAILABLE',
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
         };
     }
     /**
      * Sleep utility for retry delays
      */
     sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+        return new Promise((resolve) => setTimeout(resolve, ms));
     }
     /**
      * Clean up resources

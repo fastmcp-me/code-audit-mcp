@@ -46,7 +46,7 @@ export class LanguageDetector {
       /var\s+\w+\s*=/,
       /=>\s*{?/,
       /require\s*\(/,
-      /module\.exports/
+      /module\.exports/,
     ],
     typescript: [
       /interface\s+\w+/,
@@ -55,7 +55,7 @@ export class LanguageDetector {
       /:\s*\w+\s*[=;]/,
       /import.*from/,
       /export.*{/,
-      /as\s+\w+/
+      /as\s+\w+/,
     ],
     python: [
       /def\s+\w+\s*\(/,
@@ -63,7 +63,7 @@ export class LanguageDetector {
       /import\s+\w+/,
       /from\s+\w+\s+import/,
       /if\s+__name__\s*==\s*['""]__main__['""]:/,
-      /#\s*.+$/m
+      /#\s*.+$/m,
     ],
     java: [
       /public\s+class\s+\w+/,
@@ -71,7 +71,7 @@ export class LanguageDetector {
       /public\s+static\s+void\s+main/,
       /@\w+/,
       /import\s+\w+\.\w+/,
-      /package\s+\w+/
+      /package\s+\w+/,
     ],
     csharp: [
       /using\s+\w+/,
@@ -79,7 +79,7 @@ export class LanguageDetector {
       /public\s+class\s+\w+/,
       /\[.+\]/,
       /Console\.WriteLine/,
-      /var\s+\w+\s*=/
+      /var\s+\w+\s*=/,
     ],
     go: [
       /package\s+\w+/,
@@ -87,7 +87,7 @@ export class LanguageDetector {
       /func\s+\w+/,
       /type\s+\w+\s+struct/,
       /fmt\.Print/,
-      /go\s+\w+/
+      /go\s+\w+/,
     ],
     rust: [
       /fn\s+\w+/,
@@ -95,7 +95,7 @@ export class LanguageDetector {
       /struct\s+\w+/,
       /impl\s+\w+/,
       /use\s+\w+::/,
-      /println!/
+      /println!/,
     ],
     php: [
       /<\?php/,
@@ -103,7 +103,7 @@ export class LanguageDetector {
       /function\s+\w+/,
       /class\s+\w+/,
       /echo\s+/,
-      /include\s+/
+      /include\s+/,
     ],
     ruby: [
       /def\s+\w+/,
@@ -111,7 +111,7 @@ export class LanguageDetector {
       /module\s+\w+/,
       /require\s+/,
       /puts\s+/,
-      /@\w+/
+      /@\w+/,
     ],
     swift: [
       /func\s+\w+/,
@@ -119,7 +119,7 @@ export class LanguageDetector {
       /struct\s+\w+/,
       /var\s+\w+:/,
       /let\s+\w+:/,
-      /import\s+\w+/
+      /import\s+\w+/,
     ],
     kotlin: [
       /fun\s+\w+/,
@@ -127,23 +127,16 @@ export class LanguageDetector {
       /val\s+\w+/,
       /var\s+\w+/,
       /import\s+\w+/,
-      /package\s+\w+/
+      /package\s+\w+/,
     ],
-    html: [
-      /<html/i,
-      /<head/i,
-      /<body/i,
-      /<div/i,
-      /<script/i,
-      /<style/i
-    ],
+    html: [/<html/i, /<head/i, /<body/i, /<div/i, /<script/i, /<style/i],
     css: [
       /\.\w+\s*{/,
       /#\w+\s*{/,
       /@media/,
       /@import/,
       /:\s*\w+;/,
-      /font-family:/
+      /font-family:/,
     ],
     sql: [
       /SELECT\s+/i,
@@ -151,28 +144,18 @@ export class LanguageDetector {
       /WHERE\s+/i,
       /INSERT\s+INTO/i,
       /UPDATE\s+/i,
-      /DELETE\s+FROM/i
+      /DELETE\s+FROM/i,
     ],
-    yaml: [
-      /^\s*\w+:\s*$/m,
-      /^\s*-\s+/m,
-      /^\s*\|\s*$/m,
-      /^\s*>\s*$/m
-    ],
-    json: [
-      /^\s*{/,
-      /^\s*\[/,
-      /"\w+":\s*/,
-      /"\w+"\s*,/
-    ],
+    yaml: [/^\s*\w+:\s*$/m, /^\s*-\s+/m, /^\s*\|\s*$/m, /^\s*>\s*$/m],
+    json: [/^\s*{/, /^\s*\[/, /"\w+":\s*/, /"\w+"\s*,/],
     dockerfile: [
       /^FROM\s+/m,
       /^RUN\s+/m,
       /^COPY\s+/m,
       /^ADD\s+/m,
       /^WORKDIR\s+/m,
-      /^EXPOSE\s+/m
-    ]
+      /^EXPOSE\s+/m,
+    ],
   };
 
   /**
@@ -202,7 +185,7 @@ export class LanguageDetector {
     }
 
     // Return language with highest score
-    const bestMatch = Object.entries(scores).reduce((a, b) => 
+    const bestMatch = Object.entries(scores).reduce((a, b) =>
       scores[a[0]] > scores[b[0]] ? a : b
     );
 
@@ -214,7 +197,7 @@ export class LanguageDetector {
    */
   private static detectFromExtension(filename: string): string | null {
     const ext = filename.toLowerCase().split('.').pop();
-    
+
     const extensionMap: Record<string, string> = {
       js: 'javascript',
       jsx: 'javascript',
@@ -238,7 +221,7 @@ export class LanguageDetector {
       yaml: 'yaml',
       yml: 'yaml',
       json: 'json',
-      dockerfile: 'dockerfile'
+      dockerfile: 'dockerfile',
     };
 
     return ext ? extensionMap[ext] || null : null;
@@ -261,7 +244,7 @@ export class CodeParser {
    */
   static parseCode(code: string, language: string): ParsedCode {
     const lines = code.split('\n');
-    
+
     return {
       language,
       functions: this.extractFunctions(code, language),
@@ -270,22 +253,25 @@ export class CodeParser {
       exports: this.extractExports(code, language),
       comments: this.extractComments(code, language),
       lineCount: lines.length,
-      complexity: this.calculateComplexity(code, language)
+      complexity: this.calculateComplexity(code, language),
     };
   }
 
   /**
    * Extract function definitions
    */
-  private static extractFunctions(code: string, language: string): ParsedFunction[] {
+  private static extractFunctions(
+    code: string,
+    language: string
+  ): ParsedFunction[] {
     const functions: ParsedFunction[] = [];
     const lines = code.split('\n');
 
     const functionPatterns = this.getFunctionPatterns(language);
-    
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      
+
       for (const pattern of functionPatterns) {
         const match = line.match(pattern);
         if (match) {
@@ -308,10 +294,10 @@ export class CodeParser {
     const lines = code.split('\n');
 
     const classPatterns = this.getClassPatterns(language);
-    
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      
+
       for (const pattern of classPatterns) {
         const match = line.match(pattern);
         if (match) {
@@ -332,7 +318,7 @@ export class CodeParser {
   private static extractImports(code: string, language: string): string[] {
     const imports: string[] = [];
     const importPatterns = this.getImportPatterns(language);
-    
+
     for (const pattern of importPatterns) {
       const matches = code.match(new RegExp(pattern.source, 'gm'));
       if (matches) {
@@ -349,7 +335,7 @@ export class CodeParser {
   private static extractExports(code: string, language: string): string[] {
     const exports: string[] = [];
     const exportPatterns = this.getExportPatterns(language);
-    
+
     for (const pattern of exportPatterns) {
       const matches = code.match(new RegExp(pattern.source, 'gm'));
       if (matches) {
@@ -363,15 +349,22 @@ export class CodeParser {
   /**
    * Extract comments
    */
-  private static extractComments(code: string, language: string): { line: number; type: 'single' | 'multi'; content: string }[] {
-    const comments: { line: number; type: 'single' | 'multi'; content: string }[] = [];
+  private static extractComments(
+    code: string,
+    language: string
+  ): { line: number; type: 'single' | 'multi'; content: string }[] {
+    const comments: {
+      line: number;
+      type: 'single' | 'multi';
+      content: string;
+    }[] = [];
     const lines = code.split('\n');
 
     const commentPatterns = this.getCommentPatterns(language);
-    
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      
+
       // Single line comments
       for (const pattern of commentPatterns.single) {
         const match = line.match(pattern);
@@ -379,7 +372,7 @@ export class CodeParser {
           comments.push({
             line: i + 1,
             type: 'single',
-            content: match[0]
+            content: match[0],
           });
         }
       }
@@ -390,11 +383,13 @@ export class CodeParser {
       const matches = code.match(new RegExp(pattern.source, 'gms'));
       if (matches) {
         for (const match of matches) {
-          const lineNum = code.substring(0, code.indexOf(match)).split('\n').length;
+          const lineNum = code
+            .substring(0, code.indexOf(match))
+            .split('\n').length;
           comments.push({
             line: lineNum,
             type: 'multi',
-            content: match
+            content: match,
           });
         }
       }
@@ -410,7 +405,7 @@ export class CodeParser {
     let complexity = 1; // Base complexity
 
     const complexityPatterns = this.getComplexityPatterns(language);
-    
+
     for (const pattern of complexityPatterns) {
       const matches = code.match(new RegExp(pattern.source, 'g'));
       if (matches) {
@@ -430,25 +425,17 @@ export class CodeParser {
         /function\s+(\w+)\s*\([^)]*\)/,
         /(\w+)\s*:\s*function\s*\([^)]*\)/,
         /(\w+)\s*=>\s*/,
-        /(\w+)\s*=\s*function\s*\([^)]*\)/
+        /(\w+)\s*=\s*function\s*\([^)]*\)/,
       ],
       typescript: [
         /function\s+(\w+)\s*\([^)]*\)/,
         /(\w+)\s*\([^)]*\)\s*:\s*\w+/,
-        /(\w+)\s*=>\s*/
+        /(\w+)\s*=>\s*/,
       ],
-      python: [
-        /def\s+(\w+)\s*\([^)]*\)/
-      ],
-      java: [
-        /\w+\s+(\w+)\s*\([^)]*\)\s*{/
-      ],
-      go: [
-        /func\s+(\w+)\s*\([^)]*\)/
-      ],
-      rust: [
-        /fn\s+(\w+)\s*\([^)]*\)/
-      ]
+      python: [/def\s+(\w+)\s*\([^)]*\)/],
+      java: [/\w+\s+(\w+)\s*\([^)]*\)\s*{/],
+      go: [/func\s+(\w+)\s*\([^)]*\)/],
+      rust: [/fn\s+(\w+)\s*\([^)]*\)/],
     };
 
     return patterns[language] || [];
@@ -459,32 +446,13 @@ export class CodeParser {
    */
   private static getClassPatterns(language: string): RegExp[] {
     const patterns: Record<string, RegExp[]> = {
-      javascript: [
-        /class\s+(\w+)/
-      ],
-      typescript: [
-        /class\s+(\w+)/,
-        /interface\s+(\w+)/
-      ],
-      python: [
-        /class\s+(\w+)/
-      ],
-      java: [
-        /class\s+(\w+)/,
-        /interface\s+(\w+)/
-      ],
-      csharp: [
-        /class\s+(\w+)/,
-        /interface\s+(\w+)/
-      ],
-      go: [
-        /type\s+(\w+)\s+struct/
-      ],
-      rust: [
-        /struct\s+(\w+)/,
-        /enum\s+(\w+)/,
-        /trait\s+(\w+)/
-      ]
+      javascript: [/class\s+(\w+)/],
+      typescript: [/class\s+(\w+)/, /interface\s+(\w+)/],
+      python: [/class\s+(\w+)/],
+      java: [/class\s+(\w+)/, /interface\s+(\w+)/],
+      csharp: [/class\s+(\w+)/, /interface\s+(\w+)/],
+      go: [/type\s+(\w+)\s+struct/],
+      rust: [/struct\s+(\w+)/, /enum\s+(\w+)/, /trait\s+(\w+)/],
     };
 
     return patterns[language] || [];
@@ -495,23 +463,11 @@ export class CodeParser {
    */
   private static getImportPatterns(language: string): RegExp[] {
     const patterns: Record<string, RegExp[]> = {
-      javascript: [
-        /import.*from.*/,
-        /require\s*\(.*/
-      ],
-      typescript: [
-        /import.*from.*/
-      ],
-      python: [
-        /import\s+.*/,
-        /from\s+.*\s+import.*/
-      ],
-      java: [
-        /import\s+.*;/
-      ],
-      go: [
-        /import\s+.*/
-      ]
+      javascript: [/import.*from.*/, /require\s*\(.*/],
+      typescript: [/import.*from.*/],
+      python: [/import\s+.*/, /from\s+.*\s+import.*/],
+      java: [/import\s+.*;/],
+      go: [/import\s+.*/],
     };
 
     return patterns[language] || [];
@@ -522,13 +478,8 @@ export class CodeParser {
    */
   private static getExportPatterns(language: string): RegExp[] {
     const patterns: Record<string, RegExp[]> = {
-      javascript: [
-        /export\s+.*/,
-        /module\.exports\s*=.*/
-      ],
-      typescript: [
-        /export\s+.*/
-      ]
+      javascript: [/export\s+.*/, /module\.exports\s*=.*/],
+      typescript: [/export\s+.*/],
     };
 
     return patterns[language] || [];
@@ -537,24 +488,27 @@ export class CodeParser {
   /**
    * Get comment patterns for specific language
    */
-  private static getCommentPatterns(language: string): { single: RegExp[]; multi: RegExp[] } {
+  private static getCommentPatterns(language: string): {
+    single: RegExp[];
+    multi: RegExp[];
+  } {
     const patterns: Record<string, { single: RegExp[]; multi: RegExp[] }> = {
       javascript: {
         single: [/\/\/.*/],
-        multi: [/\/\*[\s\S]*?\*\//]
+        multi: [/\/\*[\s\S]*?\*\//],
       },
       typescript: {
         single: [/\/\/.*/],
-        multi: [/\/\*[\s\S]*?\*\//]
+        multi: [/\/\*[\s\S]*?\*\//],
       },
       python: {
         single: [/#.*/],
-        multi: [/"""[\s\S]*?"""/]
+        multi: [/"""[\s\S]*?"""/],
       },
       java: {
         single: [/\/\/.*/],
-        multi: [/\/\*[\s\S]*?\*\//]
-      }
+        multi: [/\/\*[\s\S]*?\*\//],
+      },
     };
 
     return patterns[language] || { single: [], multi: [] };
@@ -577,7 +531,7 @@ export class CodeParser {
       /\bor\b/,
       /&&/,
       /\|\|/,
-      /\?.*:/
+      /\?.*:/,
     ];
   }
 
@@ -585,14 +539,14 @@ export class CodeParser {
    * Parse function details from matched line
    */
   private static parseFunctionDetails(
-    lines: string[], 
-    startLine: number, 
-    match: RegExpMatchArray, 
+    lines: string[],
+    startLine: number,
+    match: RegExpMatchArray,
     language: string
   ): ParsedFunction | null {
     const name = match[1] || 'anonymous';
     const line = lines[startLine];
-    
+
     return {
       name,
       startLine: startLine + 1,
@@ -600,7 +554,7 @@ export class CodeParser {
       parameters: this.extractParameters(line),
       complexity: 1,
       isAsync: line.includes('async'),
-      isExported: line.includes('export')
+      isExported: line.includes('export'),
     };
   }
 
@@ -608,13 +562,13 @@ export class CodeParser {
    * Parse class details from matched line
    */
   private static parseClassDetails(
-    lines: string[], 
-    startLine: number, 
-    match: RegExpMatchArray, 
+    lines: string[],
+    startLine: number,
+    match: RegExpMatchArray,
     language: string
   ): ParsedClass | null {
     const name = match[1] || 'anonymous';
-    
+
     return {
       name,
       startLine: startLine + 1,
@@ -635,7 +589,7 @@ export class CodeParser {
 
     return paramMatch[1]
       .split(',')
-      .map(param => param.trim())
-      .filter(param => param.length > 0);
+      .map((param) => param.trim())
+      .filter((param) => param.length > 0);
   }
 }

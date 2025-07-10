@@ -6,12 +6,12 @@ import chalk from 'chalk';
 import ora from 'ora';
 import boxen from 'boxen';
 import inquirer from 'inquirer';
-import { 
-  getConfig, 
-  getConfigValue, 
-  setConfigValue, 
-  resetConfig, 
-  getConfigManager
+import {
+  getConfig,
+  getConfigValue,
+  setConfigValue,
+  resetConfig,
+  getConfigManager,
 } from '../utils/config.js';
 
 interface ConfigOptions {
@@ -52,9 +52,11 @@ export async function configCommand(options: ConfigOptions): Promise<void> {
 
     // If no options provided, show interactive config menu
     await interactiveConfig();
-
   } catch (error) {
-    console.error(chalk.red('Configuration error:'), error instanceof Error ? error.message : 'Unknown error');
+    console.error(
+      chalk.red('Configuration error:'),
+      error instanceof Error ? error.message : 'Unknown error'
+    );
     process.exit(1);
   }
 }
@@ -90,11 +92,13 @@ async function showConfiguration(): Promise<void> {
     // Show validation status
     const statusIcon = validation.isValid ? '✅' : '❌';
     const statusColor = validation.isValid ? chalk.green : chalk.red;
-    console.log(`${statusIcon} Status: ${statusColor(validation.isValid ? 'Valid' : 'Invalid')}`);
-    
+    console.log(
+      `${statusIcon} Status: ${statusColor(validation.isValid ? 'Valid' : 'Invalid')}`
+    );
+
     if (!validation.isValid) {
       console.log(chalk.red('  Errors:'));
-      validation.errors.forEach(error => {
+      validation.errors.forEach((error) => {
         console.log(chalk.red(`    • ${error}`));
       });
     }
@@ -107,7 +111,6 @@ async function showConfiguration(): Promise<void> {
     displayConfigSection('Server Settings', config.server);
     displayConfigSection('Update Settings', config.updates);
     displayConfigSection('Telemetry', config.telemetry);
-
   } catch (error) {
     spinner.fail('Failed to load configuration');
     throw error;
@@ -119,14 +122,14 @@ async function showConfiguration(): Promise<void> {
  */
 function displayConfigSection(title: string, section: any): void {
   console.log(chalk.cyan.bold(title + ':'));
-  
+
   if (typeof section === 'object' && section !== null) {
     for (const [key, value] of Object.entries(section)) {
       const formattedValue = formatConfigValue(value);
       console.log(`  ${key}: ${formattedValue}`);
     }
   }
-  
+
   console.log();
 }
 
@@ -137,19 +140,19 @@ function formatConfigValue(value: any): string {
   if (value === null || value === undefined) {
     return chalk.gray('not set');
   }
-  
+
   if (typeof value === 'boolean') {
     return value ? chalk.green('✓') : chalk.red('✗');
   }
-  
+
   if (Array.isArray(value)) {
     return chalk.yellow(`[${value.join(', ')}]`);
   }
-  
+
   if (typeof value === 'string') {
     return chalk.yellow(value);
   }
-  
+
   return chalk.yellow(String(value));
 }
 
@@ -162,7 +165,9 @@ async function resetConfiguration(): Promise<void> {
 
   console.log();
   console.log(chalk.yellow.bold('⚠️  Configuration Reset'));
-  console.log(chalk.gray('This will reset your global configuration to default values.'));
+  console.log(
+    chalk.gray('This will reset your global configuration to default values.')
+  );
   console.log();
 
   const { confirmed } = await inquirer.prompt([
@@ -170,8 +175,8 @@ async function resetConfiguration(): Promise<void> {
       type: 'confirm',
       name: 'confirmed',
       message: 'Are you sure you want to reset the configuration?',
-      default: false
-    }
+      default: false,
+    },
   ]);
 
   if (!confirmed) {
@@ -183,12 +188,16 @@ async function resetConfiguration(): Promise<void> {
 
   try {
     const success = await resetConfig(async () => true);
-    
+
     if (success) {
       resetSpinner.succeed('Configuration reset successfully');
       console.log();
       console.log(chalk.green('✅ Configuration has been reset to defaults'));
-      console.log(chalk.gray('Run "code-audit config --show" to view the default settings'));
+      console.log(
+        chalk.gray(
+          'Run "code-audit config --show" to view the default settings'
+        )
+      );
     } else {
       resetSpinner.fail('Reset was cancelled');
     }
@@ -214,15 +223,16 @@ async function setConfiguration(keyValue: string): Promise<void> {
   try {
     // Parse value based on expected type
     const parsedValue = parseConfigValue(value);
-    
+
     await setConfigValue(key.trim(), parsedValue);
-    
+
     spinner.succeed(`Configuration updated: ${key} = ${value}`);
-    
+
     console.log();
     console.log(chalk.green('✅ Configuration value updated successfully'));
-    console.log(chalk.gray('Run "code-audit config --show" to view all settings'));
-
+    console.log(
+      chalk.gray('Run "code-audit config --show" to view all settings')
+    );
   } catch (error) {
     spinner.fail(`Failed to set ${key}`);
     throw error;
@@ -234,31 +244,31 @@ async function setConfiguration(keyValue: string): Promise<void> {
  */
 function parseConfigValue(value: string): any {
   const trimmed = value.trim();
-  
+
   // Boolean values
   if (trimmed === 'true') return true;
   if (trimmed === 'false') return false;
-  
+
   // Null/undefined
   if (trimmed === 'null') return null;
   if (trimmed === 'undefined') return undefined;
-  
+
   // Numbers
   if (/^\d+$/.test(trimmed)) {
     return parseInt(trimmed, 10);
   }
-  
+
   if (/^\d+\.\d+$/.test(trimmed)) {
     return parseFloat(trimmed);
   }
-  
+
   // Arrays (simple comma-separated)
   if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
     const arrayContent = trimmed.slice(1, -1);
     if (arrayContent.trim() === '') return [];
-    return arrayContent.split(',').map(item => item.trim());
+    return arrayContent.split(',').map((item) => item.trim());
   }
-  
+
   // Objects (simple JSON)
   if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
     try {
@@ -267,7 +277,7 @@ function parseConfigValue(value: string): any {
       throw new Error(`Invalid JSON object: ${trimmed}`);
     }
   }
-  
+
   // Default to string
   return trimmed;
 }
@@ -280,9 +290,9 @@ async function getConfiguration(key: string): Promise<void> {
 
   try {
     const value = await getConfigValue(key.trim());
-    
+
     spinner.succeed(`Retrieved ${key}`);
-    
+
     console.log();
     if (value === undefined) {
       console.log(chalk.gray(`Configuration key "${key}" is not set`));
@@ -291,7 +301,6 @@ async function getConfiguration(key: string): Promise<void> {
       console.log(chalk.cyan('Value:'), formatConfigValue(value));
       console.log(chalk.cyan('Type:'), chalk.gray(typeof value));
     }
-
   } catch (error) {
     spinner.fail(`Failed to get ${key}`);
     throw error;
@@ -317,9 +326,9 @@ async function interactiveConfig(): Promise<void> {
         { name: 'Server settings', value: 'server' },
         { name: 'Reset to defaults', value: 'reset' },
         { name: 'Export configuration', value: 'export' },
-        { name: 'Cancel', value: 'cancel' }
-      ]
-    }
+        { name: 'Cancel', value: 'cancel' },
+      ],
+    },
   ]);
 
   switch (action) {
@@ -352,7 +361,7 @@ async function interactiveConfig(): Promise<void> {
  */
 async function configureOllama(): Promise<void> {
   const config = await getConfig();
-  
+
   console.log();
   console.log(chalk.cyan.bold('🦙 Ollama Configuration'));
   console.log();
@@ -371,22 +380,23 @@ async function configureOllama(): Promise<void> {
         } catch {
           return 'Invalid URL format';
         }
-      }
+      },
     },
     {
       type: 'number',
       name: 'timeout',
       message: 'Timeout (milliseconds):',
       default: config.ollama.timeout,
-      validate: (input) => (input && input >= 1000) || 'Timeout must be at least 1000ms'
+      validate: (input) =>
+        (input && input >= 1000) || 'Timeout must be at least 1000ms',
     },
     {
       type: 'input',
       name: 'primary',
       message: 'Primary model:',
       default: config.ollama.models.primary,
-      validate: (input) => input.trim() ? true : 'Primary model is required'
-    }
+      validate: (input) => (input.trim() ? true : 'Primary model is required'),
+    },
   ]);
 
   const spinner = ora('Updating Ollama configuration...').start();
@@ -395,7 +405,7 @@ async function configureOllama(): Promise<void> {
     await setConfigValue('ollama.host', answers.host);
     await setConfigValue('ollama.timeout', answers.timeout);
     await setConfigValue('ollama.models.primary', answers.primary);
-    
+
     spinner.succeed('Ollama configuration updated');
     console.log(chalk.green('✅ Ollama settings saved successfully'));
   } catch (error) {
@@ -409,7 +419,7 @@ async function configureOllama(): Promise<void> {
  */
 async function configureAudit(): Promise<void> {
   const config = await getConfig();
-  
+
   console.log();
   console.log(chalk.cyan.bold('🔍 Audit Configuration'));
   console.log();
@@ -420,15 +430,43 @@ async function configureAudit(): Promise<void> {
       name: 'rules',
       message: 'Select audit rules to enable:',
       choices: [
-        { name: 'Security Analysis', value: 'security', checked: config.audit.rules.security },
-        { name: 'Performance Analysis', value: 'performance', checked: config.audit.rules.performance },
-        { name: 'Code Quality', value: 'quality', checked: config.audit.rules.quality },
-        { name: 'Documentation Check', value: 'documentation', checked: config.audit.rules.documentation },
-        { name: 'Test Coverage', value: 'testing', checked: config.audit.rules.testing },
-        { name: 'Architecture Review', value: 'architecture', checked: config.audit.rules.architecture },
-        { name: 'Completeness Check', value: 'completeness', checked: config.audit.rules.completeness }
-      ]
-    }
+        {
+          name: 'Security Analysis',
+          value: 'security',
+          checked: config.audit.rules.security,
+        },
+        {
+          name: 'Performance Analysis',
+          value: 'performance',
+          checked: config.audit.rules.performance,
+        },
+        {
+          name: 'Code Quality',
+          value: 'quality',
+          checked: config.audit.rules.quality,
+        },
+        {
+          name: 'Documentation Check',
+          value: 'documentation',
+          checked: config.audit.rules.documentation,
+        },
+        {
+          name: 'Test Coverage',
+          value: 'testing',
+          checked: config.audit.rules.testing,
+        },
+        {
+          name: 'Architecture Review',
+          value: 'architecture',
+          checked: config.audit.rules.architecture,
+        },
+        {
+          name: 'Completeness Check',
+          value: 'completeness',
+          checked: config.audit.rules.completeness,
+        },
+      ],
+    },
   ]);
 
   const outputSettings = await inquirer.prompt([
@@ -437,35 +475,49 @@ async function configureAudit(): Promise<void> {
       name: 'format',
       message: 'Output format:',
       choices: ['json', 'markdown', 'html'],
-      default: config.audit.output.format
+      default: config.audit.output.format,
     },
     {
       type: 'list',
       name: 'verbosity',
       message: 'Verbosity level:',
       choices: ['minimal', 'normal', 'detailed'],
-      default: config.audit.output.verbosity
+      default: config.audit.output.verbosity,
     },
     {
       type: 'confirm',
       name: 'includeMetrics',
       message: 'Include metrics in output:',
-      default: config.audit.output.includeMetrics
-    }
+      default: config.audit.output.includeMetrics,
+    },
   ]);
 
   const spinner = ora('Updating audit configuration...').start();
 
   try {
     // Update audit rules
-    for (const rule of ['security', 'performance', 'quality', 'documentation', 'testing', 'architecture', 'completeness']) {
-      await setConfigValue(`audit.rules.${rule}`, auditRules.rules.includes(rule));
+    for (const rule of [
+      'security',
+      'performance',
+      'quality',
+      'documentation',
+      'testing',
+      'architecture',
+      'completeness',
+    ]) {
+      await setConfigValue(
+        `audit.rules.${rule}`,
+        auditRules.rules.includes(rule)
+      );
     }
 
     // Update output settings
     await setConfigValue('audit.output.format', outputSettings.format);
     await setConfigValue('audit.output.verbosity', outputSettings.verbosity);
-    await setConfigValue('audit.output.includeMetrics', outputSettings.includeMetrics);
+    await setConfigValue(
+      'audit.output.includeMetrics',
+      outputSettings.includeMetrics
+    );
 
     spinner.succeed('Audit configuration updated');
     console.log(chalk.green('✅ Audit settings saved successfully'));
@@ -480,7 +532,7 @@ async function configureAudit(): Promise<void> {
  */
 async function configureServer(): Promise<void> {
   const config = await getConfig();
-  
+
   console.log();
   console.log(chalk.cyan.bold('🖥️  Server Configuration'));
   console.log();
@@ -492,9 +544,9 @@ async function configureServer(): Promise<void> {
       message: 'Transport method:',
       choices: [
         { name: 'Standard I/O (recommended)', value: 'stdio' },
-        { name: 'HTTP', value: 'http' }
+        { name: 'HTTP', value: 'http' },
       ],
-      default: config.server.transport
+      default: config.server.transport,
     },
     {
       type: 'number',
@@ -502,15 +554,17 @@ async function configureServer(): Promise<void> {
       message: 'HTTP port (if using HTTP transport):',
       default: config.server.port,
       when: (answers) => answers.transport === 'http',
-      validate: (input) => (input && input >= 1 && input <= 65535) || 'Port must be between 1 and 65535'
+      validate: (input) =>
+        (input && input >= 1 && input <= 65535) ||
+        'Port must be between 1 and 65535',
     },
     {
       type: 'list',
       name: 'logLevel',
       message: 'Log level:',
       choices: ['error', 'warn', 'info', 'debug'],
-      default: config.server.logLevel
-    }
+      default: config.server.logLevel,
+    },
   ]);
 
   const spinner = ora('Updating server configuration...').start();
@@ -521,7 +575,7 @@ async function configureServer(): Promise<void> {
       await setConfigValue('server.port', answers.port);
     }
     await setConfigValue('server.logLevel', answers.logLevel);
-    
+
     spinner.succeed('Server configuration updated');
     console.log(chalk.green('✅ Server settings saved successfully'));
   } catch (error) {
@@ -539,26 +593,26 @@ async function exportConfiguration(): Promise<void> {
   try {
     const configManager = getConfigManager();
     const exported = configManager.exportConfig();
-    
+
     spinner.succeed('Configuration exported');
-    
+
     console.log();
     console.log(chalk.cyan.bold('📤 Configuration Export'));
     console.log();
-    
-    console.log(boxen(
-      JSON.stringify(exported, null, 2),
-      { 
-        padding: 1, 
+
+    console.log(
+      boxen(JSON.stringify(exported, null, 2), {
+        padding: 1,
         borderColor: 'cyan',
         title: 'Configuration Data',
-        titleAlignment: 'center'
-      }
-    ));
-    
+        titleAlignment: 'center',
+      })
+    );
+
     console.log();
-    console.log(chalk.gray('Copy this data to backup or transfer your configuration.'));
-    
+    console.log(
+      chalk.gray('Copy this data to backup or transfer your configuration.')
+    );
   } catch (error) {
     spinner.fail('Failed to export configuration');
     throw error;

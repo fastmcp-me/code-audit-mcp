@@ -7,6 +7,7 @@ A comprehensive TypeScript MCP server that performs intelligent code audits for 
 ## 🚀 Features
 
 ### Multi-Dimensional Code Analysis
+
 - **Security**: OWASP Top 10 vulnerabilities, authentication flaws, injection attacks
 - **Completeness**: TODOs, empty functions, missing error handling, unfinished implementations
 - **Performance**: Algorithmic complexity, memory leaks, optimization opportunities
@@ -16,12 +17,14 @@ A comprehensive TypeScript MCP server that performs intelligent code audits for 
 - **Documentation**: API docs, code comments, compliance standards
 
 ### Intelligent Model Selection
+
 - **Multi-model support**: CodeLlama, DeepSeek-Coder, StarCoder2, Granite-Code, Qwen2.5-Coder
 - **Specialization-based routing**: Different models for different audit types
 - **Fallback strategies**: Automatic model fallback on failures
 - **Performance optimization**: Fast vs. thorough modes
 
 ### Advanced Features
+
 - **Context-aware analysis**: Framework-specific checks (React, Express, Django, etc.)
 - **Priority-based auditing**: Fast mode (security + completeness) for rapid feedback
 - **Language support**: 10+ programming languages with language-specific rules
@@ -68,7 +71,60 @@ npm run build
 npm run test-local
 ```
 
+### 🚀 Development Setup
+
+#### Prerequisites
+
+- **Node.js**: v18.0.0 or higher
+- **npm**: v8.0.0 or higher
+- **Git**: For version control and pre-commit hooks
+- **VS Code**: Recommended IDE (see `.vscode/extensions.json` for extensions)
+
+#### Initial Setup
+
+```bash
+# Clone and enter directory
+git clone https://github.com/warrengates/code-audit-mcp.git
+cd code-audit-mcp
+
+# Install dependencies (includes husky setup)
+npm install
+
+# Build the project
+npm run build
+
+# Run quality checks
+npm run quality-check
+
+# Test the setup
+npm run test-local
+```
+
+#### Pre-commit Hooks
+
+This project uses Husky and lint-staged for automatic code quality checks:
+
+- **ESLint**: Checks code for errors and style issues
+- **Prettier**: Formats code consistently
+- **TypeScript**: Type checks all TypeScript files
+
+Pre-commit hooks run automatically on `git commit`. To manually run quality checks:
+
+```bash
+# Run all quality checks
+npm run quality-check
+
+# Fix auto-fixable issues
+npm run quality-fix
+
+# Individual checks
+npm run lint          # ESLint check
+npm run format:check  # Prettier check
+npm run type-check    # TypeScript check
+```
+
 The setup script will:
+
 1. ✅ Check prerequisites (Node.js, npm, tsx)
 2. 🩺 Verify Ollama installation and health
 3. 📦 Install recommended AI models
@@ -178,6 +234,7 @@ Add to your MCP configuration (e.g., Claude Code):
 ```
 
 **Parameters:**
+
 - `code` (required): Code to audit
 - `language` (required): Programming language
 - `auditType`: `security` | `completeness` | `performance` | `quality` | `architecture` | `testing` | `documentation` | `all`
@@ -198,7 +255,7 @@ Add to your MCP configuration (e.g., Claude Code):
 
 ```json
 {
-  "name": "list_models", 
+  "name": "list_models",
   "arguments": {}
 }
 ```
@@ -217,32 +274,32 @@ const config = {
     host: 'http://localhost:11434',
     timeout: 30000,
     retryAttempts: 3,
-    retryDelay: 1000
+    retryDelay: 1000,
   },
   auditors: {
     security: {
       enabled: true,
       severity: ['critical', 'high', 'medium'],
       rules: {
-        'sql_injection': true,
-        'xss_vulnerability': true,
-        'hardcoded_secret': true
-      }
+        sql_injection: true,
+        xss_vulnerability: true,
+        hardcoded_secret: true,
+      },
     },
     performance: {
       enabled: true,
       severity: ['high', 'medium', 'low'],
       thresholds: {
         cyclomaticComplexity: 10,
-        nestingDepth: 4
-      }
-    }
+        nestingDepth: 4,
+      },
+    },
   },
   logging: {
     level: 'info',
     enableMetrics: true,
-    enableTracing: false
-  }
+    enableTracing: false,
+  },
 };
 ```
 
@@ -267,29 +324,32 @@ Configure model preferences for different scenarios:
 // Performance-critical code
 const performanceConfig = {
   strategy: 'PerformanceModelSelectionStrategy', // Always prefer fast models
-  fallbackModels: ['codellama:7b', 'granite-code:8b']
+  fallbackModels: ['codellama:7b', 'granite-code:8b'],
 };
 
-// Quality-focused analysis  
+// Quality-focused analysis
 const qualityConfig = {
   strategy: 'QualityModelSelectionStrategy', // Always prefer accurate models
-  fallbackModels: ['deepseek-coder:33b', 'codellama:13b']
+  fallbackModels: ['deepseek-coder:33b', 'codellama:13b'],
 };
 ```
 
 ## 🤖 Supported Models
 
 ### Essential Models (Recommended)
+
 - **CodeLlama 7B**: Fast, general-purpose code analysis
 - **Granite Code 8B**: Excellent for security analysis
 
 ### Comprehensive Setup
+
 - **CodeLlama 13B**: Better accuracy for complex analysis
 - **DeepSeek-Coder 6.7B**: Superior performance analysis
 - **StarCoder2 7B**: Specialized for testing analysis
 - **Qwen2.5-Coder 7B**: Good for documentation analysis
 
 ### Full Setup (Advanced)
+
 - **DeepSeek-Coder 33B**: Highest accuracy (requires 16GB+ RAM)
 - **StarCoder2 15B**: Advanced testing and architecture analysis
 - **Llama 3.1 8B**: Excellent for documentation
@@ -316,6 +376,7 @@ ollama pull llama3.1:8b
 ## 🌐 Language Support
 
 ### Fully Supported
+
 - **JavaScript/TypeScript**: React, Node.js, Express-specific checks
 - **Python**: Django, Flask, FastAPI-specific analysis
 - **Java**: Spring Boot, security-focused analysis
@@ -323,6 +384,7 @@ ollama pull llama3.1:8b
 - **Rust**: Memory safety, performance optimization
 
 ### Well Supported
+
 - **C#**: .NET patterns, security analysis
 - **PHP**: Laravel, WordPress security checks
 - **Ruby**: Rails-specific patterns
@@ -330,6 +392,7 @@ ollama pull llama3.1:8b
 - **Kotlin**: Android-specific analysis
 
 ### Basic Support
+
 - **C/C++**: Memory safety, performance
 - **SQL**: Injection detection, query optimization
 - **HTML/CSS**: XSS prevention, performance
@@ -359,7 +422,7 @@ ollama pull llama3.1:8b
     {
       "id": "todo_3",
       "location": { "line": 3 },
-      "severity": "medium", 
+      "severity": "medium",
       "type": "todo_comment",
       "category": "completeness",
       "title": "TODO comment indicates incomplete implementation",
@@ -383,10 +446,18 @@ ollama pull llama3.1:8b
     }
   },
   "suggestions": {
-    "autoFixable": [/* fixable issues */],
-    "priorityFixes": [/* critical/high severity */],
-    "quickWins": [/* low effort, high impact */],
-    "technicalDebt": [/* long-term improvements */]
+    "autoFixable": [
+      /* fixable issues */
+    ],
+    "priorityFixes": [
+      /* critical/high severity */
+    ],
+    "quickWins": [
+      /* low effort, high impact */
+    ],
+    "technicalDebt": [
+      /* long-term improvements */
+    ]
   },
   "metrics": {
     "duration": 1250,
@@ -403,14 +474,16 @@ ollama pull llama3.1:8b
 ## ⚡ Performance Optimization
 
 ### Fast Mode for Rapid Development
+
 ```json
 {
   "auditType": "all",
-  "priority": "fast"  // Only security + completeness
+  "priority": "fast" // Only security + completeness
 }
 ```
 
 ### Context-Aware Analysis
+
 ```json
 {
   "context": {
@@ -423,6 +496,7 @@ ollama pull llama3.1:8b
 ```
 
 ### Caching Configuration
+
 ```typescript
 {
   performance: {
@@ -436,17 +510,20 @@ ollama pull llama3.1:8b
 ## 🔍 Audit Types Deep Dive
 
 ### Security Audit
+
 - **OWASP Top 10 Coverage**: SQL injection, XSS, authentication flaws
 - **Language-specific**: Prototype pollution (JS), pickle usage (Python)
 - **Framework-specific**: CSRF protection (Express), SQL injection (Django)
 
-### Performance Audit  
+### Performance Audit
+
 - **Algorithmic Analysis**: O(n²) detection, nested loop optimization
 - **Memory Management**: Leak detection, object pooling opportunities
 - **Database Optimization**: N+1 queries, missing indexes
 - **Async Patterns**: Blocking operations, Promise handling
 
 ### Quality Audit
+
 - **Code Smells**: Long methods, large classes, duplicate code
 - **SOLID Principles**: SRP, OCP, LSP, ISP, DIP violations
 - **Maintainability**: Cyclomatic complexity, cognitive load
@@ -454,7 +531,47 @@ ollama pull llama3.1:8b
 
 ## 🛠️ Development
 
+### VS Code Setup
+
+This project includes comprehensive VS Code configuration for optimal development experience:
+
+#### Recommended Extensions
+
+Install recommended extensions for the best experience:
+
+```bash
+# Install all recommended extensions
+code --install-extension dbaeumer.vscode-eslint
+code --install-extension esbenp.prettier-vscode
+code --install-extension ms-vscode.vscode-typescript-next
+code --install-extension usernamehw.errorlens
+code --install-extension yoavbls.pretty-ts-errors
+```
+
+Or open VS Code and accept the workspace recommendations popup.
+
+#### Workspace Settings
+
+The `.vscode/settings.json` includes:
+
+- **Auto-formatting**: Format on save with Prettier
+- **Linting**: Real-time ESLint feedback
+- **TypeScript**: Enhanced IntelliSense and error checking
+- **Import management**: Auto-import and path intellisense
+- **Git integration**: Pre-configured for the workflow
+
+#### Debugging
+
+Use the included debug configurations:
+
+1. **Debug Server**: Launch and debug the MCP server
+2. **Debug CLI**: Debug CLI commands
+3. **Debug Tests**: Step through test execution
+
+Press `F5` or use the Debug panel to start debugging.
+
 ### Project Structure
+
 ```
 code-audit-mcp/
 ├── src/
@@ -476,6 +593,12 @@ code-audit-mcp/
 │       └── logger.ts         # Logging utilities
 ├── cli/
 │   └── setup.ts              # Setup script
+├── .vscode/                  # VS Code configuration
+│   ├── settings.json        # Workspace settings
+│   ├── extensions.json      # Recommended extensions
+│   └── launch.json          # Debug configurations
+├── .husky/                   # Git hooks
+│   └── pre-commit           # Pre-commit checks
 └── tests/                    # Test suites
 ```
 
@@ -524,7 +647,7 @@ import { CustomAuditor } from './custom.js';
 
 export const auditorClasses = {
   // ... existing auditors
-  custom: CustomAuditor
+  custom: CustomAuditor,
 };
 ```
 
@@ -536,9 +659,9 @@ const config = {
     custom: {
       enabled: true,
       severity: ['high', 'medium'],
-      rules: {}
-    }
-  }
+      rules: {},
+    },
+  },
 };
 ```
 
@@ -547,6 +670,7 @@ const config = {
 ### Common Issues
 
 #### Ollama Connection Failed
+
 ```bash
 # Check if Ollama is running
 ollama list
@@ -559,6 +683,7 @@ curl http://localhost:11434/api/tags
 ```
 
 #### Model Not Found
+
 ```bash
 # List installed models
 ollama list
@@ -573,6 +698,7 @@ curl -X POST http://localhost:11434/api/generate \
 ```
 
 #### TypeScript Compilation Errors
+
 ```bash
 # Clear build cache
 rm -rf dist/
@@ -587,6 +713,7 @@ npm update
 ```
 
 #### Memory Issues
+
 ```bash
 # Check available memory
 free -h
@@ -605,21 +732,23 @@ ollama pull codellama:7b  # Instead of codellama:34b
 ### Performance Tuning
 
 #### Model Selection Optimization
+
 ```typescript
 // For CI/CD environments - prioritize speed
 const ciConfig = {
   strategy: 'PerformanceModelSelectionStrategy',
-  priority: 'fast'
+  priority: 'fast',
 };
 
-// For code review - prioritize accuracy  
+// For code review - prioritize accuracy
 const reviewConfig = {
   strategy: 'QualityModelSelectionStrategy',
-  priority: 'thorough'
+  priority: 'thorough',
 };
 ```
 
 #### Resource Management
+
 ```typescript
 {
   ollama: {
@@ -640,20 +769,22 @@ const reviewConfig = {
 ### Tool Schemas
 
 #### audit_code
+
 ```typescript
 interface AuditRequest {
-  code: string;                    // Required: Code to audit
-  language: string;                // Required: Programming language
-  auditType: AuditType;           // Optional: Default 'all'
-  file?: string;                  // Optional: File path for context
-  context?: AuditContext;         // Optional: Additional context
+  code: string; // Required: Code to audit
+  language: string; // Required: Programming language
+  auditType: AuditType; // Optional: Default 'all'
+  file?: string; // Optional: File path for context
+  context?: AuditContext; // Optional: Additional context
   priority?: 'fast' | 'thorough'; // Optional: Default 'thorough'
-  maxIssues?: number;             // Optional: Default 50
+  maxIssues?: number; // Optional: Default 50
   includeFixSuggestions?: boolean; // Optional: Default true
 }
 ```
 
 #### Response Format
+
 ```typescript
 interface AuditResult {
   requestId: string;
@@ -670,16 +801,16 @@ interface AuditResult {
 
 ### Error Codes
 
-| Code | Description | Resolution |
-|------|-------------|------------|
-| `INVALID_REQUEST` | Malformed request | Check required parameters |
-| `CODE_TOO_LARGE` | Code exceeds size limit | Split into smaller chunks |
-| `LANGUAGE_NOT_SUPPORTED` | Unsupported language | Use supported language |
-| `NO_AVAILABLE_MODEL` | No suitable model found | Install required models |
-| `OLLAMA_UNAVAILABLE` | Ollama service down | Start Ollama service |
-| `MODEL_NOT_FOUND` | Requested model missing | Pull model with `ollama pull` |
-| `GENERATION_FAILED` | AI generation failed | Check model health, retry |
-| `AUDIT_FAILED` | General audit failure | Check logs, verify configuration |
+| Code                     | Description             | Resolution                       |
+| ------------------------ | ----------------------- | -------------------------------- |
+| `INVALID_REQUEST`        | Malformed request       | Check required parameters        |
+| `CODE_TOO_LARGE`         | Code exceeds size limit | Split into smaller chunks        |
+| `LANGUAGE_NOT_SUPPORTED` | Unsupported language    | Use supported language           |
+| `NO_AVAILABLE_MODEL`     | No suitable model found | Install required models          |
+| `OLLAMA_UNAVAILABLE`     | Ollama service down     | Start Ollama service             |
+| `MODEL_NOT_FOUND`        | Requested model missing | Pull model with `ollama pull`    |
+| `GENERATION_FAILED`      | AI generation failed    | Check model health, retry        |
+| `AUDIT_FAILED`           | General audit failure   | Check logs, verify configuration |
 
 ## 🤝 Contributing
 
@@ -711,6 +842,13 @@ npm test
 - **Prettier**: Automated formatting
 - **Testing**: Jest with >80% coverage
 - **Documentation**: JSDoc for all public APIs
+
+### 📚 Development Documentation
+
+- **[Contributing Guidelines](CONTRIBUTING.md)**: How to contribute to the project
+- **[VS Code Setup](docs/VSCODE-SETUP.md)**: Optimal IDE configuration
+- **[Pre-commit Hooks](docs/PRE-COMMIT-HOOKS.md)**: Automated quality checks
+- **[Troubleshooting](docs/TROUBLESHOOTING.md)**: Solutions to common issues
 
 ## 📄 License
 

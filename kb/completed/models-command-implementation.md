@@ -7,14 +7,16 @@ The `models` command provides comprehensive AI model management functionality fo
 ## Implementation Files
 
 ### Main Command File
+
 - **File**: `/src/cli/commands/models.ts`
 - **Purpose**: Main command implementation with all subcommand handlers
-- **Dependencies**: 
+- **Dependencies**:
   - Ollama utility functions
   - CLI libraries (chalk, ora, boxen, cli-table3, inquirer)
   - Configuration management
 
 ### Utility Functions
+
 - **File**: `/src/cli/utils/ollama.ts`
 - **Purpose**: Ollama API wrapper functions for model management
 - **Key Functions**:
@@ -28,47 +30,61 @@ The `models` command provides comprehensive AI model management functionality fo
 ## Command Options
 
 ### `--list`
+
 Lists all installed models with detailed information in a formatted table.
+
 - Shows model name, size, health status, specialization, performance metrics
 - Displays summary statistics
 - JSON output support
 
 ### `--pull <model>`
+
 Downloads a specific model with real-time progress tracking.
+
 - Validates model compatibility before download
 - Shows progress with ora spinner
 - Prevents duplicate downloads
 - Displays model information after successful download
 
 ### `--remove <model>`
+
 Removes a specific model with safety confirmation.
+
 - Confirms model exists before removal
 - Interactive confirmation prompt (skipped in JSON mode)
 - Safe error handling
 
 ### `--update`
+
 Updates all installed models to latest versions.
+
 - Fetches list of installed models
 - Sequentially updates each model
 - Reports success/failure for each model
 - Progress tracking with spinners
 
 ### `--recommend`
+
 Analyzes system specifications and recommends optimal models.
+
 - Detects system memory and architecture
 - Categorizes models as essential/recommended/optional
 - Provides installation commands
 - Memory usage estimates
 
 ### `--health`
+
 Performs comprehensive health checks on all models.
+
 - Tests each model with a simple prompt
 - Reports detailed health status
 - Shows last tested timestamps
 - Provides health summary statistics
 
 ### Default (no options)
+
 Shows a summary overview of the current model status.
+
 - Installed model count
 - Missing essential models
 - Available command list
@@ -77,22 +93,26 @@ Shows a summary overview of the current model status.
 ## Key Features
 
 ### Progress Tracking
+
 - Real-time download progress with ora spinners
 - Percentage completion for model downloads
 - Status updates during operations
 
 ### Error Handling
+
 - Comprehensive error catching and reporting
 - Network error handling
 - Disk space validation
 - Model compatibility checks
 
 ### System Integration
+
 - Reads Ollama host from configuration
 - Validates Ollama service availability
 - System memory and architecture detection
 
 ### User Experience
+
 - Colorized output with chalk
 - Formatted tables with cli-table3
 - Boxed summaries with boxen
@@ -100,6 +120,7 @@ Shows a summary overview of the current model status.
 - JSON output mode for scripting
 
 ### Model Management
+
 - Essential model auto-detection
 - Model specialization tracking
 - Performance metrics display
@@ -109,33 +130,40 @@ Shows a summary overview of the current model status.
 ## Model Categories
 
 ### Essential Models
+
 - `codellama:7b` - Fast general purpose
 - `granite-code:8b` - Security analysis
 
 ### Recommended Models (8GB+ RAM)
+
 - `deepseek-coder:6.7b` - Performance analysis
 - `starcoder2:7b` - Testing analysis
 - `qwen2.5-coder:7b` - Documentation analysis
 
 ### Optional Models (16GB+ RAM)
+
 - `codellama:13b` - Higher accuracy
 - `starcoder2:15b` - Advanced testing
 
 ### High-end Models (32GB+ RAM)
+
 - `deepseek-coder:33b` - Maximum accuracy
 
 ## Integration Points
 
 ### Configuration
+
 - Uses `getConfig()` to get Ollama host settings
 - Respects user configuration preferences
 
 ### Health System
+
 - Integrates with existing health check infrastructure
 - Provides model-specific health status
 - Used by other commands for model availability
 
 ### CLI Framework
+
 - Follows existing command patterns
 - Consistent error handling and output formatting
 - JSON mode support for automation
@@ -169,6 +197,7 @@ code-audit models
 ## Dependencies Added
 
 ### Runtime Dependencies
+
 - `cli-table3` - Table formatting
 - `inquirer` - Interactive prompts
 - `chalk` - Terminal colors (existing)
@@ -176,6 +205,7 @@ code-audit models
 - `boxen` - Boxed output (existing)
 
 ### Model Configuration
+
 - Integrates with `/src/server/ollama/models.ts` for model specifications
 - Uses existing model configurations and priorities
 - Leverages specialization mappings

@@ -2,7 +2,7 @@
  * Base auditor abstract class with common functionality
  */
 import { randomUUID } from 'crypto';
-import { generatePrompt, generateFastModePrompt } from '../ollama/prompts.js';
+import { generatePrompt, generateFastModePrompt, } from '../ollama/prompts.js';
 export class BaseAuditor {
     auditType;
     config;
@@ -40,7 +40,7 @@ export class BaseAuditor {
                 language,
                 auditType: this.auditType,
                 context: request.context,
-                codeMetrics
+                codeMetrics,
             };
             const prompt = request.priority === 'fast'
                 ? generateFastModePrompt(promptContext)
@@ -51,7 +51,7 @@ export class BaseAuditor {
                 model,
                 prompt,
                 temperature: this.getTemperature(),
-                max_tokens: this.getMaxTokens()
+                max_tokens: this.getMaxTokens(),
             });
             const aiEndTime = Date.now();
             // Parse and validate AI response
@@ -67,7 +67,9 @@ export class BaseAuditor {
         }
         catch (error) {
             console.error(`Audit failed for ${this.auditType}:`, error);
-            throw error instanceof Error ? error : this.createError('AUDIT_FAILED', 'Unknown audit error');
+            throw error instanceof Error
+                ? error
+                : this.createError('AUDIT_FAILED', 'Unknown audit error');
         }
     }
     /**
@@ -122,7 +124,7 @@ export class BaseAuditor {
             /def\s+\w+/g, // Python functions
             /\w+\s*\([^)]*\)\s*{/g, // C-style functions
             /fn\s+\w+/g, // Rust functions
-            /func\s+\w+/g // Go functions
+            /func\s+\w+/g, // Go functions
         ];
         let functionCount = 0;
         for (const pattern of functionPatterns) {
@@ -139,7 +141,7 @@ export class BaseAuditor {
             /\bfor\b/g,
             /\bswitch\b/g,
             /\btry\b/g,
-            /\bcatch\b/g
+            /\bcatch\b/g,
         ];
         let complexity = 1; // Base complexity
         for (const pattern of complexityPatterns) {
@@ -151,7 +153,7 @@ export class BaseAuditor {
         return {
             lineCount,
             functionCount,
-            complexity: Math.round(complexity / Math.max(functionCount, 1))
+            complexity: Math.round(complexity / Math.max(functionCount, 1)),
         };
     }
     /**
@@ -217,7 +219,7 @@ export class BaseAuditor {
                     title: 'Issue detected (parsing fallback)',
                     description: line.trim(),
                     confidence: 0.3,
-                    fixable: false
+                    fixable: false,
                 });
             }
         }
@@ -265,7 +267,7 @@ export class BaseAuditor {
                 line,
                 column: raw.location.column,
                 endLine: raw.location.endLine,
-                endColumn: raw.location.endColumn
+                endColumn: raw.location.endColumn,
             },
             severity,
             type: raw.type || 'unknown',
@@ -279,14 +281,20 @@ export class BaseAuditor {
             ruleId: raw.ruleId,
             documentation: raw.documentation,
             impact: raw.impact,
-            effort: raw.effort || 'medium'
+            effort: raw.effort || 'medium',
         };
     }
     /**
      * Normalize severity to valid values
      */
     normalizeSeverity(severity) {
-        const validSeverities = ['critical', 'high', 'medium', 'low', 'info'];
+        const validSeverities = [
+            'critical',
+            'high',
+            'medium',
+            'low',
+            'info',
+        ];
         const normalized = severity?.toLowerCase();
         return validSeverities.includes(normalized) ? normalized : 'medium';
     }
@@ -306,10 +314,10 @@ export class BaseAuditor {
         let filtered = issues;
         // Filter by severity
         if (this.config.severity.length > 0) {
-            filtered = filtered.filter(issue => this.config.severity.includes(issue.severity));
+            filtered = filtered.filter((issue) => this.config.severity.includes(issue.severity));
         }
         // Filter by enabled rules
-        filtered = filtered.filter(issue => {
+        filtered = filtered.filter((issue) => {
             const ruleId = issue.ruleId || issue.type;
             return this.config.rules[ruleId] !== false;
         });
@@ -328,7 +336,7 @@ export class BaseAuditor {
             high: 1,
             medium: 2,
             low: 3,
-            info: 4
+            info: 4,
         };
         return issues.sort((a, b) => {
             // First by severity
@@ -356,11 +364,11 @@ export class BaseAuditor {
                 duration: totalDuration,
                 modelResponseTime: aiResponseTime,
                 parsingTime: totalDuration - aiResponseTime,
-                postProcessingTime: Math.max(0, totalDuration - aiResponseTime - 100)
+                postProcessingTime: Math.max(0, totalDuration - aiResponseTime - 100),
             },
             model,
             timestamp: new Date().toISOString(),
-            version: '1.0.0'
+            version: '1.0.0',
         };
     }
     /**
@@ -375,11 +383,12 @@ export class BaseAuditor {
             low: 0,
             info: 0,
             byCategory: {},
-            byType: {}
+            byType: {},
         };
         for (const issue of issues) {
             summary[issue.severity]++;
-            summary.byCategory[issue.category] = (summary.byCategory[issue.category] || 0) + 1;
+            summary.byCategory[issue.category] =
+                (summary.byCategory[issue.category] || 0) + 1;
             summary.byType[issue.type] = (summary.byType[issue.type] || 0) + 1;
         }
         return summary;
@@ -392,7 +401,7 @@ export class BaseAuditor {
             linesAnalyzed: codeMetrics.lineCount,
             functionsAnalyzed: codeMetrics.functionCount,
             classesAnalyzed: 0, // Could be implemented with better parsing
-            complexity: codeMetrics.complexity
+            complexity: codeMetrics.complexity,
         };
     }
     /**
@@ -400,10 +409,11 @@ export class BaseAuditor {
      */
     createSuggestions(issues) {
         return {
-            autoFixable: issues.filter(issue => issue.fixable),
-            priorityFixes: issues.filter(issue => issue.severity === 'critical' || issue.severity === 'high'),
-            quickWins: issues.filter(issue => issue.effort === 'low' && (issue.severity === 'medium' || issue.severity === 'high')),
-            technicalDebt: issues.filter(issue => issue.category === 'quality' || issue.category === 'architecture')
+            autoFixable: issues.filter((issue) => issue.fixable),
+            priorityFixes: issues.filter((issue) => issue.severity === 'critical' || issue.severity === 'high'),
+            quickWins: issues.filter((issue) => issue.effort === 'low' &&
+                (issue.severity === 'medium' || issue.severity === 'high')),
+            technicalDebt: issues.filter((issue) => issue.category === 'quality' || issue.category === 'architecture'),
         };
     }
     /**
@@ -421,29 +431,29 @@ export class BaseAuditor {
                 low: 0,
                 info: 0,
                 byCategory: {},
-                byType: {}
+                byType: {},
             },
             coverage: {
                 linesAnalyzed: 0,
                 functionsAnalyzed: 0,
                 classesAnalyzed: 0,
-                complexity: 0
+                complexity: 0,
             },
             suggestions: {
                 autoFixable: [],
                 priorityFixes: [],
                 quickWins: [],
-                technicalDebt: []
+                technicalDebt: [],
             },
             metrics: {
                 duration: Date.now() - startTime,
                 modelResponseTime: 0,
                 parsingTime: 0,
-                postProcessingTime: 0
+                postProcessingTime: 0,
             },
             model: 'none',
             timestamp: new Date().toISOString(),
-            version: '1.0.0'
+            version: '1.0.0',
         };
     }
     /**
@@ -455,7 +465,7 @@ export class BaseAuditor {
             message,
             details,
             recoverable: true,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
         };
     }
     /**

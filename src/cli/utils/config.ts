@@ -66,8 +66,8 @@ const DEFAULT_CONFIG: ConfigSchema = {
     timeout: 30000,
     models: {
       primary: 'codellama:7b',
-      fallback: ['granite-code:8b', 'qwen2.5-coder:7b']
-    }
+      fallback: ['granite-code:8b', 'qwen2.5-coder:7b'],
+    },
   },
   audit: {
     rules: {
@@ -77,12 +77,12 @@ const DEFAULT_CONFIG: ConfigSchema = {
       documentation: true,
       testing: true,
       architecture: true,
-      completeness: true
+      completeness: true,
     },
     output: {
       format: 'json',
       includeMetrics: true,
-      verbosity: 'normal'
+      verbosity: 'normal',
     },
     filters: {
       excludePatterns: [
@@ -92,7 +92,7 @@ const DEFAULT_CONFIG: ConfigSchema = {
         '**/*.min.js',
         '**/*.d.ts',
         'coverage/**',
-        '.git/**'
+        '.git/**',
       ],
       includePatterns: [
         '**/*.ts',
@@ -102,25 +102,25 @@ const DEFAULT_CONFIG: ConfigSchema = {
         '**/*.py',
         '**/*.java',
         '**/*.go',
-        '**/*.rs'
+        '**/*.rs',
       ],
-      maxFileSize: 1048576 // 1MB
-    }
+      maxFileSize: 1048576, // 1MB
+    },
   },
   server: {
     port: 3000,
     transport: 'stdio',
-    logLevel: 'info'
+    logLevel: 'info',
   },
   updates: {
     checkInterval: 86400000, // 24 hours
     autoUpdate: false,
-    prerelease: false
+    prerelease: false,
   },
   telemetry: {
     enabled: false,
-    anonymousId: ''
-  }
+    anonymousId: '',
+  },
 };
 
 /**
@@ -140,7 +140,7 @@ class ConfigManager {
       defaults: DEFAULT_CONFIG,
       configName: 'config',
       configFileMode: 0o600, // Secure file permissions
-      serialize: (value) => JSON.stringify(value, null, 2)
+      serialize: (value) => JSON.stringify(value, null, 2),
       // Note: schema validation disabled for now due to complexity
     });
 
@@ -164,12 +164,12 @@ class ConfigManager {
               type: 'object',
               properties: {
                 primary: { type: 'string' },
-                fallback: { type: 'array', items: { type: 'string' } }
+                fallback: { type: 'array', items: { type: 'string' } },
               },
-              required: ['primary', 'fallback']
-            }
+              required: ['primary', 'fallback'],
+            },
           },
-          required: ['host', 'timeout', 'models']
+          required: ['host', 'timeout', 'models'],
         },
         audit: {
           type: 'object',
@@ -183,13 +183,21 @@ class ConfigManager {
                 documentation: { type: 'boolean' },
                 testing: { type: 'boolean' },
                 architecture: { type: 'boolean' },
-                completeness: { type: 'boolean' }
+                completeness: { type: 'boolean' },
               },
-              required: ['security', 'performance', 'quality', 'documentation', 'testing', 'architecture', 'completeness']
-            }
-          }
-        }
-      }
+              required: [
+                'security',
+                'performance',
+                'quality',
+                'documentation',
+                'testing',
+                'architecture',
+                'completeness',
+              ],
+            },
+          },
+        },
+      },
     };
   }
 
@@ -198,7 +206,7 @@ class ConfigManager {
    */
   private initializeGlobalConfig(): void {
     const configDir = join(homedir(), '.code-audit');
-    
+
     if (!existsSync(configDir)) {
       mkdirSync(configDir, { recursive: true, mode: 0o755 });
     }
@@ -214,8 +222,11 @@ class ConfigManager {
    * Generate anonymous telemetry ID
    */
   private generateAnonymousId(): string {
-    return 'audit_' + Math.random().toString(36).substring(2, 15) + 
-           Math.random().toString(36).substring(2, 15);
+    return (
+      'audit_' +
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15)
+    );
   }
 
   /**
@@ -226,7 +237,7 @@ class ConfigManager {
     const possiblePaths = [
       join(cwd, '.code-audit.json'),
       join(cwd, '.code-audit', 'config.json'),
-      join(cwd, 'package.json') // Check for config in package.json
+      join(cwd, 'package.json'), // Check for config in package.json
     ];
 
     for (const configPath of possiblePaths) {
@@ -258,7 +269,7 @@ class ConfigManager {
    */
   public getConfig(): ConfigSchema {
     const globalConfig = this.globalConfig.store;
-    
+
     if (this.projectConfig) {
       return this.mergeConfigs(globalConfig, this.projectConfig);
     }
@@ -284,14 +295,18 @@ class ConfigManager {
       this.setNestedValue(this.globalConfig.store, key, value);
       this.globalConfig.store = { ...this.globalConfig.store };
     } else {
-      throw new Error('Project-specific configuration setting not yet implemented');
+      throw new Error(
+        'Project-specific configuration setting not yet implemented'
+      );
     }
   }
 
   /**
    * Reset configuration to defaults
    */
-  public async reset(confirmCallback?: () => Promise<boolean>): Promise<boolean> {
+  public async reset(
+    confirmCallback?: () => Promise<boolean>
+  ): Promise<boolean> {
     if (confirmCallback && !(await confirmCallback())) {
       return false;
     }
@@ -308,7 +323,7 @@ class ConfigManager {
   public getConfigPaths(): { global: string; project?: string } {
     return {
       global: this.globalConfig.path,
-      ...(this.projectConfigPath && { project: this.projectConfigPath })
+      ...(this.projectConfigPath && { project: this.projectConfigPath }),
     };
   }
 
@@ -320,11 +335,15 @@ class ConfigManager {
     const validations: Record<string, (val: any) => boolean> = {
       'ollama.host': (val) => typeof val === 'string' && val.length > 0,
       'ollama.timeout': (val) => typeof val === 'number' && val >= 1000,
-      'audit.output.format': (val) => ['json', 'markdown', 'html'].includes(val),
-      'audit.output.verbosity': (val) => ['minimal', 'normal', 'detailed'].includes(val),
+      'audit.output.format': (val) =>
+        ['json', 'markdown', 'html'].includes(val),
+      'audit.output.verbosity': (val) =>
+        ['minimal', 'normal', 'detailed'].includes(val),
       'server.transport': (val) => ['stdio', 'http'].includes(val),
-      'server.logLevel': (val) => ['error', 'warn', 'info', 'debug'].includes(val),
-      'server.port': (val) => typeof val === 'number' && val >= 1 && val <= 65535,
+      'server.logLevel': (val) =>
+        ['error', 'warn', 'info', 'debug'].includes(val),
+      'server.port': (val) =>
+        typeof val === 'number' && val >= 1 && val <= 65535,
     };
 
     const validator = validations[key];
@@ -336,14 +355,21 @@ class ConfigManager {
   /**
    * Merge configurations with deep merge
    */
-  private mergeConfigs(global: ConfigSchema, project: Partial<ConfigSchema>): ConfigSchema {
+  private mergeConfigs(
+    global: ConfigSchema,
+    project: Partial<ConfigSchema>
+  ): ConfigSchema {
     const result = { ...global };
 
     for (const [key, value] of Object.entries(project)) {
-      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      if (
+        typeof value === 'object' &&
+        value !== null &&
+        !Array.isArray(value)
+      ) {
         result[key as keyof ConfigSchema] = {
           ...(result[key as keyof ConfigSchema] as any),
-          ...value
+          ...value,
         };
       } else {
         (result as any)[key] = value;
@@ -372,7 +398,7 @@ class ConfigManager {
       }
       return current[key];
     }, obj);
-    
+
     target[lastKey] = value;
   }
 
@@ -381,7 +407,7 @@ class ConfigManager {
    */
   public async migrateConfig(): Promise<boolean> {
     const currentVersion = this.globalConfig.get('$version') || '1.0.0';
-    
+
     if (currentVersion === this.configVersion) {
       return false; // No migration needed
     }
@@ -394,21 +420,30 @@ class ConfigManager {
   /**
    * Export configuration for backup
    */
-  public exportConfig(): { global: ConfigSchema; project?: Partial<ConfigSchema> } {
+  public exportConfig(): {
+    global: ConfigSchema;
+    project?: Partial<ConfigSchema>;
+  } {
     return {
       global: this.globalConfig.store,
-      ...(this.projectConfig && { project: this.projectConfig })
+      ...(this.projectConfig && { project: this.projectConfig }),
     };
   }
 
   /**
    * Import configuration from backup
    */
-  public importConfig(config: { global: ConfigSchema; project?: Partial<ConfigSchema> }): void {
+  public importConfig(config: {
+    global: ConfigSchema;
+    project?: Partial<ConfigSchema>;
+  }): void {
     this.globalConfig.store = config.global;
-    
+
     if (config.project && this.projectConfigPath) {
-      writeFileSync(this.projectConfigPath, JSON.stringify(config.project, null, 2));
+      writeFileSync(
+        this.projectConfigPath,
+        JSON.stringify(config.project, null, 2)
+      );
       this.projectConfig = config.project;
     }
   }
@@ -435,17 +470,21 @@ class ConfigManager {
         errors.push('ollama.timeout must be at least 1000ms');
       }
 
-      if (config.server?.port && (config.server.port < 1 || config.server.port > 65535)) {
+      if (
+        config.server?.port &&
+        (config.server.port < 1 || config.server.port > 65535)
+      ) {
         errors.push('server.port must be between 1 and 65535');
       }
-
     } catch (error) {
-      errors.push(`Configuration validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      errors.push(
+        `Configuration validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 }
@@ -480,14 +519,20 @@ export async function getConfigValue<T>(key: string): Promise<T | undefined> {
 /**
  * Set configuration value
  */
-export async function setConfigValue(key: string, value: any, isGlobal: boolean = true): Promise<void> {
+export async function setConfigValue(
+  key: string,
+  value: any,
+  isGlobal: boolean = true
+): Promise<void> {
   return getConfigManager().set(key, value, isGlobal);
 }
 
 /**
  * Reset configuration to defaults
  */
-export async function resetConfig(confirmCallback?: () => Promise<boolean>): Promise<boolean> {
+export async function resetConfig(
+  confirmCallback?: () => Promise<boolean>
+): Promise<boolean> {
   return getConfigManager().reset(confirmCallback);
 }
 

@@ -11,6 +11,7 @@ Create GitHub Actions workflow to automate the publishing process for `@moikas/c
 ## 🎯 Requirements
 
 ### Core Workflow Features
+
 - ✅ **Trigger on v4+ tags** - Workflow activates on version tags starting with v4
 - ✅ **Build and test** - Run complete test suite before publishing
 - ✅ **Artifact creation** - Generate and store build artifacts
@@ -19,6 +20,7 @@ Create GitHub Actions workflow to automate the publishing process for `@moikas/c
 - ✅ **Multi-platform** - Test on multiple Node.js versions and OS
 
 ### Workflow Configuration
+
 - **Trigger:** Git tags matching `v4.*`
 - **Package Name:** `@moikas/code-audit-mcp`
 - **Registry:** npm (npmjs.org)
@@ -29,22 +31,26 @@ Create GitHub Actions workflow to automate the publishing process for `@moikas/c
 ## 🔧 Implementation Tasks
 
 ### 1. GitHub Actions Workflow File
+
 - [ ] Create `.github/workflows/publish.yml`
 - [ ] Configure trigger on v4+ tags
 - [ ] Set up Node.js matrix testing
 - [ ] Add npm publishing step
 
 ### 2. Security Configuration
+
 - [ ] Document required GitHub secrets
 - [ ] Set up NPM_TOKEN secret
 - [ ] Configure package access permissions
 
 ### 3. Testing Integration
+
 - [ ] Run local test suite in CI
 - [ ] Validate package creation
 - [ ] Ensure cross-platform compatibility
 
 ### 4. Artifact Management
+
 - [ ] Store build artifacts
 - [ ] Generate release notes
 - [ ] Create GitHub release
@@ -54,9 +60,10 @@ Create GitHub Actions workflow to automate the publishing process for `@moikas/c
 The following secrets need to be configured in the GitHub repository:
 
 ### NPM_TOKEN
+
 - **Description:** NPM authentication token for publishing
 - **Scope:** Publish access to `@moikas` organization
-- **Setup:** 
+- **Setup:**
   1. Create token at https://www.npmjs.com/settings/tokens
   2. Select "Automation" token type
   3. Grant publish access to `@moikas` organization
@@ -66,7 +73,7 @@ The following secrets need to be configured in the GitHub repository:
 
 1. **Tag Creation:** Developer creates tag like `v4.0.0`
 2. **Workflow Trigger:** GitHub Actions detects tag and starts workflow
-3. **Multi-platform Testing:** 
+3. **Multi-platform Testing:**
    - Test on Node 18, 20, 22
    - Test on Ubuntu, Windows, macOS
    - Run full test suite

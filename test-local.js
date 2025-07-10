@@ -22,28 +22,28 @@ const tests = [
   {
     name: 'CLI Entry Point',
     command: 'node bin/code-audit.js --version',
-    description: 'Test CLI entry point'
+    description: 'Test CLI entry point',
   },
   {
     name: 'Help Command',
     command: 'node bin/code-audit.js --help',
-    description: 'Test help output'
+    description: 'Test help output',
   },
   {
     name: 'Health Check',
     command: 'node bin/code-audit.js health --json',
-    description: 'Test health check command'
+    description: 'Test health check command',
   },
   {
     name: 'Configuration',
     command: 'node bin/code-audit.js config --show',
-    description: 'Test configuration display'
+    description: 'Test configuration display',
   },
   {
     name: 'Models List',
     command: 'node bin/code-audit.js models --list',
-    description: 'Test model listing'
-  }
+    description: 'Test model listing',
+  },
 ];
 
 /**
@@ -52,26 +52,28 @@ const tests = [
 async function runTest(test) {
   const spinner = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏';
   let frame = 0;
-  
+
   const interval = setInterval(() => {
     process.stdout.write(`\r${chalk.yellow(spinner[frame])} ${test.name}...`);
     frame = (frame + 1) % spinner.length;
   }, 100);
 
   try {
-    const output = execSync(test.command, { 
-      encoding: 'utf8', 
+    const output = execSync(test.command, {
+      encoding: 'utf8',
       timeout: 30000,
-      stdio: 'pipe'
+      stdio: 'pipe',
     });
-    
+
     clearInterval(interval);
     console.log(`\r${chalk.green('✓')} ${test.name}`);
-    
+
     if (process.env.VERBOSE) {
-      console.log(chalk.gray(`  Output: ${output.trim().substring(0, 100)}...`));
+      console.log(
+        chalk.gray(`  Output: ${output.trim().substring(0, 100)}...`)
+      );
     }
-    
+
     return { success: true, output };
   } catch (error) {
     clearInterval(interval);
@@ -86,7 +88,7 @@ async function runTest(test) {
  */
 async function testPackaging() {
   console.log(chalk.yellow('\n📦 Testing Package Creation'));
-  
+
   try {
     // Clean up any existing package
     const tarballName = `code-audit-mcp-${packageJson.version}.tgz`;
@@ -97,17 +99,17 @@ async function testPackaging() {
     // Create package
     console.log(chalk.gray('Creating npm package...'));
     execSync('npm pack', { stdio: 'pipe' });
-    
+
     if (existsSync(tarballName)) {
       console.log(chalk.green('✓ Package created successfully'));
       console.log(chalk.gray(`  File: ${tarballName}`));
-      
+
       // Get package size
       const { statSync } = await import('fs');
       const stats = statSync(tarballName);
       const sizeKB = Math.round(stats.size / 1024);
       console.log(chalk.gray(`  Size: ${sizeKB} KB`));
-      
+
       return true;
     } else {
       console.log(chalk.red('✗ Package creation failed'));
@@ -125,7 +127,7 @@ async function testPackaging() {
  */
 async function testAudit() {
   console.log(chalk.yellow('\n🔍 Testing Audit Functionality'));
-  
+
   const testCode = `
 function processPayment(amount) {
   const query = \`SELECT * FROM users WHERE id = \${userId}\`;
@@ -147,17 +149,17 @@ function processPayment(amount) {
         code: testCode,
         language: 'javascript',
         auditType: 'all',
-        priority: 'fast'
-      }
-    }
+        priority: 'fast',
+      },
+    },
   };
 
   try {
     // Test if we can at least start the server
     console.log(chalk.gray('Testing server startup...'));
-    
+
     const child = spawn('npx', ['tsx', 'src/server/index.ts'], {
-      stdio: 'pipe'
+      stdio: 'pipe',
     });
 
     // Send test request
@@ -192,11 +194,13 @@ function processPayment(amount) {
     });
 
     console.log(chalk.green('✓ Server responds to audit requests'));
-    
+
     if (process.env.VERBOSE) {
-      console.log(chalk.gray(`  Response: ${response.toString().substring(0, 200)}...`));
+      console.log(
+        chalk.gray(`  Response: ${response.toString().substring(0, 200)}...`)
+      );
     }
-    
+
     return true;
   } catch (error) {
     console.log(chalk.red('✗ Audit functionality test failed'));
@@ -210,10 +214,10 @@ function processPayment(amount) {
  */
 async function runTests() {
   console.log(chalk.blue('🔧 Running CLI Tests\n'));
-  
+
   let passed = 0;
   let failed = 0;
-  
+
   for (const test of tests) {
     const result = await runTest(test);
     if (result.success) {
@@ -222,28 +226,38 @@ async function runTests() {
       failed++;
     }
   }
-  
+
   console.log(chalk.blue('\n📦 Package Tests'));
   const packageResult = await testPackaging();
-  if (packageResult) passed++; else failed++;
-  
+  if (packageResult) passed++;
+  else failed++;
+
   console.log(chalk.blue('\n🔍 Functionality Tests'));
   const auditResult = await testAudit();
-  if (auditResult) passed++; else failed++;
-  
+  if (auditResult) passed++;
+  else failed++;
+
   // Summary
   console.log(chalk.blue.bold('\n📊 Test Summary'));
   console.log(`${chalk.green('✓')} Passed: ${passed}`);
   console.log(`${chalk.red('✗')} Failed: ${failed}`);
-  
+
   if (failed === 0) {
-    console.log(chalk.green.bold('\n🎉 All tests passed! Package is ready for publishing.'));
+    console.log(
+      chalk.green.bold(
+        '\n🎉 All tests passed! Package is ready for publishing.'
+      )
+    );
     console.log(chalk.gray('Next steps:'));
     console.log(chalk.gray('  1. npm publish'));
     console.log(chalk.gray('  2. npm install -g code-audit-mcp'));
     console.log(chalk.gray('  3. code-audit setup'));
   } else {
-    console.log(chalk.red.bold('\n❌ Some tests failed. Please fix issues before publishing.'));
+    console.log(
+      chalk.red.bold(
+        '\n❌ Some tests failed. Please fix issues before publishing.'
+      )
+    );
     process.exit(1);
   }
 }
@@ -254,7 +268,7 @@ if (process.argv.includes('--verbose')) {
 }
 
 // Run the tests
-runTests().catch(error => {
+runTests().catch((error) => {
   console.error(chalk.red.bold('\n💥 Test runner crashed:'), error);
   process.exit(1);
 });

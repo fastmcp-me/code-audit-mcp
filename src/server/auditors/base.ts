@@ -3,10 +3,10 @@
  */
 
 import { randomUUID } from 'crypto';
-import type { 
-  AuditRequest, 
-  AuditResult, 
-  AuditIssue, 
+import type {
+  AuditRequest,
+  AuditResult,
+  AuditIssue,
   AuditorConfig,
   AuditError,
   AuditType,
@@ -15,11 +15,15 @@ import type {
   AuditCoverage,
   AuditSuggestions,
   AuditMetrics,
-  PromptContext
+  PromptContext,
 } from '../types.js';
 import type { OllamaClient } from '../ollama/client.js';
 import { ModelManager } from '../ollama/models.js';
-import { generatePrompt, generateFastModePrompt, getSeverityGuidelines } from '../ollama/prompts.js';
+import {
+  generatePrompt,
+  generateFastModePrompt,
+  getSeverityGuidelines,
+} from '../ollama/prompts.js';
 
 export abstract class BaseAuditor {
   protected auditType: AuditType;
@@ -56,11 +60,14 @@ export abstract class BaseAuditor {
       // Detect language and prepare context
       const language = this.detectLanguage(request.code, request.language);
       const codeMetrics = await this.analyzeCodeMetrics(request.code, language);
-      
+
       // Select appropriate model
       const model = this.selectModel(request, language);
       if (!model) {
-        throw this.createError('NO_AVAILABLE_MODEL', 'No suitable model available for audit');
+        throw this.createError(
+          'NO_AVAILABLE_MODEL',
+          'No suitable model available for audit'
+        );
       }
 
       // Generate audit prompt
@@ -69,12 +76,13 @@ export abstract class BaseAuditor {
         language,
         auditType: this.auditType,
         context: request.context,
-        codeMetrics
+        codeMetrics,
       };
 
-      const prompt = request.priority === 'fast' 
-        ? generateFastModePrompt(promptContext)
-        : generatePrompt(promptContext);
+      const prompt =
+        request.priority === 'fast'
+          ? generateFastModePrompt(promptContext)
+          : generatePrompt(promptContext);
 
       // Perform AI analysis
       const aiStartTime = Date.now();
@@ -82,16 +90,16 @@ export abstract class BaseAuditor {
         model,
         prompt,
         temperature: this.getTemperature(),
-        max_tokens: this.getMaxTokens()
+        max_tokens: this.getMaxTokens(),
       });
       const aiEndTime = Date.now();
 
       // Parse and validate AI response
       const rawIssues = await this.parseAIResponse(aiResponse.response);
-      
+
       // Post-process issues
       const issues = await this.postProcessIssues(rawIssues, request, language);
-      
+
       // Filter and sort issues
       const filteredIssues = this.filterIssues(issues, request);
       const sortedIssues = this.sortIssues(filteredIssues);
@@ -107,10 +115,11 @@ export abstract class BaseAuditor {
       );
 
       return result;
-
     } catch (error) {
       console.error(`Audit failed for ${this.auditType}:`, error);
-      throw error instanceof Error ? error : this.createError('AUDIT_FAILED', 'Unknown audit error');
+      throw error instanceof Error
+        ? error
+        : this.createError('AUDIT_FAILED', 'Unknown audit error');
     }
   }
 
@@ -119,7 +128,10 @@ export abstract class BaseAuditor {
    */
   protected validateRequest(request: AuditRequest): void {
     if (!request.code?.trim()) {
-      throw this.createError('INVALID_REQUEST', 'Code is required and cannot be empty');
+      throw this.createError(
+        'INVALID_REQUEST',
+        'Code is required and cannot be empty'
+      );
     }
 
     if (!request.language?.trim()) {
@@ -127,7 +139,10 @@ export abstract class BaseAuditor {
     }
 
     if (request.code.length > 50000) {
-      throw this.createError('CODE_TOO_LARGE', 'Code exceeds maximum size limit (50KB)');
+      throw this.createError(
+        'CODE_TOO_LARGE',
+        'Code exceeds maximum size limit (50KB)'
+      );
     }
   }
 
@@ -165,7 +180,10 @@ export abstract class BaseAuditor {
   /**
    * Analyze basic code metrics
    */
-  protected async analyzeCodeMetrics(code: string, language: string): Promise<{
+  protected async analyzeCodeMetrics(
+    code: string,
+    language: string
+  ): Promise<{
     lineCount: number;
     functionCount: number;
     complexity: number;
@@ -175,11 +193,11 @@ export abstract class BaseAuditor {
 
     // Simple function counting (language-agnostic)
     const functionPatterns = [
-      /function\s+\w+/g,     // JavaScript/TypeScript functions
-      /def\s+\w+/g,          // Python functions
+      /function\s+\w+/g, // JavaScript/TypeScript functions
+      /def\s+\w+/g, // Python functions
       /\w+\s*\([^)]*\)\s*{/g, // C-style functions
-      /fn\s+\w+/g,           // Rust functions
-      /func\s+\w+/g          // Go functions
+      /fn\s+\w+/g, // Rust functions
+      /func\s+\w+/g, // Go functions
     ];
 
     let functionCount = 0;
@@ -198,7 +216,7 @@ export abstract class BaseAuditor {
       /\bfor\b/g,
       /\bswitch\b/g,
       /\btry\b/g,
-      /\bcatch\b/g
+      /\bcatch\b/g,
     ];
 
     let complexity = 1; // Base complexity
@@ -212,17 +230,20 @@ export abstract class BaseAuditor {
     return {
       lineCount,
       functionCount,
-      complexity: Math.round(complexity / Math.max(functionCount, 1))
+      complexity: Math.round(complexity / Math.max(functionCount, 1)),
     };
   }
 
   /**
    * Select the best model for this audit
    */
-  protected selectModel(request: AuditRequest, language: string): string | null {
+  protected selectModel(
+    request: AuditRequest,
+    language: string
+  ): string | null {
     const availableModels = this.ollamaClient.getAvailableModels();
     const priority = request.priority || 'thorough';
-    
+
     return this.modelManager.selectModel(
       this.auditType,
       language,
@@ -248,12 +269,15 @@ export abstract class BaseAuditor {
   /**
    * Parse AI response into structured issues
    */
-  protected async parseAIResponse(response: string): Promise<Partial<AuditIssue>[]> {
+  protected async parseAIResponse(
+    response: string
+  ): Promise<Partial<AuditIssue>[]> {
     try {
       // Extract JSON from response (handle markdown code blocks)
-      const jsonMatch = response.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/) || 
-                       response.match(/(\{[\s\S]*\})/);
-      
+      const jsonMatch =
+        response.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/) ||
+        response.match(/(\{[\s\S]*\})/);
+
       if (!jsonMatch) {
         throw new Error('No JSON found in AI response');
       }
@@ -269,7 +293,7 @@ export abstract class BaseAuditor {
     } catch (error) {
       console.error('Failed to parse AI response:', error);
       console.error('Raw response:', response);
-      
+
       // Try to extract issues manually if JSON parsing fails
       return this.fallbackParseResponse(response);
     }
@@ -282,7 +306,7 @@ export abstract class BaseAuditor {
     // Very basic fallback - look for line numbers and descriptions
     const issues: Partial<AuditIssue>[] = [];
     const lines = response.split('\n');
-    
+
     for (const line of lines) {
       const lineMatch = line.match(/line\s*(\d+)/i);
       if (lineMatch) {
@@ -294,7 +318,7 @@ export abstract class BaseAuditor {
           title: 'Issue detected (parsing fallback)',
           description: line.trim(),
           confidence: 0.3,
-          fixable: false
+          fixable: false,
         });
       }
     }
@@ -342,7 +366,7 @@ export abstract class BaseAuditor {
 
     // Normalize severity
     const severity = this.normalizeSeverity(raw.severity);
-    
+
     // Generate unique ID
     const id = randomUUID();
 
@@ -359,7 +383,7 @@ export abstract class BaseAuditor {
         line,
         column: raw.location.column,
         endLine: raw.location.endLine,
-        endColumn: raw.location.endColumn
+        endColumn: raw.location.endColumn,
       },
       severity,
       type: raw.type || 'unknown',
@@ -373,7 +397,7 @@ export abstract class BaseAuditor {
       ruleId: raw.ruleId,
       documentation: raw.documentation,
       impact: raw.impact,
-      effort: raw.effort || 'medium'
+      effort: raw.effort || 'medium',
     };
   }
 
@@ -381,38 +405,51 @@ export abstract class BaseAuditor {
    * Normalize severity to valid values
    */
   protected normalizeSeverity(severity?: string): Severity {
-    const validSeverities: Severity[] = ['critical', 'high', 'medium', 'low', 'info'];
+    const validSeverities: Severity[] = [
+      'critical',
+      'high',
+      'medium',
+      'low',
+      'info',
+    ];
     const normalized = severity?.toLowerCase() as Severity;
-    
+
     return validSeverities.includes(normalized) ? normalized : 'medium';
   }
 
   /**
    * Extract code snippet around a specific line
    */
-  protected extractCodeSnippet(code: string, line: number, context = 2): string {
+  protected extractCodeSnippet(
+    code: string,
+    line: number,
+    context = 2
+  ): string {
     const lines = code.split('\n');
     const start = Math.max(0, line - context - 1);
     const end = Math.min(lines.length, line + context);
-    
+
     return lines.slice(start, end).join('\n');
   }
 
   /**
    * Filter issues based on configuration and request
    */
-  protected filterIssues(issues: AuditIssue[], request: AuditRequest): AuditIssue[] {
+  protected filterIssues(
+    issues: AuditIssue[],
+    request: AuditRequest
+  ): AuditIssue[] {
     let filtered = issues;
 
     // Filter by severity
     if (this.config.severity.length > 0) {
-      filtered = filtered.filter(issue => 
+      filtered = filtered.filter((issue) =>
         this.config.severity.includes(issue.severity)
       );
     }
 
     // Filter by enabled rules
-    filtered = filtered.filter(issue => {
+    filtered = filtered.filter((issue) => {
       const ruleId = issue.ruleId || issue.type;
       return this.config.rules[ruleId] !== false;
     });
@@ -434,12 +471,13 @@ export abstract class BaseAuditor {
       high: 1,
       medium: 2,
       low: 3,
-      info: 4
+      info: 4,
     };
 
     return issues.sort((a, b) => {
       // First by severity
-      const severityDiff = severityOrder[a.severity] - severityOrder[b.severity];
+      const severityDiff =
+        severityOrder[a.severity] - severityOrder[b.severity];
       if (severityDiff !== 0) {
         return severityDiff;
       }
@@ -458,7 +496,11 @@ export abstract class BaseAuditor {
     model: string,
     startTime: number,
     aiResponseTime: number,
-    codeMetrics: { lineCount: number; functionCount: number; complexity: number }
+    codeMetrics: {
+      lineCount: number;
+      functionCount: number;
+      complexity: number;
+    }
   ): AuditResult {
     const endTime = Date.now();
     const totalDuration = endTime - startTime;
@@ -473,11 +515,11 @@ export abstract class BaseAuditor {
         duration: totalDuration,
         modelResponseTime: aiResponseTime,
         parsingTime: totalDuration - aiResponseTime,
-        postProcessingTime: Math.max(0, totalDuration - aiResponseTime - 100)
+        postProcessingTime: Math.max(0, totalDuration - aiResponseTime - 100),
       },
       model,
       timestamp: new Date().toISOString(),
-      version: '1.0.0'
+      version: '1.0.0',
     };
   }
 
@@ -493,12 +535,13 @@ export abstract class BaseAuditor {
       low: 0,
       info: 0,
       byCategory: {} as Record<AuditType, number>,
-      byType: {}
+      byType: {},
     };
 
     for (const issue of issues) {
       summary[issue.severity]++;
-      summary.byCategory[issue.category] = (summary.byCategory[issue.category] || 0) + 1;
+      summary.byCategory[issue.category] =
+        (summary.byCategory[issue.category] || 0) + 1;
       summary.byType[issue.type] = (summary.byType[issue.type] || 0) + 1;
     }
 
@@ -509,14 +552,18 @@ export abstract class BaseAuditor {
    * Create coverage information
    */
   protected createCoverage(
-    codeMetrics: { lineCount: number; functionCount: number; complexity: number },
+    codeMetrics: {
+      lineCount: number;
+      functionCount: number;
+      complexity: number;
+    },
     issues: AuditIssue[]
   ): AuditCoverage {
     return {
       linesAnalyzed: codeMetrics.lineCount,
       functionsAnalyzed: codeMetrics.functionCount,
       classesAnalyzed: 0, // Could be implemented with better parsing
-      complexity: codeMetrics.complexity
+      complexity: codeMetrics.complexity,
     };
   }
 
@@ -525,23 +572,29 @@ export abstract class BaseAuditor {
    */
   protected createSuggestions(issues: AuditIssue[]): AuditSuggestions {
     return {
-      autoFixable: issues.filter(issue => issue.fixable),
-      priorityFixes: issues.filter(issue => 
-        issue.severity === 'critical' || issue.severity === 'high'
+      autoFixable: issues.filter((issue) => issue.fixable),
+      priorityFixes: issues.filter(
+        (issue) => issue.severity === 'critical' || issue.severity === 'high'
       ),
-      quickWins: issues.filter(issue => 
-        issue.effort === 'low' && (issue.severity === 'medium' || issue.severity === 'high')
+      quickWins: issues.filter(
+        (issue) =>
+          issue.effort === 'low' &&
+          (issue.severity === 'medium' || issue.severity === 'high')
       ),
-      technicalDebt: issues.filter(issue => 
-        issue.category === 'quality' || issue.category === 'architecture'
-      )
+      technicalDebt: issues.filter(
+        (issue) =>
+          issue.category === 'quality' || issue.category === 'architecture'
+      ),
     };
   }
 
   /**
    * Create empty result for disabled auditors
    */
-  protected createEmptyResult(requestId: string, startTime: number): AuditResult {
+  protected createEmptyResult(
+    requestId: string,
+    startTime: number
+  ): AuditResult {
     return {
       requestId,
       issues: [],
@@ -553,42 +606,46 @@ export abstract class BaseAuditor {
         low: 0,
         info: 0,
         byCategory: {} as Record<AuditType, number>,
-        byType: {}
+        byType: {},
       },
       coverage: {
         linesAnalyzed: 0,
         functionsAnalyzed: 0,
         classesAnalyzed: 0,
-        complexity: 0
+        complexity: 0,
       },
       suggestions: {
         autoFixable: [],
         priorityFixes: [],
         quickWins: [],
-        technicalDebt: []
+        technicalDebt: [],
       },
       metrics: {
         duration: Date.now() - startTime,
         modelResponseTime: 0,
         parsingTime: 0,
-        postProcessingTime: 0
+        postProcessingTime: 0,
       },
       model: 'none',
       timestamp: new Date().toISOString(),
-      version: '1.0.0'
+      version: '1.0.0',
     };
   }
 
   /**
    * Create standardized error
    */
-  protected createError(code: string, message: string, details?: unknown): AuditError {
+  protected createError(
+    code: string,
+    message: string,
+    details?: unknown
+  ): AuditError {
     return {
       code,
       message,
       details,
       recoverable: true,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 

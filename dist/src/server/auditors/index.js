@@ -27,7 +27,7 @@ export class AuditorFactory {
         quality: QualityAuditor,
         architecture: ArchitectureAuditor,
         testing: TestingAuditor,
-        documentation: DocumentationAuditor
+        documentation: DocumentationAuditor,
     };
     static createAuditor(auditType, config, ollamaClient, modelManager) {
         if (auditType === 'all') {
@@ -48,7 +48,7 @@ export class AuditorFactory {
             'quality',
             'architecture',
             'testing',
-            'documentation'
+            'documentation',
         ];
         for (const auditType of auditTypes) {
             const config = configs[auditType];
@@ -59,7 +59,7 @@ export class AuditorFactory {
         return auditors;
     }
     static getSupportedAuditTypes() {
-        return Object.keys(this.auditorClasses).filter(type => type !== 'all');
+        return Object.keys(this.auditorClasses).filter((type) => type !== 'all');
     }
 }
 //# sourceMappingURL=index.js.map

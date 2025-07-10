@@ -31,15 +31,15 @@ export async function stopCommand(): Promise<void> {
 
   try {
     const pid = parseInt(readFileSync(pidFile, 'utf8').trim());
-    
+
     const spinner = ora(`Stopping server (PID: ${pid})...`).start();
 
     try {
       // Try graceful shutdown first
       process.kill(pid, 'SIGTERM');
-      
+
       // Wait a bit for graceful shutdown
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Check if process is still running
       try {
@@ -47,9 +47,9 @@ export async function stopCommand(): Promise<void> {
         // Still running, force kill
         spinner.text = 'Force stopping server...';
         process.kill(pid, 'SIGKILL');
-        
+
         // Wait a bit more
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       } catch (error) {
         // Process is dead, that's what we want
       }
@@ -67,9 +67,8 @@ export async function stopCommand(): Promise<void> {
 
     // Clean up PID file
     unlinkSync(pidFile);
-    
-    console.log(chalk.green('✅ Server shutdown complete'));
 
+    console.log(chalk.green('✅ Server shutdown complete'));
   } catch (error: any) {
     if (error.code === 'ENOENT') {
       console.log(chalk.yellow('⚠️  PID file not found or corrupted'));

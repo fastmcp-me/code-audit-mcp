@@ -8,7 +8,11 @@ import type { OllamaClient } from '../ollama/client.js';
 import { ModelManager } from '../ollama/models.js';
 
 export class DocumentationAuditor extends BaseAuditor {
-  constructor(config: AuditorConfig, ollamaClient: OllamaClient, modelManager: ModelManager) {
+  constructor(
+    config: AuditorConfig,
+    ollamaClient: OllamaClient,
+    modelManager: ModelManager
+  ) {
     super(config, ollamaClient, modelManager);
     this.auditType = 'documentation';
   }

@@ -11,6 +11,7 @@ The MCP Code Audit Server has been successfully transformed into a globally inst
 ## ✅ Completed Requirements
 
 ### Core Publishing Requirements
+
 - ✅ **Global npm installation** - `npm install -g @moikas/code-audit-mcp`
 - ✅ **CLI command interface** - `code-audit` global command
 - ✅ **Auto-update functionality** - Built-in update checking and installation
@@ -21,6 +22,7 @@ The MCP Code Audit Server has been successfully transformed into a globally inst
 - 🔧 **GitHub Actions CI/CD** - In progress with 5-agent team
 
 ### Current Phase: CI/CD Pipeline Implementation
+
 - **Target:** GitHub Actions workflow for v4+ tags
 - **Scope:** `@moikas/code-audit-mcp` publishing automation
 - **Team:** 5 specialized agents working in parallel
@@ -41,6 +43,7 @@ The MCP Code Audit Server has been successfully transformed into a globally inst
 ## 🚀 Next Steps: Automated Publishing
 
 ### GitHub Workflow Requirements
+
 - **Trigger:** Git tags `v4.*` (v4.0.0, v4.1.0, etc.)
 - **Multi-platform:** Ubuntu, Windows, macOS
 - **Node versions:** 18.x, 20.x, 22.x
@@ -48,6 +51,7 @@ The MCP Code Audit Server has been successfully transformed into a globally inst
 - **Artifacts:** GitHub releases with build artifacts
 
 ### Team Implementation Plan
+
 1. **Workflow Agent** - Main GitHub Actions file
 2. **Testing Agent** - Multi-platform test matrix
 3. **Publishing Agent** - NPM authentication and publishing

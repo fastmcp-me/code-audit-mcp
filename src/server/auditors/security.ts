@@ -8,7 +8,11 @@ import type { OllamaClient } from '../ollama/client.js';
 import { ModelManager } from '../ollama/models.js';
 
 export class SecurityAuditor extends BaseAuditor {
-  constructor(config: AuditorConfig, ollamaClient: OllamaClient, modelManager: ModelManager) {
+  constructor(
+    config: AuditorConfig,
+    ollamaClient: OllamaClient,
+    modelManager: ModelManager
+  ) {
     super(config, ollamaClient, modelManager);
     this.auditType = 'security';
   }
@@ -22,18 +26,21 @@ export class SecurityAuditor extends BaseAuditor {
     language: string
   ): Promise<AuditIssue[]> {
     const issues = await super.postProcessIssues(rawIssues, request, language);
-    
+
     // Add security-specific post-processing
-    return issues.map(issue => {
+    return issues.map((issue) => {
       // Enhance security issues with specific classifications
       issue = this.classifySecurityIssue(issue, request.code);
-      
+
       // Add OWASP mapping if applicable
       issue = this.addOWASPMapping(issue);
-      
+
       // Validate severity for security context
-      issue = this.validateSecuritySeverity(issue, request.context?.environment);
-      
+      issue = this.validateSecuritySeverity(
+        issue,
+        request.context?.environment
+      );
+
       return issue;
     });
   }
@@ -47,55 +54,93 @@ export class SecurityAuditor extends BaseAuditor {
     const lowercaseLine = line.toLowerCase();
 
     // SQL Injection patterns
-    if (lowercaseDescription.includes('sql') || lowercaseDescription.includes('injection')) {
-      if (lowercaseLine.includes('query') || lowercaseLine.includes('select') || lowercaseLine.includes('insert')) {
+    if (
+      lowercaseDescription.includes('sql') ||
+      lowercaseDescription.includes('injection')
+    ) {
+      if (
+        lowercaseLine.includes('query') ||
+        lowercaseLine.includes('select') ||
+        lowercaseLine.includes('insert')
+      ) {
         issue.type = 'sql_injection';
         issue.ruleId = 'SEC001';
       }
     }
 
     // XSS patterns
-    if (lowercaseDescription.includes('xss') || lowercaseDescription.includes('cross-site')) {
-      if (lowercaseLine.includes('innerhtml') || lowercaseLine.includes('eval') || lowercaseLine.includes('document.write')) {
+    if (
+      lowercaseDescription.includes('xss') ||
+      lowercaseDescription.includes('cross-site')
+    ) {
+      if (
+        lowercaseLine.includes('innerhtml') ||
+        lowercaseLine.includes('eval') ||
+        lowercaseLine.includes('document.write')
+      ) {
         issue.type = 'xss_vulnerability';
         issue.ruleId = 'SEC002';
       }
     }
 
     // Hardcoded secrets
-    if (lowercaseDescription.includes('secret') || lowercaseDescription.includes('password') || lowercaseDescription.includes('key')) {
-      if (lowercaseLine.includes('password') || lowercaseLine.includes('apikey') || lowercaseLine.includes('secret')) {
+    if (
+      lowercaseDescription.includes('secret') ||
+      lowercaseDescription.includes('password') ||
+      lowercaseDescription.includes('key')
+    ) {
+      if (
+        lowercaseLine.includes('password') ||
+        lowercaseLine.includes('apikey') ||
+        lowercaseLine.includes('secret')
+      ) {
         issue.type = 'hardcoded_secret';
         issue.ruleId = 'SEC003';
       }
     }
 
     // Authentication issues
-    if (lowercaseDescription.includes('auth') || lowercaseDescription.includes('login')) {
+    if (
+      lowercaseDescription.includes('auth') ||
+      lowercaseDescription.includes('login')
+    ) {
       issue.type = 'authentication_flaw';
       issue.ruleId = 'SEC004';
     }
 
     // CSRF issues
-    if (lowercaseDescription.includes('csrf') || lowercaseDescription.includes('cross-site request')) {
+    if (
+      lowercaseDescription.includes('csrf') ||
+      lowercaseDescription.includes('cross-site request')
+    ) {
       issue.type = 'csrf_vulnerability';
       issue.ruleId = 'SEC005';
     }
 
     // Path traversal
-    if (lowercaseDescription.includes('path') && lowercaseDescription.includes('traversal')) {
+    if (
+      lowercaseDescription.includes('path') &&
+      lowercaseDescription.includes('traversal')
+    ) {
       issue.type = 'path_traversal';
       issue.ruleId = 'SEC006';
     }
 
     // Command injection
-    if (lowercaseDescription.includes('command') && lowercaseDescription.includes('injection')) {
+    if (
+      lowercaseDescription.includes('command') &&
+      lowercaseDescription.includes('injection')
+    ) {
       issue.type = 'command_injection';
       issue.ruleId = 'SEC007';
     }
 
     // Insecure deserialization
-    if (lowercaseDescription.includes('deserial') || lowercaseDescription.includes('pickle') || lowercaseDescription.includes('unserialize')) {
+    if (
+      lowercaseDescription.includes('deserial') ||
+      lowercaseDescription.includes('pickle') ||
+      lowercaseDescription.includes('unserialize')
+    ) {
       issue.type = 'insecure_deserialization';
       issue.ruleId = 'SEC008';
     }
@@ -108,14 +153,16 @@ export class SecurityAuditor extends BaseAuditor {
    */
   private addOWASPMapping(issue: AuditIssue): AuditIssue {
     const owaspMappings: Record<string, string> = {
-      'sql_injection': 'A03:2021 – Injection',
-      'xss_vulnerability': 'A03:2021 – Injection',
-      'authentication_flaw': 'A07:2021 – Identification and Authentication Failures',
-      'csrf_vulnerability': 'A01:2021 – Broken Access Control',
-      'hardcoded_secret': 'A02:2021 – Cryptographic Failures',
-      'path_traversal': 'A01:2021 – Broken Access Control',
-      'command_injection': 'A03:2021 – Injection',
-      'insecure_deserialization': 'A08:2021 – Software and Data Integrity Failures'
+      sql_injection: 'A03:2021 – Injection',
+      xss_vulnerability: 'A03:2021 – Injection',
+      authentication_flaw:
+        'A07:2021 – Identification and Authentication Failures',
+      csrf_vulnerability: 'A01:2021 – Broken Access Control',
+      hardcoded_secret: 'A02:2021 – Cryptographic Failures',
+      path_traversal: 'A01:2021 – Broken Access Control',
+      command_injection: 'A03:2021 – Injection',
+      insecure_deserialization:
+        'A08:2021 – Software and Data Integrity Failures',
     };
 
     const owaspCategory = owaspMappings[issue.type];
@@ -129,18 +176,34 @@ export class SecurityAuditor extends BaseAuditor {
   /**
    * Validate and adjust severity based on environment
    */
-  private validateSecuritySeverity(issue: AuditIssue, environment?: string): AuditIssue {
+  private validateSecuritySeverity(
+    issue: AuditIssue,
+    environment?: string
+  ): AuditIssue {
     // Increase severity for production environments
     if (environment === 'production') {
-      const criticalTypes = ['sql_injection', 'command_injection', 'authentication_flaw'];
-      const highTypes = ['xss_vulnerability', 'csrf_vulnerability', 'path_traversal'];
+      const criticalTypes = [
+        'sql_injection',
+        'command_injection',
+        'authentication_flaw',
+      ];
+      const highTypes = [
+        'xss_vulnerability',
+        'csrf_vulnerability',
+        'path_traversal',
+      ];
 
       if (criticalTypes.includes(issue.type) && issue.severity !== 'critical') {
         issue.severity = 'critical';
-        issue.impact = 'Critical security vulnerability in production environment';
-      } else if (highTypes.includes(issue.type) && issue.severity === 'medium') {
+        issue.impact =
+          'Critical security vulnerability in production environment';
+      } else if (
+        highTypes.includes(issue.type) &&
+        issue.severity === 'medium'
+      ) {
         issue.severity = 'high';
-        issue.impact = 'High-risk security vulnerability in production environment';
+        issue.impact =
+          'High-risk security vulnerability in production environment';
       }
     }
 

@@ -11,16 +11,19 @@ Comprehensive multi-platform testing matrix configuration for the `@moikas/code-
 ## 🎯 Testing Matrix Specifications
 
 ### Node.js Versions
+
 - **18.x** - LTS Hydrogen (minimum supported)
 - **20.x** - LTS Iron (recommended)
 - **22.x** - Current release
 
 ### Operating Systems
+
 - **ubuntu-latest** - Linux platform
-- **windows-latest** - Windows platform  
+- **windows-latest** - Windows platform
 - **macos-latest** - macOS platform
 
 ### Total Combinations
+
 **9 total test combinations** (3 Node.js versions × 3 Operating systems)
 
 ## 🔧 Implementation Details
@@ -28,6 +31,7 @@ Comprehensive multi-platform testing matrix configuration for the `@moikas/code-
 ### Workflow Files Created
 
 #### 1. `.github/workflows/test.yml`
+
 - **Purpose:** Standalone testing matrix workflow
 - **Trigger:** Push to main/develop, PRs, workflow_call
 - **Features:**
@@ -37,6 +41,7 @@ Comprehensive multi-platform testing matrix configuration for the `@moikas/code-
   - Test result summaries
 
 #### 2. `.github/workflows/publish.yml`
+
 - **Purpose:** NPM publishing workflow with integrated testing
 - **Trigger:** Version tags starting with `v4.*`
 - **Dependencies:** Requires test workflow to pass before publishing
@@ -45,7 +50,7 @@ Comprehensive multi-platform testing matrix configuration for the `@moikas/code-
 
 ```yaml
 strategy:
-  fail-fast: false  # Don't cancel other jobs if one fails
+  fail-fast: false # Don't cancel other jobs if one fails
   matrix:
     node-version: ['18.x', '20.x', '22.x']
     os: [ubuntu-latest, windows-latest, macos-latest]
@@ -54,31 +59,37 @@ strategy:
 ## 🧪 Test Steps Per Platform
 
 ### 1. Environment Setup
+
 - Checkout repository
 - Setup Node.js with specified version
 - Display system information
 - Enable npm caching
 
 ### 2. Dependency Management
+
 - Run `npm ci` for clean installation
 - Build project with `npm run build`
 
 ### 3. Code Quality Checks
+
 - Linting with `npm run lint`
 - Code formatting verification
 - TypeScript compilation validation
 
 ### 4. Test Execution
+
 - TypeScript unit tests (`npm run test-audit`)
 - Local integration tests (`npm run test-local`)
 - Package creation verification
 
 ### 5. Platform-Specific Testing
+
 - **Unix platforms:** Test executable permissions
 - **Windows:** Test CMD shell compatibility
 - CLI command verification across platforms
 
 ### 6. Artifact Management
+
 - Upload test results per platform combination
 - Store build artifacts for debugging
 - Generate comprehensive test reports
@@ -86,6 +97,7 @@ strategy:
 ## 📊 Test Result Reporting
 
 ### Matrix Summary Table
+
 ```
 | OS            | Node 18.x | Node 20.x | Node 22.x |
 |---------------|-----------|-----------|-----------|
@@ -95,6 +107,7 @@ strategy:
 ```
 
 ### Failure Handling
+
 - Individual test failures don't cancel other matrix jobs
 - Comprehensive failure reporting in GitHub Actions summary
 - Artifact collection even on test failures
@@ -103,12 +116,14 @@ strategy:
 ## 🔒 Integration with Publishing
 
 ### Publish Workflow Requirements
+
 1. **Test Gate:** All 9 platform combinations must pass
 2. **Version Verification:** Tag version must match package.json
 3. **Final Test:** Additional test-local run before publish
 4. **Success Only:** Publishing only proceeds if tests succeed
 
 ### Post-Publish Verification
+
 - NPM registry availability check
 - Global installation testing
 - CLI functionality verification
@@ -116,11 +131,13 @@ strategy:
 ## 📁 Artifact Storage
 
 ### Test Artifacts (7-day retention)
+
 - Platform-specific test results
-- npm package files (*.tgz)
+- npm package files (\*.tgz)
 - Debug logs and error reports
 
 ### Build Artifacts (7-day retention)
+
 - Compiled TypeScript (dist/)
 - CLI entry points (bin/)
 - Platform-specific builds
@@ -128,11 +145,13 @@ strategy:
 ## 🚀 Platform Support Validation
 
 ### Supported Configurations
+
 - **Node.js:** 18.0.0+ (as specified in package.json engines)
 - **OS:** darwin, linux, win32 (as specified in package.json)
 - **Architecture:** x64, arm64 (tested via GitHub runners)
 
 ### Cross-Platform Compatibility
+
 - **Path handling:** Platform-agnostic file operations
 - **Shell compatibility:** Both bash and cmd support
 - **Permission handling:** Unix executable permissions
@@ -141,11 +160,13 @@ strategy:
 ## 📈 Performance Metrics
 
 ### Workflow Timing
+
 - **Per-platform test:** ~5-10 minutes
 - **Total matrix completion:** ~15-20 minutes (parallel)
 - **Publish workflow:** ~25-30 minutes total
 
 ### Resource Usage
+
 - **Concurrent jobs:** 9 (limited by GitHub Actions)
 - **Storage:** ~50MB artifacts per platform
 - **Bandwidth:** Efficient npm caching
@@ -153,11 +174,13 @@ strategy:
 ## 🔄 Maintenance
 
 ### Regular Updates Required
+
 - **Node.js versions:** Update when new LTS releases
 - **OS runners:** GitHub Actions runner updates
 - **Dependencies:** Keep GitHub Actions up to date
 
 ### Monitoring
+
 - **Test success rates:** Monitor matrix completion
 - **Performance trends:** Track execution times
 - **Failure patterns:** Identify platform-specific issues
@@ -165,6 +188,7 @@ strategy:
 ## 📝 Usage Instructions
 
 ### For Developers
+
 ```bash
 # Test locally before pushing
 npm run test-local
@@ -178,6 +202,7 @@ git push origin v4.1.0
 ```
 
 ### For Maintainers
+
 - Monitor workflow runs in GitHub Actions
 - Review test artifacts for failures
 - Update matrix configurations as needed

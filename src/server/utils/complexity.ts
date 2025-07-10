@@ -12,14 +12,14 @@ export interface ComplexityMetrics {
 }
 
 export interface HalsteadMetrics {
-  vocabulary: number;          // n = n1 + n2
-  length: number;             // N = N1 + N2
-  calculatedLength: number;   // N^ = n1 * log2(n1) + n2 * log2(n2)
-  volume: number;             // V = N * log2(n)
-  difficulty: number;         // D = (n1/2) * (N2/n2)
-  effort: number;             // E = D * V
+  vocabulary: number; // n = n1 + n2
+  length: number; // N = N1 + N2
+  calculatedLength: number; // N^ = n1 * log2(n1) + n2 * log2(n2)
+  volume: number; // V = N * log2(n)
+  difficulty: number; // D = (n1/2) * (N2/n2)
+  effort: number; // E = D * V
   timeRequiredToProgram: number; // T = E / 18 seconds
-  deliveredBugs: number;      // B = V / 3000
+  deliveredBugs: number; // B = V / 3000
 }
 
 /**
@@ -36,7 +36,7 @@ export class CyclomaticComplexityCalculator {
     let complexity = 1; // Base complexity
 
     const decisionPatterns = this.getDecisionPatterns(language);
-    
+
     for (const pattern of decisionPatterns) {
       const matches = code.match(new RegExp(pattern.source, 'gi'));
       if (matches) {
@@ -64,36 +64,15 @@ export class CyclomaticComplexityCalculator {
       /\bfinally\b/,
       /&&/,
       /\|\|/,
-      /\?/  // Ternary operator
+      /\?/, // Ternary operator
     ];
 
     const languageSpecific: Record<string, RegExp[]> = {
-      python: [
-        ...basePatterns,
-        /\belif\b/,
-        /\bexcept\b/,
-        /\band\b/,
-        /\bor\b/
-      ],
-      javascript: [
-        ...basePatterns,
-        /\.then\b/,
-        /\.catch\b/
-      ],
-      typescript: [
-        ...basePatterns,
-        /\.then\b/,
-        /\.catch\b/
-      ],
-      java: [
-        ...basePatterns,
-        /\bthrows\b/
-      ],
-      go: [
-        ...basePatterns,
-        /\bselect\b/,
-        /\bdefer\b/
-      ]
+      python: [...basePatterns, /\belif\b/, /\bexcept\b/, /\band\b/, /\bor\b/],
+      javascript: [...basePatterns, /\.then\b/, /\.catch\b/],
+      typescript: [...basePatterns, /\.then\b/, /\.catch\b/],
+      java: [...basePatterns, /\bthrows\b/],
+      go: [...basePatterns, /\bselect\b/, /\bdefer\b/],
     };
 
     return languageSpecific[language] || basePatterns;
@@ -112,15 +91,18 @@ export class CognitiveComplexityCalculator {
     const lines = code.split('\n');
     let complexity = 0;
     let nestingLevel = 0;
-    
+
     for (const line of lines) {
       const trimmedLine = line.trim();
-      
+
       // Track nesting level
       nestingLevel += this.getNestingChange(trimmedLine, language);
-      
+
       // Add complexity for control structures
-      const structureComplexity = this.getStructureComplexity(trimmedLine, language);
+      const structureComplexity = this.getStructureComplexity(
+        trimmedLine,
+        language
+      );
       if (structureComplexity > 0) {
         // Add base complexity + nesting bonus
         complexity += structureComplexity + Math.max(0, nestingLevel - 1);
@@ -135,17 +117,21 @@ export class CognitiveComplexityCalculator {
    */
   private static getNestingChange(line: string, language: string): number {
     let change = 0;
-    
+
     // Opening braces/blocks
     change += (line.match(/{/g) || []).length;
     change += (line.match(/\bthen\b/g) || []).length; // Python if/then
-    
+
     // Closing braces/blocks
     change -= (line.match(/}/g) || []).length;
-    
+
     // Python specific (indentation-based)
     if (language === 'python') {
-      if (line.match(/^\s*(if|else|elif|while|for|try|except|finally|with|def|class):/)) {
+      if (
+        line.match(
+          /^\s*(if|else|elif|while|for|try|except|finally|with|def|class):/
+        )
+      ) {
         change += 1;
       }
     }
@@ -156,7 +142,10 @@ export class CognitiveComplexityCalculator {
   /**
    * Get complexity score for control structures
    */
-  private static getStructureComplexity(line: string, language: string): number {
+  private static getStructureComplexity(
+    line: string,
+    language: string
+  ): number {
     const patterns = [
       { pattern: /\bif\b/, score: 1 },
       { pattern: /\belse\s+if\b|\belif\b/, score: 1 },
@@ -173,11 +162,11 @@ export class CognitiveComplexityCalculator {
       { pattern: /\?.*:/, score: 1 }, // Ternary
       { pattern: /\bgoto\b/, score: 2 }, // Higher penalty for goto
       { pattern: /\bbreak\b/, score: 1 },
-      { pattern: /\bcontinue\b/, score: 1 }
+      { pattern: /\bcontinue\b/, score: 1 },
     ];
 
     let totalScore = 0;
-    
+
     for (const { pattern, score } of patterns) {
       if (pattern.test(line)) {
         totalScore += score;
@@ -199,16 +188,16 @@ export class NestingDepthCalculator {
     const lines = code.split('\n');
     let currentDepth = 0;
     let maxDepth = 0;
-    
+
     for (const line of lines) {
       const trimmedLine = line.trim();
-      
+
       // Track depth changes
       const depthChange = this.getDepthChange(trimmedLine, language);
       currentDepth += depthChange;
-      
+
       maxDepth = Math.max(maxDepth, currentDepth);
-      
+
       // Prevent negative depth
       currentDepth = Math.max(0, currentDepth);
     }
@@ -223,12 +212,12 @@ export class NestingDepthCalculator {
     if (language === 'python') {
       return this.calculatePythonDepthChange(line);
     }
-    
+
     // For brace-based languages
     let change = 0;
     change += (line.match(/{/g) || []).length;
     change -= (line.match(/}/g) || []).length;
-    
+
     return change;
   }
 
@@ -237,10 +226,14 @@ export class NestingDepthCalculator {
    */
   private static calculatePythonDepthChange(line: string): number {
     // Simplified Python depth calculation
-    if (line.match(/^\s*(if|else|elif|while|for|try|except|finally|with|def|class):/)) {
+    if (
+      line.match(
+        /^\s*(if|else|elif|while|for|try|except|finally|with|def|class):/
+      )
+    ) {
       return 1;
     }
-    
+
     // This is a simplification - real Python would need proper indentation analysis
     return 0;
   }
@@ -256,15 +249,15 @@ export class HalsteadComplexityCalculator {
   static calculate(code: string, language: string): HalsteadMetrics {
     const operators = this.extractOperators(code, language);
     const operands = this.extractOperands(code, language);
-    
+
     const n1 = new Set(operators).size; // Unique operators
-    const n2 = new Set(operands).size;  // Unique operands
-    const N1 = operators.length;        // Total operators
-    const N2 = operands.length;         // Total operands
-    
-    const n = n1 + n2;                  // Vocabulary
-    const N = N1 + N2;                  // Length
-    
+    const n2 = new Set(operands).size; // Unique operands
+    const N1 = operators.length; // Total operators
+    const N2 = operands.length; // Total operands
+
+    const n = n1 + n2; // Vocabulary
+    const N = N1 + N2; // Length
+
     const calculatedLength = n1 * Math.log2(n1) + n2 * Math.log2(n2);
     const volume = N * Math.log2(n);
     const difficulty = (n1 / 2) * (N2 / (n2 || 1));
@@ -280,7 +273,7 @@ export class HalsteadComplexityCalculator {
       difficulty,
       effort,
       timeRequiredToProgram,
-      deliveredBugs
+      deliveredBugs,
     };
   }
 
@@ -290,14 +283,14 @@ export class HalsteadComplexityCalculator {
   private static extractOperators(code: string, language: string): string[] {
     const operatorPatterns = this.getOperatorPatterns(language);
     const operators: string[] = [];
-    
+
     for (const pattern of operatorPatterns) {
       const matches = code.match(new RegExp(pattern.source, 'g'));
       if (matches) {
         operators.push(...matches);
       }
     }
-    
+
     return operators;
   }
 
@@ -307,14 +300,14 @@ export class HalsteadComplexityCalculator {
   private static extractOperands(code: string, language: string): string[] {
     const operandPatterns = this.getOperandPatterns(language);
     const operands: string[] = [];
-    
+
     for (const pattern of operandPatterns) {
       const matches = code.match(new RegExp(pattern.source, 'g'));
       if (matches) {
         operands.push(...matches);
       }
     }
-    
+
     return operands;
   }
 
@@ -323,13 +316,36 @@ export class HalsteadComplexityCalculator {
    */
   private static getOperatorPatterns(language: string): RegExp[] {
     return [
-      /\+/g, /-/g, /\*/g, /\//g, /%/g,
-      /==/g, /!=/g, /</g, />/g, /<=/g, />=/g,
-      /&&/g, /\|\|/g, /!/g,
-      /&/g, /\|/g, /\^/g, /~/g, /<</g, />>/g,
-      /=/g, /\+=/g, /-=/g, /\*=/g, /\/=/g,
-      /\+\+/g, /--/g,
-      /\./g, /->/g, /::/g
+      /\+/g,
+      /-/g,
+      /\*/g,
+      /\//g,
+      /%/g,
+      /==/g,
+      /!=/g,
+      /</g,
+      />/g,
+      /<=/g,
+      />=/g,
+      /&&/g,
+      /\|\|/g,
+      /!/g,
+      /&/g,
+      /\|/g,
+      /\^/g,
+      /~/g,
+      /<</g,
+      />>/g,
+      /=/g,
+      /\+=/g,
+      /-=/g,
+      /\*=/g,
+      /\/=/g,
+      /\+\+/g,
+      /--/g,
+      /\./g,
+      /->/g,
+      /::/g,
     ];
   }
 
@@ -338,11 +354,11 @@ export class HalsteadComplexityCalculator {
    */
   private static getOperandPatterns(language: string): RegExp[] {
     return [
-      /\b\w+\b/g,           // Identifiers
-      /\b\d+\b/g,           // Numbers
-      /"[^"]*"/g,           // String literals
-      /'[^']*'/g,           // Character literals
-      /`[^`]*`/g            // Template literals
+      /\b\w+\b/g, // Identifiers
+      /\b\d+\b/g, // Numbers
+      /"[^"]*"/g, // String literals
+      /'[^']*'/g, // Character literals
+      /`[^`]*`/g, // Template literals
     ];
   }
 }
@@ -362,13 +378,17 @@ export class MaintainabilityIndexCalculator {
     linesOfCode: number,
     commentRatio: number = 0
   ): number {
-    const base = 171 - 5.2 * Math.log(halsteadVolume) - 0.23 * cyclomaticComplexity - 16.2 * Math.log(linesOfCode);
-    
+    const base =
+      171 -
+      5.2 * Math.log(halsteadVolume) -
+      0.23 * cyclomaticComplexity -
+      16.2 * Math.log(linesOfCode);
+
     // Add comment bonus
     const commentBonus = 50 * Math.sin(Math.sqrt(2.4 * commentRatio));
-    
-    const mi = Math.max(0, (base + commentBonus) * 100 / 171);
-    
+
+    const mi = Math.max(0, ((base + commentBonus) * 100) / 171);
+
     return Math.round(mi);
   }
 }
@@ -382,17 +402,26 @@ export class ComplexityAnalyzer {
    */
   static analyze(code: string, language: string): ComplexityMetrics {
     const lines = code.split('\n');
-    const linesOfCode = lines.filter(line => line.trim().length > 0).length;
-    
-    const cyclomaticComplexity = CyclomaticComplexityCalculator.calculate(code, language);
-    const cognitiveComplexity = CognitiveComplexityCalculator.calculate(code, language);
+    const linesOfCode = lines.filter((line) => line.trim().length > 0).length;
+
+    const cyclomaticComplexity = CyclomaticComplexityCalculator.calculate(
+      code,
+      language
+    );
+    const cognitiveComplexity = CognitiveComplexityCalculator.calculate(
+      code,
+      language
+    );
     const nestingDepth = NestingDepthCalculator.calculate(code, language);
-    const halsteadMetrics = HalsteadComplexityCalculator.calculate(code, language);
-    
+    const halsteadMetrics = HalsteadComplexityCalculator.calculate(
+      code,
+      language
+    );
+
     // Calculate comment ratio
     const commentLines = this.countCommentLines(code, language);
     const commentRatio = commentLines / Math.max(linesOfCode, 1);
-    
+
     const maintainabilityIndex = MaintainabilityIndexCalculator.calculate(
       halsteadMetrics.volume,
       cyclomaticComplexity,
@@ -406,7 +435,7 @@ export class ComplexityAnalyzer {
       nestingDepth,
       linesOfCode,
       maintainabilityIndex,
-      halsteadMetrics
+      halsteadMetrics,
     };
   }
 
@@ -416,9 +445,9 @@ export class ComplexityAnalyzer {
   private static countCommentLines(code: string, language: string): number {
     const lines = code.split('\n');
     let commentLines = 0;
-    
+
     const commentPatterns = this.getCommentPatterns(language);
-    
+
     for (const line of lines) {
       const trimmedLine = line.trim();
       for (const pattern of commentPatterns) {
@@ -428,7 +457,7 @@ export class ComplexityAnalyzer {
         }
       }
     }
-    
+
     return commentLines;
   }
 
@@ -446,16 +475,19 @@ export class ComplexityAnalyzer {
       rust: [/^\/\//, /^\/\*/, /^\*/],
       php: [/^\/\//, /^\/\*/, /^#/],
       ruby: [/^#/],
-      sql: [/^--/, /^\/\*/]
+      sql: [/^--/, /^\/\*/],
     };
-    
+
     return patterns[language] || [/^\/\//, /^#/];
   }
 
   /**
    * Get complexity rating
    */
-  static getComplexityRating(complexity: number, type: 'cyclomatic' | 'cognitive'): string {
+  static getComplexityRating(
+    complexity: number,
+    type: 'cyclomatic' | 'cognitive'
+  ): string {
     if (type === 'cyclomatic') {
       if (complexity <= 10) return 'Low';
       if (complexity <= 20) return 'Moderate';

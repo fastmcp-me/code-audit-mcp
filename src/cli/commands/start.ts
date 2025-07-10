@@ -78,14 +78,20 @@ export async function startCommand(options: StartOptions): Promise<void> {
     // Check Ollama health
     const config = await getConfig();
     await checkOllamaHealth(config.ollama.host);
-    
+
     // Ensure required models are available
     await ensureRequiredModels();
-    
+
     spinner.succeed('Pre-flight checks passed');
   } catch (error) {
-    spinner.fail(`Pre-flight check failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    console.log(chalk.yellow('\n💡 Try running "code-audit setup" to configure the system'));
+    spinner.fail(
+      `Pre-flight check failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
+    console.log(
+      chalk.yellow(
+        '\n💡 Try running "code-audit setup" to configure the system'
+      )
+    );
     return;
   }
 
@@ -95,10 +101,10 @@ export async function startCommand(options: StartOptions): Promise<void> {
   if (options.daemon) {
     // Start as daemon
     console.log(chalk.gray('Starting server as daemon...'));
-    
+
     const child = spawn('node', [serverPath], {
       detached: true,
-      stdio: 'ignore'
+      stdio: 'ignore',
     });
 
     child.unref();
@@ -113,7 +119,7 @@ export async function startCommand(options: StartOptions): Promise<void> {
     console.log(chalk.gray('Press Ctrl+C to stop the server\n'));
 
     const child = spawn('node', [serverPath], {
-      stdio: 'inherit'
+      stdio: 'inherit',
     });
 
     // Save PID for potential stop command
@@ -123,7 +129,7 @@ export async function startCommand(options: StartOptions): Promise<void> {
     process.on('SIGINT', () => {
       console.log(chalk.yellow('\n🛑 Shutting down server...'));
       child.kill('SIGTERM');
-      
+
       setTimeout(() => {
         child.kill('SIGKILL');
       }, 5000);

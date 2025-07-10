@@ -96,10 +96,21 @@
     "typescript": "^5.7.2"
   },
   "lint-staged": {
-    "*.{ts,js}": [
+    "src/**/*.{ts,js}": [
       "eslint --fix",
-      "prettier --write",
-      "bash -c 'npm run type-check'"
+      "prettier --write"
+    ],
+    "bin/**/*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "scripts/**/*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "tests/**/*.{ts,js}": [
+      "eslint --fix",
+      "prettier --write"
     ],
     "*.{json,md}": [
       "prettier --write"

@@ -202,25 +202,25 @@ jobs:
             *.tgz
           body: |
             ## Code Audit MCP v1.0.0 - Initial Release
-            
+
             ### 🚀 Features
             - AI-powered code auditing via MCP using local Ollama models
             - Comprehensive security, performance, and quality analysis
             - Multiple audit types: security, completeness, performance, quality, architecture, testing, documentation
             - Global CLI tool with interactive commands
             - Support for multiple programming languages
-            
+
             ### 🔧 Components
             - MCP server for Claude integration
             - Ollama client with model management
             - Configurable auditor system
             - Health monitoring and diagnostics
-            
+
             ### 📦 Installation
             ```bash
             npm install -g @moikas-code/code-audit-mcp@${{ needs.validate.outputs.version }}
             ```
-            
+
             ### 🔗 Links
             - [NPM Package](https://www.npmjs.com/package/@moikas-code/code-audit-mcp)
             - [Documentation](https://github.com/warrengates/code-audit-mcp#readme)

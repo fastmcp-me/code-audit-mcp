@@ -1,0 +1,16 @@
+# NPM Configuration Template for @moikas/code-audit-mcp
+# Copy this to .npmrc and replace YOUR_NPM_TOKEN with your actual token
+
+# Registry configuration for scoped package
+@moikas:registry=https://registry.npmjs.org/
+registry=https://registry.npmjs.org/
+
+# Authentication token (replace with your actual token)
+//registry.npmjs.org/:_authToken=YOUR_NPM_TOKEN
+
+# Publishing configuration
+access=public
+provenance=true
+
+# Cache configuration
+cache=/tmp/.npm

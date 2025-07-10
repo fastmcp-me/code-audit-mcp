@@ -38,7 +38,20 @@ A comprehensive TypeScript MCP server that performs intelligent code audits for 
 
 ## 🛠️ Installation
 
-### Quick Setup
+### Global Installation (Recommended)
+
+```bash
+# Install globally from npm
+npm install -g code-audit-mcp
+
+# Run interactive setup
+code-audit setup
+
+# Start the MCP server
+code-audit start
+```
+
+### Development Installation
 
 ```bash
 # Clone the repository
@@ -48,8 +61,11 @@ cd code-audit-mcp
 # Install dependencies
 npm install
 
-# Run automated setup
-npm run setup
+# Build the package
+npm run build
+
+# Test locally
+npm run test-local
 ```
 
 The setup script will:
@@ -80,17 +96,47 @@ npm run dev
 
 ## 🎯 Usage
 
-### Starting the Server
+### CLI Commands
+
+```bash
+# Interactive setup wizard
+code-audit setup
+
+# Start MCP server (foreground)
+code-audit start
+
+# Start as background daemon
+code-audit start --daemon
+
+# Stop running server
+code-audit stop
+
+# Check system health
+code-audit health
+
+# Manage AI models
+code-audit models --list
+code-audit models --pull codellama:7b
+
+# Configuration management
+code-audit config --show
+code-audit config --set ollama.host=http://remote:11434
+
+# Check for updates
+code-audit update
+```
+
+### Development Mode
 
 ```bash
 # Development mode with hot reload
 npm run dev
 
-# Production mode
-npm run start
-
 # Build TypeScript
 npm run build
+
+# Test package locally
+npm run test-local
 ```
 
 ### MCP Integration
@@ -101,8 +147,8 @@ Add to your MCP configuration (e.g., Claude Code):
 {
   "mcpServers": {
     "code-audit": {
-      "command": "node",
-      "args": ["/path/to/code-audit-mcp/dist/server.js"],
+      "command": "code-audit",
+      "args": ["start", "--stdio"],
       "env": {}
     }
   }

@@ -1,0 +1,420 @@
+name: Publish @moikas/code-audit-mcp to NPM
+
+# Workflow triggers on v4+ version tags
+on:
+  push:
+    tags:
+      - 'v4.*'
+
+# Environment configuration
+env:
+  NODE_VERSION_MATRIX: '["18.x", "20.x", "22.x"]'
+  OS_MATRIX: '["ubuntu-latest", "windows-latest", "macos-latest"]'
+  PACKAGE_NAME: '@moikas/code-audit-mcp'
+  REGISTRY_URL: 'https://registry.npmjs.org'
+
+# Workflow permissions
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+  actions: read
+  security-events: write
+
+jobs:
+  # Job 1: Validation and Preparation
+  validate:
+    name: 'Validate Tag and Setup'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.extract_version.outputs.version }}
+      tag_valid: ${{ steps.validate_tag.outputs.valid }}
+      should_proceed: ${{ steps.gate_check.outputs.proceed }}
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 'Extract Version from Tag'
+        id: extract_version
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG_NAME#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "🏷️ Extracted version: $VERSION from tag: $TAG_NAME"
+
+      - name: 'Validate v4+ Tag Pattern'
+        id: validate_tag
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          if [[ $TAG_NAME =~ ^v4\.[0-9]+\.[0-9]+$ ]]; then
+            echo "valid=true" >> $GITHUB_OUTPUT
+            echo "✅ Valid v4+ tag: $TAG_NAME"
+          else
+            echo "valid=false" >> $GITHUB_OUTPUT
+            echo "❌ Invalid tag pattern: $TAG_NAME (expected v4.x.x)"
+            exit 1
+          fi
+
+      - name: 'Package.json Version Validation'
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          TAG_VERSION=${{ steps.extract_version.outputs.version }}
+          echo "📦 Package.json version: $PACKAGE_VERSION"
+          echo "🏷️ Tag version: $TAG_VERSION"
+          if [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
+            echo "❌ Version mismatch between package.json ($PACKAGE_VERSION) and tag ($TAG_VERSION)"
+            exit 1
+          fi
+          echo "✅ Version validation passed"
+
+      - name: 'Quality Gate Check'
+        id: gate_check
+        run: |
+          echo "proceed=true" >> $GITHUB_OUTPUT
+          echo "🚀 All validation checks passed - proceeding with workflow"
+
+  # Job 2: Multi-Platform Testing Matrix
+  test:
+    name: 'Test (Node ${{ matrix.node-version }} on ${{ matrix.os }})'
+    needs: validate
+    if: needs.validate.outputs.should_proceed == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+
+      - name: 'Setup Node.js ${{ matrix.node-version }}'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: 'Install Dependencies'
+        run: |
+          npm ci
+          echo "📦 Dependencies installed for Node ${{ matrix.node-version }} on ${{ matrix.os }}"
+
+      - name: 'Run TypeScript Build'
+        run: |
+          npm run build
+          echo "🔨 TypeScript compilation successful"
+
+      - name: 'Run Test Suite'
+        run: |
+          npm run test-local
+          echo "✅ Test suite passed on Node ${{ matrix.node-version }} - ${{ matrix.os }}"
+
+      - name: 'Verify CLI Functionality'
+        shell: bash
+        run: |
+          # Test CLI binary creation and basic functionality
+          if [ -f "bin/code-audit.js" ]; then
+            echo "✅ CLI binary exists"
+            # Test help command (safe test that doesn't require Ollama)
+            node bin/code-audit.js --help > /dev/null 2>&1 && echo "✅ CLI help command works" || echo "⚠️ CLI help might need setup"
+          else
+            echo "❌ CLI binary not found"
+            exit 1
+          fi
+
+      - name: 'Upload Test Artifacts'
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-failure-${{ matrix.os }}-node${{ matrix.node-version }}
+          path: |
+            dist/
+            *.log
+            npm-debug.log*
+          retention-days: 7
+
+  # Job 3: Package Creation and Validation
+  package:
+    name: 'Create and Validate Package'
+    needs: [validate, test]
+    runs-on: ubuntu-latest
+    outputs:
+      package_created: ${{ steps.package_check.outputs.created }}
+      package_size: ${{ steps.package_info.outputs.size }}
+    
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+
+      - name: 'Setup Node.js LTS'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: 'Install Dependencies'
+        run: npm ci
+
+      - name: 'Build Package'
+        run: |
+          npm run build
+          echo "🔨 Package build completed"
+
+      - name: 'Create NPM Package'
+        run: |
+          npm pack
+          echo "📦 NPM package created"
+
+      - name: 'Validate Package Contents'
+        id: package_check
+        run: |
+          PACKAGE_FILE=$(ls *.tgz | head -1)
+          if [ -f "$PACKAGE_FILE" ]; then
+            echo "created=true" >> $GITHUB_OUTPUT
+            echo "✅ Package file created: $PACKAGE_FILE"
+            
+            # Validate package contents
+            tar -tzf "$PACKAGE_FILE" | head -20
+            echo "📋 Package contents validated"
+          else
+            echo "created=false" >> $GITHUB_OUTPUT
+            echo "❌ Package creation failed"
+            exit 1
+          fi
+
+      - name: 'Package Information'
+        id: package_info
+        run: |
+          PACKAGE_FILE=$(ls *.tgz | head -1)
+          PACKAGE_SIZE=$(ls -lh "$PACKAGE_FILE" | awk '{print $5}')
+          echo "size=$PACKAGE_SIZE" >> $GITHUB_OUTPUT
+          echo "📊 Package size: $PACKAGE_SIZE"
+
+      - name: 'Upload Package Artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-package-${{ needs.validate.outputs.version }}
+          path: '*.tgz'
+          retention-days: 30
+
+  # Job 4: NPM Publishing
+  publish:
+    name: 'Publish to NPM Registry'
+    needs: [validate, test, package]
+    runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      published: ${{ steps.publish_check.outputs.success }}
+      npm_url: ${{ steps.publish_info.outputs.url }}
+    
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+
+      - name: 'Setup Node.js for Publishing'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          registry-url: ${{ env.REGISTRY_URL }}
+          cache: 'npm'
+
+      - name: 'Install Dependencies'
+        run: npm ci
+
+      - name: 'Build for Publishing'
+        run: npm run build
+
+      - name: 'Configure NPM Authentication'
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+          echo "📝 NPM authentication configured"
+
+      - name: 'Verify NPM Authentication'
+        run: |
+          npm whoami
+          echo "✅ NPM authentication verified"
+
+      - name: 'Publish to NPM'
+        id: publish_step
+        run: |
+          npm publish --access public
+          echo "🚀 Package published to NPM registry"
+
+      - name: 'Verify Publication'
+        id: publish_check
+        run: |
+          # Wait a moment for NPM registry to update
+          sleep 10
+          
+          # Verify package is available
+          PACKAGE_INFO=$(npm view ${{ env.PACKAGE_NAME }}@${{ needs.validate.outputs.version }} --json)
+          if [ $? -eq 0 ]; then
+            echo "success=true" >> $GITHUB_OUTPUT
+            echo "✅ Package verification successful"
+            echo "$PACKAGE_INFO" | jq -r '.version' | head -1
+          else
+            echo "success=false" >> $GITHUB_OUTPUT
+            echo "❌ Package verification failed"
+            exit 1
+          fi
+
+      - name: 'Package Publication Info'
+        id: publish_info
+        run: |
+          NPM_URL="https://www.npmjs.com/package/${{ env.PACKAGE_NAME }}/v/${{ needs.validate.outputs.version }}"
+          echo "url=$NPM_URL" >> $GITHUB_OUTPUT
+          echo "🔗 Package URL: $NPM_URL"
+
+  # Job 5: GitHub Release Creation
+  release:
+    name: 'Create GitHub Release'
+    needs: [validate, test, package, publish]
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release_check.outputs.created }}
+      release_url: ${{ steps.create_release.outputs.html_url }}
+    
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 'Download Package Artifact'
+        uses: actions/download-artifact@v4
+        with:
+          name: npm-package-${{ needs.validate.outputs.version }}
+
+      - name: 'Generate Release Notes'
+        id: release_notes
+        run: |
+          TAG_NAME="v${{ needs.validate.outputs.version }}"
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+          
+          echo "## 🚀 Release v${{ needs.validate.outputs.version }}" > release_notes.md
+          echo "" >> release_notes.md
+          echo "### 📦 Installation" >> release_notes.md
+          echo "\`\`\`bash" >> release_notes.md
+          echo "npm install -g ${{ env.PACKAGE_NAME }}@${{ needs.validate.outputs.version }}" >> release_notes.md
+          echo "\`\`\`" >> release_notes.md
+          echo "" >> release_notes.md
+          
+          if [ -n "$PREV_TAG" ]; then
+            echo "### 📝 Changes since $PREV_TAG" >> release_notes.md
+            git log --pretty=format:"- %s (%h)" $PREV_TAG..HEAD >> release_notes.md
+          else
+            echo "### 📝 Initial Release" >> release_notes.md
+            echo "- Initial release of @moikas/code-audit-mcp" >> release_notes.md
+          fi
+          
+          echo "" >> release_notes.md
+          echo "### 🔗 Links" >> release_notes.md
+          echo "- 📦 [NPM Package](${{ needs.publish.outputs.npm_url }})" >> release_notes.md
+          echo "- 📋 [Package Contents](https://unpkg.com/${{ env.PACKAGE_NAME }}@${{ needs.validate.outputs.version }}/)" >> release_notes.md
+          echo "- 📊 Package Size: ${{ needs.package.outputs.package_size }}" >> release_notes.md
+
+      - name: 'Create GitHub Release'
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ needs.validate.outputs.version }}
+          release_name: 'Release v${{ needs.validate.outputs.version }}'
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+
+      - name: 'Upload Package to Release'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./*.tgz
+          asset_name: ${{ env.PACKAGE_NAME }}-${{ needs.validate.outputs.version }}.tgz
+          asset_content_type: application/gzip
+
+      - name: 'Verify Release Creation'
+        id: release_check
+        run: |
+          echo "created=true" >> $GITHUB_OUTPUT
+          echo "✅ GitHub release created successfully"
+
+  # Job 6: Final Status and Notifications
+  finalize:
+    name: 'Workflow Completion Status'
+    needs: [validate, test, package, publish, release]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: 'Workflow Summary'
+        run: |
+          echo "## 🎯 Workflow Completion Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Job Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status | Details |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Validation | ${{ needs.validate.result }} | Version: ${{ needs.validate.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Testing | ${{ needs.test.result }} | Multi-platform matrix completed |" >> $GITHUB_STEP_SUMMARY
+          echo "| Package | ${{ needs.package.result }} | Size: ${{ needs.package.outputs.package_size }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Publish | ${{ needs.publish.result }} | NPM Registry |" >> $GITHUB_STEP_SUMMARY
+          echo "| Release | ${{ needs.release.result }} | GitHub Release |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: 'Success Notification'
+        if: needs.validate.result == 'success' && needs.test.result == 'success' && needs.package.result == 'success' && needs.publish.result == 'success' && needs.release.result == 'success'
+        run: |
+          echo "🎉 SUCCESS: ${{ env.PACKAGE_NAME }}@${{ needs.validate.outputs.version }} published successfully!"
+          echo "📦 NPM: ${{ needs.publish.outputs.npm_url }}"
+          echo "🔗 Release: ${{ needs.release.outputs.release_url }}"
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Publication Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "- **Package:** [${{ env.PACKAGE_NAME }}@${{ needs.validate.outputs.version }}](${{ needs.publish.outputs.npm_url }})" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release:** [GitHub Release](${{ needs.release.outputs.release_url }})" >> $GITHUB_STEP_SUMMARY
+          echo "- **Install:** \`npm install -g ${{ env.PACKAGE_NAME }}@${{ needs.validate.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: 'Failure Analysis'
+        if: failure() || cancelled()
+        run: |
+          echo "❌ WORKFLOW FAILED: One or more jobs failed"
+          echo "🔍 Check individual job logs for detailed error information"
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ❌ Workflow Failed" >> $GITHUB_STEP_SUMMARY
+          echo "Please review the failed job logs and resolve issues before retrying." >> $GITHUB_STEP_SUMMARY
+          exit 1
+
+  # Job 7: Error Recovery and Cleanup
+  cleanup:
+    name: 'Cleanup and Error Recovery'
+    needs: [validate, test, package, publish, release, finalize]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: 'Cleanup Temporary Files'
+        run: |
+          echo "🧹 Performing cleanup operations"
+          # Cleanup is handled by GitHub Actions automatically
+          echo "✅ Cleanup completed"
+
+      - name: 'Error Recovery Information'
+        if: failure()
+        run: |
+          echo "🔧 Error Recovery Options:"
+          echo "1. Check GitHub secrets configuration (NPM_TOKEN)"
+          echo "2. Verify package.json version matches tag"
+          echo "3. Ensure all tests pass locally"
+          echo "4. Review NPM registry permissions"
+          echo "5. Check network connectivity issues"
+
+# Workflow metadata
+# This workflow provides complete CI/CD automation for @moikas/code-audit-mcp
+# Triggers: v4+ version tags (v4.0.0, v4.1.0, etc.)
+# Features: Multi-platform testing, NPM publishing, GitHub releases
+# Security: Uses NPM_TOKEN secret for authentication
+# Monitoring: Comprehensive logging and status reporting

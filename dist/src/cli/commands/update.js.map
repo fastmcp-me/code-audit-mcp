@@ -1,0 +1,1 @@
+{"version":3,"file":"update.js","sourceRoot":"","sources":["../../../../src/cli/commands/update.ts"],"names":[],"mappings":"AAAA;;GAEG;AAEH,MAAM,CAAC,KAAK,UAAU,aAAa,CAAC,OAAY;IAC9C,OAAO,CAAC,GAAG,CAAC,6CAA6C,CAAC,CAAC;IAC3D,OAAO,CAAC,GAAG,CAAC,UAAU,EAAE,OAAO,CAAC,CAAC;AACnC,CAAC"}

@@ -16,7 +16,7 @@ on:
 env:
   NODE_VERSION: '18'
   REGISTRY_URL: 'https://registry.npmjs.org'
-  PACKAGE_SCOPE: '@moikas-code'
+  PACKAGE_SCOPE: '@moikas'
 
 jobs:
   validate:
@@ -101,7 +101,7 @@ jobs:
             echo "Version already set to $TARGET_VERSION, skipping npm version"
           fi
 
-          sed -i 's/"name": "@moikas\/code-audit-mcp"/"name": "@moikas-code\/code-audit-mcp"/' package.json
+          # Package name is already correct in package.json as @moikas/code-audit-mcp
           cat package.json | grep -A 5 -B 5 '"name":'
 
       - name: Build project
@@ -160,7 +160,7 @@ jobs:
           find . -maxdepth 1 -name "*.tgz" -type f
 
           # Find the correct tarball file - use find to ensure one per line
-          TARBALL=$(find . -maxdepth 1 -name "moikas-code-code-audit-mcp-*.tgz" -type f | head -n1)
+          TARBALL=$(find . -maxdepth 1 -name "moikas-code-audit-mcp-*.tgz" -type f | head -n1)
           if [ -z "$TARBALL" ]; then
             # Fallback to any .tgz file
             TARBALL=$(find . -maxdepth 1 -name "*.tgz" -type f | head -n1)
@@ -196,7 +196,7 @@ jobs:
       - name: Configure npm authentication
         run: |
           echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
-          echo "@moikas-code:registry=https://registry.npmjs.org/" >> ~/.npmrc
+          echo "@moikas:registry=https://registry.npmjs.org/" >> ~/.npmrc
 
       - name: Publish to NPM
         run: |
@@ -211,7 +211,7 @@ jobs:
       - name: Verify publication
         run: |
           sleep 30
-          npm view @moikas-code/code-audit-mcp@${{ needs.validate.outputs.version }} --json
+          npm view @moikas/code-audit-mcp@${{ needs.validate.outputs.version }} --json
 
   create-github-release:
     name: Create GitHub Release
@@ -254,11 +254,11 @@ jobs:
 
             ### 📦 Installation
             ```bash
-            npm install -g @moikas-code/code-audit-mcp@${{ needs.validate.outputs.version }}
+            npm install -g @moikas/code-audit-mcp@${{ needs.validate.outputs.version }}
             ```
 
             ### 🔗 Links
-            - [NPM Package](https://www.npmjs.com/package/@moikas-code/code-audit-mcp)
+            - [NPM Package](https://www.npmjs.com/package/@moikas/code-audit-mcp)
             - [Documentation](https://github.com/warrengates/code-audit-mcp#readme)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -272,11 +272,11 @@ jobs:
       - name: Success notification
         if: needs.publish-npm.result == 'success'
         run: |
-          echo "✅ Successfully published @moikas-code/code-audit-mcp@${{ needs.validate.outputs.version }}"
-          echo "📦 Package available at: https://www.npmjs.com/package/@moikas-code/code-audit-mcp"
+          echo "✅ Successfully published @moikas/code-audit-mcp@${{ needs.validate.outputs.version }}"
+          echo "📦 Package available at: https://www.npmjs.com/package/@moikas/code-audit-mcp"
 
       - name: Failure notification
         if: needs.publish-npm.result == 'failure'
         run: |
-          echo "❌ Failed to publish @moikas-code/code-audit-mcp@${{ needs.validate.outputs.version }}"
+          echo "❌ Failed to publish @moikas/code-audit-mcp@${{ needs.validate.outputs.version }}"
           exit 1

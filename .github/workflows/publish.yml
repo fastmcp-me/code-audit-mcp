@@ -11,7 +11,7 @@ on:
       version:
         description: 'Version to publish (e.g., 1.0.0)'
         required: true
-        default: '1.0.0'
+        default: '1.0.6'
 
 env:
   NODE_VERSION: '18'
@@ -237,20 +237,17 @@ jobs:
           files: |
             *.tgz
           body: |
-            ## Code Audit MCP v1.0.0 - Initial Release
+            ## Code Audit MCP ${{ needs.validate.outputs.tag }}
 
-            ### 🚀 Features
-            - AI-powered code auditing via MCP using local Ollama models
-            - Comprehensive security, performance, and quality analysis
-            - Multiple audit types: security, completeness, performance, quality, architecture, testing, documentation
-            - Global CLI tool with interactive commands
-            - Support for multiple programming languages
+            ### 🐛 Bug Fixes
+            - Fixed MCP stdio mode console output interfering with JSON-RPC protocol
+            - Added MCP-aware logger to suppress non-JSON output when running as MCP server
+            - Resolved "not valid JSON" errors when using bunx/npx to run the server
 
-            ### 🔧 Components
-            - MCP server for Claude integration
-            - Ollama client with model management
-            - Configurable auditor system
-            - Health monitoring and diagnostics
+            ### 🔧 Technical Changes
+            - Introduced MCP_STDIO_MODE environment variable for proper stdio detection
+            - Replaced all console.log/warn/error calls with MCP-aware logger in server code
+            - Improved server startup process for stdio mode
 
             ### 📦 Installation
             ```bash

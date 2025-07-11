@@ -165,13 +165,26 @@ export async function startCommand(options) {
         console.log(chalk.yellow('\n💡 Try running "code-audit setup" to configure the system'));
         return;
     }
-    // Determine server path
-    const serverPath = join(__dirname, '../../../src/server/index.js');
+    // Determine server path - handle different execution contexts
+    let serverPath = join(__dirname, '../../server/index.js'); // For compiled dist
+    // Check if we're in the dist folder (normal execution)
+    if (!existsSync(serverPath)) {
+        // Try development path (running from src)
+        serverPath = join(__dirname, '../../../src/server/index.js');
+        if (!existsSync(serverPath)) {
+            // Try npx/global install path (one level up)
+            serverPath = join(__dirname, '../server/index.js');
+        }
+    }
     // Validate server file exists
     if (!existsSync(serverPath)) {
         console.error(chalk.red('❌ Server build artifacts not found'));
-        console.log(chalk.yellow('💡 Run "npm run build" to build the server first'));
-        console.log(chalk.gray(`Expected file: ${serverPath}`));
+        console.log(chalk.yellow('💡 This might be a path resolution issue.'));
+        console.log(chalk.gray(`Attempted paths:`));
+        console.log(chalk.gray(`  - ${join(__dirname, '../../server/index.js')}`));
+        console.log(chalk.gray(`  - ${join(__dirname, '../../../src/server/index.js')}`));
+        console.log(chalk.gray(`  - ${join(__dirname, '../server/index.js')}`));
+        console.log(chalk.gray(`Current directory: ${__dirname}`));
         return;
     }
     if (options.daemon) {

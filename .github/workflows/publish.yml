@@ -105,7 +105,10 @@ jobs:
           cat package.json | grep -A 5 -B 5 '"name":'
 
       - name: Build project
-        run: npm run build
+        run: |
+          # Clean any existing artifacts first
+          rm -f *.tgz
+          npm run build
 
       - name: Create tarball
         run: |
@@ -160,7 +163,8 @@ jobs:
           find . -maxdepth 1 -name "*.tgz" -type f
 
           # Find the correct tarball file - use find to ensure one per line
-          TARBALL=$(find . -maxdepth 1 -name "@moikas/code-audit-mcp-*.tgz" -type f | head -n1)
+          # Note: npm pack creates files without @ in the filename
+          TARBALL=$(find . -maxdepth 1 -name "moikas-code-audit-mcp-*.tgz" -type f | head -n1)
           if [ -z "$TARBALL" ]; then
             # Fallback to any .tgz file
             TARBALL=$(find . -maxdepth 1 -name "*.tgz" -type f | head -n1)

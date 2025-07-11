@@ -268,10 +268,17 @@ export class CodeAuditServer {
             }
             catch (error) {
                 console.error(`Tool ${name} failed:`, error);
+                if (error)
+                    console.error('Error stack:', error.stack);
                 if (error instanceof McpError) {
                     throw error;
                 }
-                throw new McpError(ErrorCode.InternalError, `Tool execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                const errorMessage = error instanceof Error
+                    ? error.message
+                    : typeof error === 'string'
+                        ? error
+                        : 'Truly unknown error - check server logs';
+                throw new McpError(ErrorCode.InternalError, `Tool execution failed: ${errorMessage}`);
             }
         });
     }
@@ -283,20 +290,40 @@ export class CodeAuditServer {
         this.validateAuditRequest(request);
         // Check for duplicate audits
         const requestKey = this.generateRequestKey(request);
-        if (this.activeAudits.has(requestKey)) {
+        const existingAudit = this.activeAudits.get(requestKey);
+        if (existingAudit) {
             console.log('Audit already in progress, waiting for completion...');
-            const result = await this.activeAudits.get(requestKey);
+            const result = await existingAudit.promise;
             return { content: [result] };
         }
-        // Create audit promise
+        // Create audit promise with timeout
         const auditPromise = this.performAudit(request);
-        this.activeAudits.set(requestKey, auditPromise);
+        const auditTimeout = 300000; // 5 minutes
+        // Create timeout that will clean up the audit
+        const timeout = setTimeout(() => {
+            const audit = this.activeAudits.get(requestKey);
+            if (audit) {
+                console.error(`Audit ${requestKey} timed out after ${auditTimeout / 1000} seconds`);
+                this.activeAudits.delete(requestKey);
+            }
+        }, auditTimeout);
+        // Store audit metadata
+        this.activeAudits.set(requestKey, {
+            promise: auditPromise,
+            startTime: Date.now(),
+            timeout,
+        });
         try {
             const result = await auditPromise;
             return { content: [result] };
         }
         finally {
-            this.activeAudits.delete(requestKey);
+            // Clean up audit and cancel timeout
+            const audit = this.activeAudits.get(requestKey);
+            if (audit) {
+                clearTimeout(audit.timeout);
+                this.activeAudits.delete(requestKey);
+            }
         }
     }
     /**

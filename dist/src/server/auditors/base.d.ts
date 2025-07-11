@@ -61,7 +61,7 @@ export declare abstract class BaseAuditor {
     /**
      * Validate and normalize a single issue
      */
-    protected validateAndNormalizeIssue(raw: Partial<AuditIssue>, request: AuditRequest, language: string): AuditIssue | null;
+    protected validateAndNormalizeIssue(raw: Partial<AuditIssue>, request: AuditRequest, _language: string): AuditIssue | null;
     /**
      * Normalize severity to valid values
      */

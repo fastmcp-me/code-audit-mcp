@@ -247,7 +247,7 @@ export class BaseAuditor {
     /**
      * Validate and normalize a single issue
      */
-    validateAndNormalizeIssue(raw, request, language) {
+    validateAndNormalizeIssue(raw, request, _language) {
         // Required fields validation
         if (!raw.location?.line || !raw.title || !raw.description) {
             return null;

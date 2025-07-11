@@ -7,6 +7,17 @@ import { join } from 'path';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { homedir } from 'os';
 /**
+ * Custom error class for configuration issues
+ */
+export class ConfigError extends Error {
+    configPath;
+    constructor(message, configPath) {
+        super(message);
+        this.configPath = configPath;
+        this.name = 'ConfigError';
+    }
+}
+/**
  * Default configuration
  */
 const DEFAULT_CONFIG = {
@@ -60,6 +71,10 @@ const DEFAULT_CONFIG = {
         port: 3000,
         transport: 'stdio',
         logLevel: 'info',
+        shutdown: {
+            gracefulTimeout: 5000,
+            forceTimeout: 10000,
+        },
     },
     updates: {
         checkInterval: 86400000, // 24 hours
@@ -194,7 +209,7 @@ class ConfigManager {
                         break;
                     }
                 }
-                catch (_error) {
+                catch {
                     // Skip invalid config files
                 }
             }

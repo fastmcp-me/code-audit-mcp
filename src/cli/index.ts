@@ -103,6 +103,10 @@ export async function cli(): Promise<void> {
     .option('--force', 'Force re-setup even if already configured')
     .option('--minimal', 'Minimal setup with essential models only')
     .option('--comprehensive', 'Full setup with all recommended models')
+    .option('--claude-desktop', 'Configure Claude Desktop MCP server')
+    .option('--claude-code', 'Configure Claude Code global MCP server')
+    .option('--project', 'Configure Claude Code project MCP server')
+    .option('--auto', 'Auto-configure all available Claude environments')
     .action(setupCommand);
 
   program

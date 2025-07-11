@@ -3,6 +3,13 @@
  * Provides type-safe configuration management with global and project-specific overrides
  */
 /**
+ * Custom error class for configuration issues
+ */
+export declare class ConfigError extends Error {
+    configPath?: string;
+    constructor(message: string, configPath?: string);
+}
+/**
  * Configuration schema for validation
  */
 export interface ConfigSchema {
@@ -39,6 +46,10 @@ export interface ConfigSchema {
         port: number;
         transport: 'stdio' | 'http';
         logLevel: 'error' | 'warn' | 'info' | 'debug';
+        shutdown?: {
+            gracefulTimeout: number;
+            forceTimeout: number;
+        };
     };
     updates: {
         checkInterval: number;

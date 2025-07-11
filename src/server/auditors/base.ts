@@ -352,7 +352,7 @@ export abstract class BaseAuditor {
   protected validateAndNormalizeIssue(
     raw: Partial<AuditIssue>,
     request: AuditRequest,
-    language: string
+    _language: string
   ): AuditIssue | null {
     // Required fields validation
     if (!raw.location?.line || !raw.title || !raw.description) {

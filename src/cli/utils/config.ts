@@ -9,6 +9,19 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { homedir } from 'os';
 
 /**
+ * Custom error class for configuration issues
+ */
+export class ConfigError extends Error {
+  constructor(
+    message: string,
+    public configPath?: string
+  ) {
+    super(message);
+    this.name = 'ConfigError';
+  }
+}
+
+/**
  * JSON Schema type for validation
  */
 interface JSONSchema {
@@ -61,6 +74,10 @@ export interface ConfigSchema {
     port: number;
     transport: 'stdio' | 'http';
     logLevel: 'error' | 'warn' | 'info' | 'debug';
+    shutdown?: {
+      gracefulTimeout: number;
+      forceTimeout: number;
+    };
   };
   updates: {
     checkInterval: number;
@@ -127,6 +144,10 @@ const DEFAULT_CONFIG: ConfigSchema = {
     port: 3000,
     transport: 'stdio',
     logLevel: 'info',
+    shutdown: {
+      gracefulTimeout: 5000,
+      forceTimeout: 10000,
+    },
   },
   updates: {
     checkInterval: 86400000, // 24 hours
@@ -273,7 +294,7 @@ class ConfigManager {
             this.projectConfig = config;
             break;
           }
-        } catch (_error) {
+        } catch {
           // Skip invalid config files
         }
       }

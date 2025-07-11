@@ -229,6 +229,28 @@ ollama pull codellama:7b  # Not codellama:34b
 }
 ```
 
+## Daemon Mode Issues
+
+**Problem**: Server starts but exits shortly after in daemon mode
+
+**Cause**: MCP servers use stdio transport and expect active stdin/stdout connections. Running as a true background daemon is not fully supported.
+
+**Solutions**:
+
+1. Use foreground mode for development:
+
+```bash
+code-audit start
+```
+
+2. For background operation, use tools like tmux or screen:
+
+```bash
+tmux new -s mcp-server 'code-audit start'
+```
+
+3. Alternatively, use systemd service for production (see deployment guide)
+
 ## Ollama Issues
 
 ### Ollama not found

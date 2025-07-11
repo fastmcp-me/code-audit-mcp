@@ -3,6 +3,7 @@
  */
 
 import { getConfig } from './config.js';
+import { execSync } from 'child_process';
 
 interface OllamaModel {
   name: string;
@@ -106,7 +107,10 @@ export async function getModelHealth(): Promise<Record<string, boolean>> {
 /**
  * Pull a model from Ollama
  */
-export async function pullModel(modelName: string): Promise<void> {
+export async function pullModel(
+  modelName: string,
+  onProgress?: (progress: Record<string, unknown>) => void
+): Promise<void> {
   const config = await getConfig();
 
   try {
@@ -116,7 +120,7 @@ export async function pullModel(modelName: string): Promise<void> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ name: modelName }),
-      signal: AbortSignal.timeout(300000), // 5 minutes for model pull
+      signal: AbortSignal.timeout(3600000), // 60 minutes for model pull
     });
 
     if (!response.ok) {
@@ -126,12 +130,25 @@ export async function pullModel(modelName: string): Promise<void> {
     // Handle streaming response for progress updates
     const reader = response.body?.getReader();
     if (reader) {
+      let buffer = '';
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        // Parse and handle progress updates here if needed
-        new TextDecoder().decode(value);
+        buffer += new TextDecoder().decode(value);
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.trim()) {
+            try {
+              const data = JSON.parse(line);
+              if (onProgress) onProgress(data);
+            } catch {
+              // Ignore parse errors
+            }
+          }
+        }
       }
     }
   } catch (error) {
@@ -191,5 +208,48 @@ export async function ensureRequiredModels(): Promise<void> {
     console.warn(
       'Run "code-audit models --pull <model>" to install missing models.'
     );
+  }
+}
+
+export async function pullModelWithRetry(
+  modelName: string,
+  onProgress?: (progress: Record<string, unknown>) => void,
+  maxRetries: number = 3
+): Promise<void> {
+  let attempts = 0;
+  while (attempts < maxRetries) {
+    try {
+      await pullModel(modelName, onProgress);
+      return;
+    } catch (error) {
+      attempts++;
+      if (attempts >= maxRetries) {
+        throw error;
+      }
+      const delay = 5000 * Math.pow(2, attempts - 1);
+      console.log(
+        `Retry attempt ${attempts}/${maxRetries} after ${delay / 1000} seconds...`
+      );
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+}
+
+export function estimateModelSize(modelName: string): number {
+  if (modelName.includes('70b')) return 40; // GB
+  if (modelName.includes('34b')) return 20;
+  if (modelName.includes('13b')) return 8;
+  if (modelName.includes('7b') || modelName.includes('8b')) return 4;
+  return 10; // Default
+}
+
+export function getAvailableDiskSpace(): number {
+  try {
+    const output = execSync('df -k / | tail -1').toString().trim();
+    const parts = output.split(/\s+/);
+    const availableKB = parseInt(parts[3]);
+    return Math.floor(availableKB / 1024 / 1024); // Convert to GB
+  } catch {
+    return -1; // Error, unknown space
   }
 }

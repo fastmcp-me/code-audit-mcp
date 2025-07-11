@@ -20,8 +20,9 @@ import {
 import {
   checkOllamaHealth,
   getInstalledModels,
-  pullModel,
+  pullModelWithRetry,
 } from '../utils/ollama.js';
+import { getMCPConfigManager, ClaudeEnvironment } from '../utils/mcp-config.js';
 
 const execAsync = promisify(exec);
 
@@ -30,6 +31,10 @@ interface SetupOptions {
   minimal?: boolean;
   comprehensive?: boolean;
   verbose?: boolean;
+  claudeDesktop?: boolean;
+  claudeCode?: boolean;
+  project?: boolean;
+  auto?: boolean;
 }
 
 interface SetupState {
@@ -101,26 +106,41 @@ export async function setupCommand(options: SetupOptions = {}): Promise<void> {
     console.log(chalk.blue('\n✅ Step 5: Verifying setup...'));
     await verifySetup();
 
+    // Step 6: MCP configuration
+    console.log(chalk.blue('\n🔌 Step 6: Configuring MCP servers...'));
+    const mcpConfigured = await setupMCPServers(options);
+
     // Success message
+    const successMessage = mcpConfigured
+      ? chalk.green.bold('🎉 Setup Complete!\n\n') +
+        chalk.white('Code Audit MCP is now ready to use.\n') +
+        chalk.white('MCP server configuration has been added to Claude.\n\n') +
+        chalk.cyan('Next steps:\n') +
+        chalk.white(
+          '• Restart Claude Desktop/Code to load the new configuration\n'
+        ) +
+        chalk.white('• Run ') +
+        chalk.yellow('code-audit health') +
+        chalk.white(' to check system health\n') +
+        chalk.white('• Visit the documentation for usage examples')
+      : chalk.green.bold('🎉 Setup Complete!\n\n') +
+        chalk.white('Code Audit MCP is now ready to use.\n\n') +
+        chalk.cyan('Next steps:\n') +
+        chalk.white('• Run ') +
+        chalk.yellow('code-audit start') +
+        chalk.white(' to start the server\n') +
+        chalk.white('• Run ') +
+        chalk.yellow('code-audit health') +
+        chalk.white(' to check system health\n') +
+        chalk.white('• Visit the documentation for usage examples');
+
     console.log(
-      boxen(
-        chalk.green.bold('🎉 Setup Complete!\n\n') +
-          chalk.white('Code Audit MCP is now ready to use.\n\n') +
-          chalk.cyan('Next steps:\n') +
-          chalk.white('• Run ') +
-          chalk.yellow('code-audit start') +
-          chalk.white(' to start the server\n') +
-          chalk.white('• Run ') +
-          chalk.yellow('code-audit health') +
-          chalk.white(' to check system health\n') +
-          chalk.white('• Visit the documentation for usage examples'),
-        {
-          padding: 1,
-          margin: 1,
-          borderStyle: 'round',
-          borderColor: 'green',
-        }
-      )
+      boxen(successMessage, {
+        padding: 1,
+        margin: 1,
+        borderStyle: 'round',
+        borderColor: 'green',
+      })
     );
   } catch (error) {
     console.error(
@@ -134,7 +154,7 @@ export async function setupCommand(options: SetupOptions = {}): Promise<void> {
 
     console.log(
       chalk.yellow(
-        '\nFor help, visit: https://github.com/warrengates/code-audit-mcp/issues'
+        '\nFor help, visit: https://github.com/moikas-code/code-audit-mcp/issues'
       )
     );
     process.exit(1);
@@ -302,6 +322,30 @@ async function setupConfiguration(options: SetupOptions): Promise<void> {
     // Load current config
     const currentConfig = await getConfig();
 
+    // In auto mode, use defaults without prompting
+    if (
+      options.auto ||
+      options.claudeDesktop ||
+      options.claudeCode ||
+      options.project
+    ) {
+      await setConfigValue(
+        'ollama.host',
+        currentConfig.ollama?.host || defaultConfig.ollama.host
+      );
+      await setConfigValue(
+        'ollama.timeout',
+        currentConfig.ollama?.timeout || defaultConfig.ollama.timeout
+      );
+      await setConfigValue(
+        'server.transport',
+        currentConfig.server?.transport || defaultConfig.server.transport
+      );
+
+      spinner.succeed(chalk.green('Configuration saved (using defaults)'));
+      return;
+    }
+
     // Ask for configuration preferences
     const answers = await inquirer.prompt([
       {
@@ -383,6 +427,14 @@ async function setupModels(options: SetupOptions): Promise<void> {
       modelsToInstall = minimalModels;
     } else if (options.comprehensive) {
       modelsToInstall = comprehensiveModels;
+    } else if (
+      options.auto ||
+      options.claudeDesktop ||
+      options.claudeCode ||
+      options.project
+    ) {
+      // In auto/MCP mode, use minimal models by default
+      modelsToInstall = minimalModels;
     } else {
       // Interactive selection
       const { modelSet } = await inquirer.prompt([
@@ -474,7 +526,15 @@ async function setupModels(options: SetupOptions): Promise<void> {
       const spinner = ora(`Downloading ${model}...`).start();
 
       try {
-        await pullModel(model);
+        await pullModelWithRetry(model, (progress) => {
+          if (progress.status === 'downloading' && progress.total) {
+            const percent = (
+              ((progress.completed as number) / (progress.total as number)) *
+              100
+            ).toFixed(1);
+            spinner.text = `Downloading ${model}: ${percent}%`;
+          }
+        });
         spinner.succeed(chalk.green(`Downloaded ${model}`));
       } catch {
         spinner.fail(chalk.red(`Failed to download ${model}`));
@@ -532,5 +592,197 @@ async function verifySetup(): Promise<void> {
   } catch (error) {
     spinner.fail(chalk.red('Setup verification failed'));
     throw error;
+  }
+}
+
+/**
+ * Setup MCP servers in Claude environments
+ */
+async function setupMCPServers(options: SetupOptions): Promise<boolean> {
+  try {
+    const mcpManager = getMCPConfigManager();
+    const environments = mcpManager.getAvailableEnvironments();
+
+    if (environments.length === 0) {
+      console.log(
+        chalk.yellow(
+          'No Claude environments detected on this system. Skipping MCP configuration.'
+        )
+      );
+      return false;
+    }
+
+    // Auto mode - configure all available environments
+    if (options.auto) {
+      console.log(
+        chalk.blue('Auto-configuring all available Claude environments...')
+      );
+      const results = await mcpManager.autoConfigureAll({
+        force: options.force,
+      });
+
+      if (results.configured.length > 0) {
+        console.log(
+          chalk.green(
+            `✓ Configured ${results.configured.length} environment(s): ${results.configured.join(', ')}`
+          )
+        );
+      }
+
+      if (results.skipped.length > 0) {
+        console.log(
+          chalk.yellow(
+            `⚠ Skipped ${results.skipped.length} environment(s) (already configured): ${results.skipped.join(', ')}`
+          )
+        );
+      }
+
+      if (results.failed.length > 0) {
+        console.log(
+          chalk.red(
+            `✗ Failed to configure ${results.failed.length} environment(s): ${results.failed.join(', ')}`
+          )
+        );
+      }
+
+      return results.configured.length > 0;
+    }
+
+    // Check which environments to configure based on options
+    const environmentsToConfig: ClaudeEnvironment[] = [];
+
+    if (options.claudeDesktop) {
+      environmentsToConfig.push(ClaudeEnvironment.DESKTOP);
+    }
+
+    if (options.claudeCode) {
+      environmentsToConfig.push(ClaudeEnvironment.CODE_GLOBAL);
+    }
+
+    if (options.project) {
+      environmentsToConfig.push(ClaudeEnvironment.CODE_PROJECT);
+    }
+
+    // If no specific options, ask interactively
+    if (environmentsToConfig.length === 0) {
+      const availableChoices = environments
+        .filter(
+          (env) =>
+            env.exists || env.environment === ClaudeEnvironment.CODE_PROJECT
+        )
+        .map((env) => ({
+          name: `${getEnvironmentDisplayName(env.environment)} ${
+            env.configured ? '(already configured)' : ''
+          }`,
+          value: env.environment,
+          checked: !env.configured,
+        }));
+
+      if (availableChoices.length === 0) {
+        console.log(
+          chalk.yellow('No Claude environments available for configuration.')
+        );
+        return false;
+      }
+
+      const { selectedEnvironments } = await inquirer.prompt([
+        {
+          type: 'checkbox',
+          name: 'selectedEnvironments',
+          message: 'Select Claude environments to configure:',
+          choices: availableChoices,
+        },
+      ]);
+
+      if (selectedEnvironments.length === 0) {
+        console.log(chalk.yellow('Skipping MCP configuration.'));
+        return false;
+      }
+
+      environmentsToConfig.push(...selectedEnvironments);
+    }
+
+    // Configure selected environments
+    let successCount = 0;
+    for (const env of environmentsToConfig) {
+      const envInfo = environments.find((e) => e.environment === env);
+
+      if (envInfo?.configured && !options.force) {
+        console.log(
+          chalk.yellow(
+            `${getEnvironmentDisplayName(env)} is already configured.`
+          )
+        );
+        continue;
+      }
+
+      const spinner = ora(
+        `Configuring ${getEnvironmentDisplayName(env)}...`
+      ).start();
+
+      try {
+        const success = await mcpManager.configureServer(env, {
+          force: options.force,
+        });
+
+        if (success) {
+          spinner.succeed(
+            chalk.green(`✓ Configured ${getEnvironmentDisplayName(env)}`)
+          );
+          successCount++;
+        } else {
+          spinner.fail(
+            chalk.red(`✗ Failed to configure ${getEnvironmentDisplayName(env)}`)
+          );
+        }
+      } catch (error) {
+        spinner.fail(
+          chalk.red(
+            `✗ Error configuring ${getEnvironmentDisplayName(env)}: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          )
+        );
+      }
+    }
+
+    if (successCount > 0) {
+      console.log(
+        chalk.green(
+          `\n✓ Successfully configured ${successCount} environment(s).`
+        )
+      );
+      console.log(
+        chalk.yellow(
+          'Please restart Claude Desktop/Code to load the new configuration.'
+        )
+      );
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error(
+      chalk.red('MCP configuration failed:'),
+      error instanceof Error ? error.message : String(error)
+    );
+    // Don't throw - MCP configuration is optional
+    return false;
+  }
+}
+
+/**
+ * Get display name for environment
+ */
+function getEnvironmentDisplayName(env: ClaudeEnvironment): string {
+  switch (env) {
+    case ClaudeEnvironment.DESKTOP:
+      return 'Claude Desktop';
+    case ClaudeEnvironment.CODE_GLOBAL:
+      return 'Claude Code (Global)';
+    case ClaudeEnvironment.CODE_PROJECT:
+      return 'Claude Code (Project)';
+    default:
+      return env;
   }
 }

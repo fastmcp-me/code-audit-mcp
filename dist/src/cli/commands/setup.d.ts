@@ -6,6 +6,10 @@ interface SetupOptions {
     minimal?: boolean;
     comprehensive?: boolean;
     verbose?: boolean;
+    claudeDesktop?: boolean;
+    claudeCode?: boolean;
+    project?: boolean;
+    auto?: boolean;
 }
 /**
  * Main setup command handler

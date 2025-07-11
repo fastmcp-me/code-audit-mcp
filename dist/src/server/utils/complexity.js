@@ -236,7 +236,7 @@ export class HalsteadComplexityCalculator {
     /**
      * Get operator patterns for language
      */
-    static getOperatorPatterns(language) {
+    static getOperatorPatterns(_language) {
         return [
             /\+/g,
             /-/g,
@@ -273,7 +273,7 @@ export class HalsteadComplexityCalculator {
     /**
      * Get operand patterns for language
      */
-    static getOperandPatterns(language) {
+    static getOperandPatterns(_language) {
         return [
             /\b\w+\b/g, // Identifiers
             /\b\d+\b/g, // Numbers

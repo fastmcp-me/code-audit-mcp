@@ -2,6 +2,7 @@
  * Ollama utility functions for CLI commands
  */
 import { getConfig } from './config.js';
+import { execSync } from 'child_process';
 /**
  * Check Ollama health status
  */
@@ -74,7 +75,7 @@ export async function getModelHealth() {
 /**
  * Pull a model from Ollama
  */
-export async function pullModel(modelName) {
+export async function pullModel(modelName, onProgress) {
     const config = await getConfig();
     try {
         const response = await fetch(`${config.ollama.host}/api/pull`, {
@@ -83,7 +84,7 @@ export async function pullModel(modelName) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ name: modelName }),
-            signal: AbortSignal.timeout(300000), // 5 minutes for model pull
+            signal: AbortSignal.timeout(3600000), // 60 minutes for model pull
         });
         if (!response.ok) {
             throw new Error(`Failed to pull model: ${response.statusText}`);
@@ -91,12 +92,26 @@ export async function pullModel(modelName) {
         // Handle streaming response for progress updates
         const reader = response.body?.getReader();
         if (reader) {
+            let buffer = '';
             while (true) {
                 const { done, value } = await reader.read();
                 if (done)
                     break;
-                // Parse and handle progress updates here if needed
-                new TextDecoder().decode(value);
+                buffer += new TextDecoder().decode(value);
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || '';
+                for (const line of lines) {
+                    if (line.trim()) {
+                        try {
+                            const data = JSON.parse(line);
+                            if (onProgress)
+                                onProgress(data);
+                        }
+                        catch {
+                            // Ignore parse errors
+                        }
+                    }
+                }
             }
         }
     }
@@ -140,6 +155,46 @@ export async function ensureRequiredModels() {
         console.warn(`Warning: Missing required models: ${missingModels.join(', ')}`);
         console.warn('Server will start but may have limited functionality.');
         console.warn('Run "code-audit models --pull <model>" to install missing models.');
+    }
+}
+export async function pullModelWithRetry(modelName, onProgress, maxRetries = 3) {
+    let attempts = 0;
+    while (attempts < maxRetries) {
+        try {
+            await pullModel(modelName, onProgress);
+            return;
+        }
+        catch (error) {
+            attempts++;
+            if (attempts >= maxRetries) {
+                throw error;
+            }
+            const delay = 5000 * Math.pow(2, attempts - 1);
+            console.log(`Retry attempt ${attempts}/${maxRetries} after ${delay / 1000} seconds...`);
+            await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+    }
+}
+export function estimateModelSize(modelName) {
+    if (modelName.includes('70b'))
+        return 40; // GB
+    if (modelName.includes('34b'))
+        return 20;
+    if (modelName.includes('13b'))
+        return 8;
+    if (modelName.includes('7b') || modelName.includes('8b'))
+        return 4;
+    return 10; // Default
+}
+export function getAvailableDiskSpace() {
+    try {
+        const output = execSync('df -k / | tail -1').toString().trim();
+        const parts = output.split(/\s+/);
+        const availableKB = parseInt(parts[3]);
+        return Math.floor(availableKB / 1024 / 1024); // Convert to GB
+    }
+    catch {
+        return -1; // Error, unknown space
     }
 }
 //# sourceMappingURL=ollama.js.map

@@ -91,6 +91,7 @@ This completeness analysis examines the `setup.ts` and `start.ts` commands in th
    - **Recommendation**: Consider early return or state management
 
 5. **Line 477-486: Model Pull Failure**
+
    ```typescript
    try {
      await pullModel(model);
@@ -138,6 +139,7 @@ This completeness analysis examines the `setup.ts` and `start.ts` commands in th
    - **Recommendation**: Add maximum (e.g., 300000ms)
 
 3. **Line 196-198: Memory Check**
+
    ```typescript
    const memory = process.memoryUsage().heapTotal / 1024 / 1024; // MB
    ```
@@ -155,6 +157,7 @@ This completeness analysis examines the `setup.ts` and `start.ts` commands in th
    - **Recommendation**: Implement proper system memory checking
 
 2. **Line 452-454: Model Filtering**
+
    ```typescript
    const newModels = modelsToInstall.filter(
      (model) => !installedModels.includes(model)
@@ -212,6 +215,7 @@ This completeness analysis examines the `setup.ts` and `start.ts` commands in th
    - **Recommendation**: Add error event listener
 
 3. **Line 111: PID Assertion**
+
    ```typescript
    savePid(child.pid!);
    ```
@@ -235,6 +239,7 @@ This completeness analysis examines the `setup.ts` and `start.ts` commands in th
    - **Recommendation**: Add `existsSync` check
 
 2. **Line 56-58: PID File Writing**
+
    ```typescript
    function savePid(pid: number): void {
      const pidFile = getPidFilePath();
@@ -265,6 +270,7 @@ This completeness analysis examines the `setup.ts` and `start.ts` commands in th
    - **Recommendation**: Implement or remove
 
 2. **Line 133-135: Hard-coded Timeout**
+
    ```typescript
    setTimeout(() => {
      child.kill('SIGKILL');

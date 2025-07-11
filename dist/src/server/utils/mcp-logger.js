@@ -6,7 +6,8 @@ class MCPLogger {
     options;
     constructor(options = {}) {
         // Detect if running in MCP stdio mode
-        this.isMCPMode = process.env.MCP_STDIO_MODE === 'true' || process.argv.includes('--stdio');
+        this.isMCPMode =
+            process.env.MCP_STDIO_MODE === 'true' || process.argv.includes('--stdio');
         this.options = {
             enableConsole: !this.isMCPMode,
             enableFile: false,

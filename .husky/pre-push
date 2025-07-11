@@ -1,0 +1,19 @@
+echo "🚀 Running pre-push validation..."
+
+# Run the full quality check that would run in CI
+echo "→ Running quality checks..."
+npm run quality-check
+if [ $? -ne 0 ]; then
+  echo "❌ Quality checks failed! Fix issues before pushing."
+  exit 1
+fi
+
+# Optionally run tests before push (can be slow)
+# echo "→ Running tests..."
+# npm run test-audit
+# if [ $? -ne 0 ]; then
+#   echo "❌ Tests failed! Fix failing tests before pushing."
+#   exit 1
+# fi
+
+echo "✅ All pre-push checks passed!"

@@ -1,1 +1,43 @@
+# Run lint-staged for incremental checks on staged files
+echo "🔍 Running lint-staged on staged files..."
 npx lint-staged
+
+# If lint-staged passes, run the same checks as GitHub Actions
+if [ $? -eq 0 ]; then
+  echo "\n📋 Running workflow validation checks..."
+  
+  # 1. Check code formatting
+  echo "→ Checking code formatting..."
+  npm run format:check
+  if [ $? -ne 0 ]; then
+    echo "❌ Code formatting check failed! Run 'npm run format' to fix."
+    exit 1
+  fi
+  
+  # 2. Run linting
+  echo "→ Running ESLint..."
+  npm run lint
+  if [ $? -ne 0 ]; then
+    echo "❌ Linting failed! Run 'npm run lint:fix' to fix auto-fixable issues."
+    exit 1
+  fi
+  
+  # 3. Run type checking
+  echo "→ Running TypeScript type check..."
+  npm run type-check
+  if [ $? -ne 0 ]; then
+    echo "❌ TypeScript type checking failed!"
+    exit 1
+  fi
+  
+  # 4. Run tests (optional - can be slow)
+  # Uncomment the following lines to also run tests before commit
+  # echo "→ Running tests..."
+  # npm run test-audit
+  # if [ $? -ne 0 ]; then
+  #   echo "❌ Tests failed!"
+  #   exit 1
+  # fi
+  
+  echo "✅ All pre-commit checks passed!"
+fi

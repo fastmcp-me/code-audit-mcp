@@ -116,7 +116,7 @@ export async function startCommand(options) {
         const serverPath = join(__dirname, '../../server/index.js');
         spawn('node', [serverPath], {
             stdio: 'inherit',
-            env: { ...process.env, MCP_STDIO_MODE: 'true' }
+            env: { ...process.env, MCP_STDIO_MODE: 'true' },
         });
         return;
     }

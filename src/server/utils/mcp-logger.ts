@@ -26,6 +26,9 @@ class MCPLogger {
   log(...args: unknown[]): void {
     if (this.options.enableConsole && !this.isMCPMode) {
       console.log(...args);
+    } else if (this.isMCPMode && process.env.DEBUG_MCP === 'true') {
+      // In MCP mode with debug, write to stderr to avoid corrupting stdio
+      console.error('[LOG]', ...args);
     }
     // TODO: Add file logging if needed
   }
@@ -33,6 +36,9 @@ class MCPLogger {
   error(...args: unknown[]): void {
     if (this.options.enableConsole && !this.isMCPMode) {
       console.error(...args);
+    } else if (this.isMCPMode) {
+      // Always write errors to stderr in MCP mode
+      console.error('[ERROR]', ...args);
     }
     // TODO: Add file logging if needed
   }
@@ -40,6 +46,9 @@ class MCPLogger {
   warn(...args: unknown[]): void {
     if (this.options.enableConsole && !this.isMCPMode) {
       console.warn(...args);
+    } else if (this.isMCPMode && process.env.DEBUG_MCP === 'true') {
+      // In MCP mode with debug, write to stderr to avoid corrupting stdio
+      console.error('[WARN]', ...args);
     }
     // TODO: Add file logging if needed
   }
@@ -47,6 +56,9 @@ class MCPLogger {
   debug(...args: unknown[]): void {
     if (this.options.enableConsole && !this.isMCPMode) {
       console.log(...args);
+    } else if (this.isMCPMode && process.env.DEBUG_MCP === 'true') {
+      // In MCP mode with debug, write to stderr to avoid corrupting stdio
+      console.error('[DEBUG]', ...args);
     }
     // TODO: Add file logging if needed
   }
@@ -54,6 +66,9 @@ class MCPLogger {
   info(...args: unknown[]): void {
     if (this.options.enableConsole && !this.isMCPMode) {
       console.log(...args);
+    } else if (this.isMCPMode && process.env.DEBUG_MCP === 'true') {
+      // In MCP mode with debug, write to stderr to avoid corrupting stdio
+      console.error('[INFO]', ...args);
     }
     // TODO: Add file logging if needed
   }

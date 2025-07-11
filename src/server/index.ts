@@ -201,6 +201,8 @@ export class CodeAuditServer {
       logger.log(
         'Server will continue running - Ollama connection will be retried on demand'
       );
+      // Ensure the error doesn't propagate as an unhandled rejection
+      return;
     }
   }
 
@@ -910,6 +912,23 @@ export class CodeAuditServer {
  * Start server if this file is run directly
  */
 if (import.meta.url === `file://${process.argv[1]}`) {
+  // Add unhandled rejection handlers
+  process.on('unhandledRejection', (reason, promise) => {
+    logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    // Don't exit in stdio mode to allow proper error reporting
+    if (process.env.MCP_STDIO_MODE !== 'true') {
+      process.exit(1);
+    }
+  });
+
+  process.on('uncaughtException', (error) => {
+    logger.error('Uncaught Exception:', error);
+    // Don't exit in stdio mode to allow proper error reporting
+    if (process.env.MCP_STDIO_MODE !== 'true') {
+      process.exit(1);
+    }
+  });
+
   const server = new CodeAuditServer();
   server.start().catch((error) => {
     logger.error('Failed to start server:', error);

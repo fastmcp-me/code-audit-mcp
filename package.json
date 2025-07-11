@@ -5,7 +5,8 @@
   "main": "dist/server/index.js",
   "type": "module",
   "bin": {
-    "code-audit": "./bin/code-audit.js"
+    "code-audit": "./bin/code-audit.js",
+    "code-audit-mcp": "./bin/mcp-wrapper.js"
   },
   "preferGlobal": true,
   "scripts": {

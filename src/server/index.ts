@@ -25,6 +25,7 @@ import type {
   HealthCheckResult,
   AuditorConfig,
 } from './types.js';
+import { logger } from './utils/mcp-logger.js';
 
 // Internal interfaces for tool responses
 interface ConfigUpdateArgs {
@@ -156,7 +157,7 @@ export class CodeAuditServer {
    */
   async initialize(): Promise<void> {
     try {
-      console.log('Initializing Code Audit MCP Server...');
+      logger.log('Initializing Code Audit MCP Server...');
 
       // Create auditors first (doesn't require Ollama connection)
       this.auditors = AuditorFactory.createAllAuditors(
@@ -165,14 +166,14 @@ export class CodeAuditServer {
         this.modelManager
       );
 
-      console.log(
+      logger.log(
         `Server initialized with ${Object.keys(this.auditors).length} auditors`
       );
 
       // Initialize Ollama client in the background (non-blocking)
       this.initializeOllamaAsync();
     } catch (error) {
-      console.error('Failed to initialize server:', error);
+      logger.error('Failed to initialize server:', error);
       throw error;
     }
   }
@@ -183,21 +184,21 @@ export class CodeAuditServer {
   private async initializeOllamaAsync(): Promise<void> {
     try {
       await this.ollamaClient.initialize();
-      console.log('Ollama client connected successfully');
+      logger.log('Ollama client connected successfully');
 
       // Perform health check after Ollama is ready
       const health = await this.healthCheck();
       if (health.status === 'unhealthy') {
-        console.warn(
+        logger.warn(
           'Ollama health check failed - some features may be limited'
         );
       }
     } catch (error) {
-      console.warn(
+      logger.warn(
         'Failed to connect to Ollama:',
         error instanceof Error ? error.message : error
       );
-      console.log(
+      logger.log(
         'Server will continue running - Ollama connection will be retried on demand'
       );
     }
@@ -349,8 +350,8 @@ export class CodeAuditServer {
             );
         }
       } catch (error) {
-        console.error(`Tool ${name} failed:`, error);
-        if (error) console.error('Error stack:', error.stack);
+        logger.error(`Tool ${name} failed:`, error);
+        if (error) logger.error('Error stack:', error.stack);
 
         if (error instanceof McpError) {
           throw error;
@@ -383,7 +384,7 @@ export class CodeAuditServer {
     const requestKey = this.generateRequestKey(request);
     const existingAudit = this.activeAudits.get(requestKey);
     if (existingAudit) {
-      console.log('Audit already in progress, waiting for completion...');
+      logger.log('Audit already in progress, waiting for completion...');
       const result = await existingAudit.promise;
       return {
         content: [
@@ -403,7 +404,7 @@ export class CodeAuditServer {
     const timeout = setTimeout(() => {
       const audit = this.activeAudits.get(requestKey);
       if (audit) {
-        console.error(
+        logger.error(
           `Audit ${requestKey} timed out after ${auditTimeout / 1000} seconds`
         );
         this.activeAudits.delete(requestKey);
@@ -467,7 +468,7 @@ export class CodeAuditServer {
 
       return result;
     } catch (error) {
-      console.error('Audit failed:', error);
+      logger.error('Audit failed:', error);
       throw error;
     }
   }
@@ -598,7 +599,7 @@ export class CodeAuditServer {
 
       if (args.ollama) {
         // Note: Ollama config updates would require client recreation
-        console.log('Ollama config update requested (requires restart)');
+        logger.log('Ollama config update requested (requires restart)');
       }
 
       return {
@@ -854,7 +855,7 @@ export class CodeAuditServer {
       return;
     }
 
-    console.log(
+    logger.log(
       `Audit completed: ${request.auditType} (${request.language}) - ${result.issues.length} issues found in ${totalTime}ms`
     );
   }
@@ -864,17 +865,17 @@ export class CodeAuditServer {
    */
   private setupErrorHandling(): void {
     this.server.onerror = (error) => {
-      console.error('MCP Server error:', error);
+      logger.error('MCP Server error:', error);
     };
 
     process.on('SIGINT', async () => {
-      console.log('Shutting down server...');
+      logger.log('Shutting down server...');
       await this.cleanup();
       process.exit(0);
     });
 
     process.on('SIGTERM', async () => {
-      console.log('Shutting down server...');
+      logger.log('Shutting down server...');
       await this.cleanup();
       process.exit(0);
     });
@@ -889,7 +890,7 @@ export class CodeAuditServer {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
 
-    console.log('Code Audit MCP Server is running');
+    logger.log('Code Audit MCP Server is running');
   }
 
   /**
@@ -898,9 +899,9 @@ export class CodeAuditServer {
   async cleanup(): Promise<void> {
     try {
       await this.ollamaClient.cleanup();
-      console.log('Server cleanup completed');
+      logger.log('Server cleanup completed');
     } catch (error) {
-      console.error('Error during cleanup:', error);
+      logger.error('Error during cleanup:', error);
     }
   }
 }
@@ -911,7 +912,7 @@ export class CodeAuditServer {
 if (import.meta.url === `file://${process.argv[1]}`) {
   const server = new CodeAuditServer();
   server.start().catch((error) => {
-    console.error('Failed to start server:', error);
+    logger.error('Failed to start server:', error);
     process.exit(1);
   });
 }

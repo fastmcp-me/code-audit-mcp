@@ -4,6 +4,7 @@
 
 import { Ollama } from 'ollama';
 import type { OllamaConfig, AuditError, HealthCheckResult } from '../types.js';
+import { logger } from '../utils/mcp-logger.js';
 
 export interface OllamaResponse {
   response: string;
@@ -86,7 +87,7 @@ export class OllamaClient {
       await this.refreshAvailableModels();
       this.isHealthy = true;
       this.isInitialized = true;
-      console.log(
+      logger.log(
         `Ollama client initialized with ${this.availableModels.size} models`
       );
     } catch (error) {
@@ -185,7 +186,7 @@ export class OllamaClient {
       };
     } catch (error) {
       this.isHealthy = false;
-      console.error('Ollama health check failed:', error);
+      logger.error('Ollama health check failed:', error);
 
       return {
         status: 'unhealthy',
@@ -266,7 +267,7 @@ export class OllamaClient {
         const delay = this.config.retryDelay * Math.pow(2, attempt - 1);
         await this.sleep(delay);
 
-        console.warn(
+        logger.warn(
           `Ollama request failed (attempt ${attempt}/${this.config.retryAttempts}), retrying in ${delay}ms:`,
           lastError.message
         );
@@ -343,7 +344,7 @@ export class OllamaClient {
         this.availableModels.add(model.name);
       }
 
-      console.log(
+      logger.log(
         `Found ${this.availableModels.size} available models:`,
         Array.from(this.availableModels)
       );
@@ -377,7 +378,7 @@ export class OllamaClient {
     }
 
     try {
-      console.log(`Pulling model: ${modelName}`);
+      logger.log(`Pulling model: ${modelName}`);
       await this.client.pull({ model: modelName });
 
       // Refresh model list
@@ -385,7 +386,7 @@ export class OllamaClient {
 
       return this.isModelAvailable(modelName);
     } catch (error) {
-      console.error(`Failed to pull model ${modelName}:`, error);
+      logger.error(`Failed to pull model ${modelName}:`, error);
       return false;
     }
   }

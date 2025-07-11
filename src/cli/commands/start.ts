@@ -144,6 +144,17 @@ async function waitForServerReady(
  * Start the MCP server
  */
 export async function startCommand(options: StartOptions): Promise<void> {
+  // When running in stdio mode, skip all console output and pre-flight checks
+  if (options.stdio) {
+    // Directly start the server for MCP stdio mode
+    const serverPath = join(__dirname, '../../server/index.js');
+    spawn('node', [serverPath], {
+      stdio: 'inherit',
+      env: { ...process.env, MCP_STDIO_MODE: 'true' },
+    });
+    return;
+  }
+
   console.log(chalk.blue.bold('🚀 Starting Code Audit MCP Server'));
 
   // Pre-flight checks with timeout

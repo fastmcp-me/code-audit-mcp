@@ -2,6 +2,7 @@
  * Ollama HTTP client wrapper with retry logic and health checking
  */
 import { Ollama } from 'ollama';
+import { logger } from '../utils/mcp-logger.js';
 export class OllamaClient {
     client;
     config;
@@ -46,7 +47,7 @@ export class OllamaClient {
             await this.refreshAvailableModels();
             this.isHealthy = true;
             this.isInitialized = true;
-            console.log(`Ollama client initialized with ${this.availableModels.size} models`);
+            logger.log(`Ollama client initialized with ${this.availableModels.size} models`);
         }
         catch (error) {
             this.isHealthy = false;
@@ -136,7 +137,7 @@ export class OllamaClient {
         }
         catch (error) {
             this.isHealthy = false;
-            console.error('Ollama health check failed:', error);
+            logger.error('Ollama health check failed:', error);
             return {
                 status: 'unhealthy',
                 checks: {
@@ -200,7 +201,7 @@ export class OllamaClient {
                 // Wait before retry with exponential backoff
                 const delay = this.config.retryDelay * Math.pow(2, attempt - 1);
                 await this.sleep(delay);
-                console.warn(`Ollama request failed (attempt ${attempt}/${this.config.retryAttempts}), retrying in ${delay}ms:`, lastError.message);
+                logger.warn(`Ollama request failed (attempt ${attempt}/${this.config.retryAttempts}), retrying in ${delay}ms:`, lastError.message);
             }
         }
         throw this.createError('GENERATION_FAILED', `Failed to generate response after ${this.config.retryAttempts} attempts: ${lastError?.message}`);
@@ -257,7 +258,7 @@ export class OllamaClient {
             for (const model of models.models) {
                 this.availableModels.add(model.name);
             }
-            console.log(`Found ${this.availableModels.size} available models:`, Array.from(this.availableModels));
+            logger.log(`Found ${this.availableModels.size} available models:`, Array.from(this.availableModels));
         }
         catch (error) {
             throw new Error(`Failed to refresh model list: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -283,14 +284,14 @@ export class OllamaClient {
             return true;
         }
         try {
-            console.log(`Pulling model: ${modelName}`);
+            logger.log(`Pulling model: ${modelName}`);
             await this.client.pull({ model: modelName });
             // Refresh model list
             await this.refreshAvailableModels();
             return this.isModelAvailable(modelName);
         }
         catch (error) {
-            console.error(`Failed to pull model ${modelName}:`, error);
+            logger.error(`Failed to pull model ${modelName}:`, error);
             return false;
         }
     }

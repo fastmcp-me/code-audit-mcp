@@ -1,6 +1,6 @@
 {
   "name": "@moikas/code-audit-mcp",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "AI-powered code auditing via MCP using local Ollama models for security, performance, and quality analysis",
   "main": "dist/server/index.js",
   "type": "module",

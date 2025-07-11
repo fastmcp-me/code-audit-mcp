@@ -101,8 +101,7 @@ jobs:
             echo "Version already set to $TARGET_VERSION, skipping npm version"
           fi
 
-          # Change to unscoped package name
-          sed -i 's/"name": "@moikas\/code-audit-mcp"/"name": "moikas-code-audit-mcp"/' package.json
+          # Package name is already unscoped in package.json
           cat package.json | grep -A 5 -B 5 '"name":'
 
       - name: Build project

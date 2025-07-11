@@ -260,9 +260,11 @@ class ConfigManager {
             'ollama.host': (val) => typeof val === 'string' && val.length > 0,
             'ollama.timeout': (val) => typeof val === 'number' && val >= 1000,
             'audit.output.format': (val) => typeof val === 'string' && ['json', 'markdown', 'html'].includes(val),
-            'audit.output.verbosity': (val) => typeof val === 'string' && ['minimal', 'normal', 'detailed'].includes(val),
+            'audit.output.verbosity': (val) => typeof val === 'string' &&
+                ['minimal', 'normal', 'detailed'].includes(val),
             'server.transport': (val) => typeof val === 'string' && ['stdio', 'http'].includes(val),
-            'server.logLevel': (val) => typeof val === 'string' && ['error', 'warn', 'info', 'debug'].includes(val),
+            'server.logLevel': (val) => typeof val === 'string' &&
+                ['error', 'warn', 'info', 'debug'].includes(val),
             'server.port': (val) => typeof val === 'number' && val >= 1 && val <= 65535,
         };
         const validator = validations[key];
@@ -282,9 +284,15 @@ class ConfigManager {
         if (project.audit) {
             result.audit = {
                 ...result.audit,
-                rules: project.audit.rules ? { ...result.audit.rules, ...project.audit.rules } : result.audit.rules,
-                output: project.audit.output ? { ...result.audit.output, ...project.audit.output } : result.audit.output,
-                filters: project.audit.filters ? { ...result.audit.filters, ...project.audit.filters } : result.audit.filters,
+                rules: project.audit.rules
+                    ? { ...result.audit.rules, ...project.audit.rules }
+                    : result.audit.rules,
+                output: project.audit.output
+                    ? { ...result.audit.output, ...project.audit.output }
+                    : result.audit.output,
+                filters: project.audit.filters
+                    ? { ...result.audit.filters, ...project.audit.filters }
+                    : result.audit.filters,
             };
         }
         if (project.server) {
@@ -302,7 +310,9 @@ class ConfigManager {
      * Get nested configuration value
      */
     getNestedValue(obj, path) {
-        return path.split('.').reduce((current, key) => current?.[key], obj);
+        return path
+            .split('.')
+            .reduce((current, key) => current?.[key], obj);
     }
     /**
      * Set nested configuration value

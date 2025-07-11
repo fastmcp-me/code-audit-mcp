@@ -20,7 +20,9 @@ export async function checkOllamaHealth(host) {
             throw new Error(`Ollama API returned ${response.status}: ${response.statusText}`);
         }
         const data = await response.json();
-        const models = data.models ? data.models.map((m) => m.name) : [];
+        const models = data.models
+            ? data.models.map((m) => m.name)
+            : [];
         return {
             models,
             version: data.version || 'unknown',

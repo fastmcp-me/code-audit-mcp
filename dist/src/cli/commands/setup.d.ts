@@ -1,5 +1,15 @@
 /**
  * Setup command - Interactive setup wizard
  */
-export declare function setupCommand(options: Record<string, unknown>): Promise<void>;
+interface SetupOptions {
+    force?: boolean;
+    minimal?: boolean;
+    comprehensive?: boolean;
+    verbose?: boolean;
+}
+/**
+ * Main setup command handler
+ */
+export declare function setupCommand(options?: SetupOptions): Promise<void>;
+export {};
 //# sourceMappingURL=setup.d.ts.map

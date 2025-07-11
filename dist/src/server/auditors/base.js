@@ -2,7 +2,7 @@
  * Base auditor abstract class with common functionality
  */
 import { randomUUID } from 'crypto';
-import { generatePrompt, generateFastModePrompt, } from '../ollama/prompts.js';
+import { generatePrompt, generateFastModePrompt } from '../ollama/prompts.js';
 export class BaseAuditor {
     auditType;
     config;

@@ -1,5 +1,10 @@
 /**
  * Update command - Check for and install updates
  */
-export declare function updateCommand(options: Record<string, unknown>): Promise<void>;
+interface UpdateOptions {
+    check?: boolean;
+    force?: boolean;
+}
+export declare function updateCommand(options: UpdateOptions): Promise<void>;
+export {};
 //# sourceMappingURL=update.d.ts.map

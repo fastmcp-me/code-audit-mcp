@@ -23,27 +23,13 @@ import type {
   ServerConfig,
   AuditType,
   HealthCheckResult,
-  ModelConfig,
   AuditorConfig,
 } from './types.js';
 
 // Internal interfaces for tool responses
-interface ModelListResponse {
-  models: Array<
-    ModelConfig & {
-      available: boolean;
-      metrics: Record<string, unknown> | null;
-    }
-  >;
-}
-
 interface ConfigUpdateArgs {
   auditors?: Record<string, Partial<AuditorConfig>>;
   ollama?: Record<string, unknown>;
-}
-
-interface ConfigUpdateResponse {
-  message: string;
 }
 
 /**
@@ -172,10 +158,7 @@ export class CodeAuditServer {
     try {
       console.log('Initializing Code Audit MCP Server...');
 
-      // Initialize Ollama client
-      await this.ollamaClient.initialize();
-
-      // Create auditors
+      // Create auditors first (doesn't require Ollama connection)
       this.auditors = AuditorFactory.createAllAuditors(
         this.config.auditors,
         this.ollamaClient,
@@ -186,14 +169,37 @@ export class CodeAuditServer {
         `Server initialized with ${Object.keys(this.auditors).length} auditors`
       );
 
-      // Perform initial health check
-      const health = await this.healthCheck();
-      if (health.status === 'unhealthy') {
-        console.warn('Server initialized but health check failed');
-      }
+      // Initialize Ollama client in the background (non-blocking)
+      this.initializeOllamaAsync();
     } catch (error) {
       console.error('Failed to initialize server:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Initialize Ollama client asynchronously
+   */
+  private async initializeOllamaAsync(): Promise<void> {
+    try {
+      await this.ollamaClient.initialize();
+      console.log('Ollama client connected successfully');
+
+      // Perform health check after Ollama is ready
+      const health = await this.healthCheck();
+      if (health.status === 'unhealthy') {
+        console.warn(
+          'Ollama health check failed - some features may be limited'
+        );
+      }
+    } catch (error) {
+      console.warn(
+        'Failed to connect to Ollama:',
+        error instanceof Error ? error.message : error
+      );
+      console.log(
+        'Server will continue running - Ollama connection will be retried on demand'
+      );
     }
   }
 
@@ -369,7 +375,7 @@ export class CodeAuditServer {
    */
   private async handleAuditCode(
     request: AuditRequest
-  ): Promise<{ content: AuditResult[] }> {
+  ): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
     // Validate request
     this.validateAuditRequest(request);
 
@@ -379,7 +385,14 @@ export class CodeAuditServer {
     if (existingAudit) {
       console.log('Audit already in progress, waiting for completion...');
       const result = await existingAudit.promise;
-      return { content: [result] };
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+      };
     }
 
     // Create audit promise with timeout
@@ -406,7 +419,14 @@ export class CodeAuditServer {
 
     try {
       const result = await auditPromise;
-      return { content: [result] };
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+      };
     } finally {
       // Clean up audit and cancel timeout
       const audit = this.activeAudits.get(requestKey);
@@ -521,15 +541,26 @@ export class CodeAuditServer {
   /**
    * Handle health_check tool requests
    */
-  private async handleHealthCheck(): Promise<{ content: HealthCheckResult[] }> {
+  private async handleHealthCheck(): Promise<{
+    content: Array<{ type: 'text'; text: string }>;
+  }> {
     const health = await this.healthCheck();
-    return { content: [health] };
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(health, null, 2),
+        },
+      ],
+    };
   }
 
   /**
    * Handle list_models tool requests
    */
-  private async handleListModels(): Promise<{ content: ModelListResponse[] }> {
+  private async handleListModels(): Promise<{
+    content: Array<{ type: 'text'; text: string }>;
+  }> {
     const availableModels = this.ollamaClient.getAvailableModels();
     const allModels = this.modelManager.getAllModels();
     const modelMetrics = this.ollamaClient.getAllMetrics();
@@ -540,7 +571,14 @@ export class CodeAuditServer {
       metrics: modelMetrics[config.name] || null,
     }));
 
-    return { content: [{ models: modelInfo }] };
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({ models: modelInfo }, null, 2),
+        },
+      ],
+    };
   }
 
   /**
@@ -548,7 +586,7 @@ export class CodeAuditServer {
    */
   private async handleUpdateConfig(
     args: ConfigUpdateArgs
-  ): Promise<{ content: ConfigUpdateResponse[] }> {
+  ): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
     try {
       if (args.auditors) {
         for (const [auditType, config] of Object.entries(args.auditors)) {
@@ -563,7 +601,18 @@ export class CodeAuditServer {
         console.log('Ollama config update requested (requires restart)');
       }
 
-      return { content: [{ message: 'Configuration updated successfully' }] };
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(
+              { message: 'Configuration updated successfully' },
+              null,
+              2
+            ),
+          },
+        ],
+      };
     } catch (error) {
       throw new McpError(
         ErrorCode.InternalError,

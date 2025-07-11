@@ -45,10 +45,13 @@ A comprehensive TypeScript MCP server that performs intelligent code audits for 
 
 ```bash
 # Install globally from npm
-npm install -g code-audit-mcp
+npm install -g @moikas/code-audit-mcp
 
-# Run interactive setup
+# Run interactive setup (includes MCP configuration)
 code-audit setup
+
+# Or setup with automatic MCP configuration
+code-audit setup --auto
 
 # Start the MCP server
 code-audit start
@@ -178,6 +181,11 @@ code-audit models --pull codellama:7b
 code-audit config --show
 code-audit config --set ollama.host=http://remote:11434
 
+# MCP server management
+code-audit mcp status
+code-audit mcp configure
+code-audit mcp remove
+
 # Check for updates
 code-audit update
 ```
@@ -197,7 +205,27 @@ npm run test-local
 
 ### MCP Integration
 
-Add to your MCP configuration (e.g., Claude Code):
+#### Automatic Configuration (Recommended)
+
+The setup wizard now automatically configures code-audit as an MCP server:
+
+```bash
+# Configure during setup
+code-audit setup
+
+# Or configure after installation
+code-audit mcp configure
+```
+
+This will automatically add code-audit to:
+
+- Claude Desktop: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Claude Code (Global): `~/.config/claude/mcp-settings.json`
+- Claude Code (Project): `.claude/mcp-settings.json`
+
+#### Manual Configuration
+
+If you prefer manual configuration, add to your MCP configuration:
 
 ```json
 {
@@ -210,6 +238,11 @@ Add to your MCP configuration (e.g., Claude Code):
   }
 }
 ```
+
+For more details, see:
+
+- [MCP Configuration Guide](./kb/docs/MCP_SERVERS_CONFIG.md)
+- [Claude Code Integration](./kb/docs/CLAUDE_CODE_INTEGRATION.md)
 
 ### Available Tools
 

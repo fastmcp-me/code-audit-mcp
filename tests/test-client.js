@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 async function testMCPServer() {
-  const serverPath = join(__dirname, 'dist/src/server/index.js');
+  const serverPath = join(__dirname, '../dist/src/server/index.js');
 
   // Create transport
   const transport = new StdioClientTransport({

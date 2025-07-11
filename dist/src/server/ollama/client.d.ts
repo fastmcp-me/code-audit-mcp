@@ -30,11 +30,21 @@ export declare class OllamaClient {
     private modelMetrics;
     private lastHealthCheck;
     private isHealthy;
+    private isInitialized;
+    private initializationPromise;
     constructor(config: OllamaConfig);
     /**
      * Initialize the client and perform health check
      */
     initialize(): Promise<void>;
+    /**
+     * Perform actual initialization
+     */
+    private doInitialize;
+    /**
+     * Ensure client is initialized before making requests
+     */
+    private ensureInitialized;
     /**
      * Check if Ollama service is healthy and refresh model list
      */

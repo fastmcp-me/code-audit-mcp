@@ -8,8 +8,9 @@ import boxen from 'boxen';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { existsSync } from 'fs';
+import os from 'os';
 import { getConfigManager, getDefaultConfig, getConfig, setConfigValue, resetConfig, } from '../utils/config.js';
-import { checkOllamaHealth, getInstalledModels, pullModelWithRetry, } from '../utils/ollama.js';
+import { checkOllamaHealth, getInstalledModels, pullModelWithRetry, getAvailableDiskSpace, } from '../utils/ollama.js';
 import { getMCPConfigManager, ClaudeEnvironment } from '../utils/mcp-config.js';
 const execAsync = promisify(exec);
 /**
@@ -40,6 +41,9 @@ export async function setupCommand(options = {}) {
                 return;
             }
         }
+        // Pre-flight system checks
+        console.log(chalk.blue('\n🔍 Pre-flight system checks...'));
+        await verifySystemReadiness(options);
         // Step 1: System requirements check
         console.log(chalk.blue('\n📋 Step 1: Checking system requirements...'));
         const systemState = await checkSystemRequirements();
@@ -93,6 +97,66 @@ export async function setupCommand(options = {}) {
         }
         console.log(chalk.yellow('\nFor help, visit: https://github.com/moikas-code/code-audit-mcp/issues'));
         process.exit(1);
+    }
+}
+/**
+ * Verify system readiness before setup
+ */
+async function verifySystemReadiness(options) {
+    const spinner = ora('Running pre-flight checks...').start();
+    try {
+        // Check disk space
+        const availableGB = getAvailableDiskSpace();
+        const requiredGB = options.minimal ? 10 : options.comprehensive ? 50 : 20;
+        if (availableGB > 0 && availableGB < requiredGB) {
+            spinner.fail(chalk.red(`Insufficient disk space: ${availableGB}GB available, ${requiredGB}GB required`));
+            throw new Error('Insufficient disk space for model installation');
+        }
+        // Check network connectivity to Ollama registry
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            await fetch('https://registry.ollama.ai', {
+                method: 'HEAD',
+                signal: controller.signal,
+            });
+            clearTimeout(timeoutId);
+        }
+        catch {
+            spinner.fail(chalk.red('Cannot reach Ollama registry'));
+            console.log(chalk.yellow('\n💡 Troubleshooting tips:'));
+            console.log(chalk.dim('  • Check your internet connection'));
+            console.log(chalk.dim('  • Verify firewall/proxy settings'));
+            console.log(chalk.dim('  • Try again later if registry is down'));
+            throw new Error('Network connectivity check failed');
+        }
+        // Check system memory and provide recommendations
+        const totalMemoryGB = Math.round(os.totalmem() / (1024 * 1024 * 1024));
+        if (totalMemoryGB < 8) {
+            spinner.warn(chalk.yellow(`System has ${totalMemoryGB}GB RAM. Recommended: 8GB+ for optimal performance`));
+            console.log(chalk.yellow('\n💡 Model recommendations for your system:'));
+            console.log(chalk.dim('  • Use 7b models only (codellama:7b, granite-code:8b)'));
+            console.log(chalk.dim('  • Avoid running multiple models simultaneously'));
+            console.log(chalk.dim('  • Close other applications during model downloads'));
+        }
+        // Early Ollama health check
+        try {
+            await checkOllamaHealth();
+            spinner.succeed(chalk.green('Pre-flight checks passed'));
+        }
+        catch {
+            spinner.warn(chalk.yellow('Ollama not accessible - will check again during setup'));
+        }
+    }
+    catch (error) {
+        spinner.fail(chalk.red('Pre-flight checks failed'));
+        if (!options.force) {
+            console.log(chalk.yellow('\nUse --force to bypass pre-flight checks (not recommended)'));
+            throw error;
+        }
+        else {
+            console.log(chalk.yellow('\n⚠️  Continuing despite failed checks (--force)'));
+        }
     }
 }
 /**
@@ -446,119 +510,113 @@ async function verifySetup() {
  * Setup MCP servers in Claude environments
  */
 async function setupMCPServers(options) {
+    const mcpManager = getMCPConfigManager();
     try {
-        const mcpManager = getMCPConfigManager();
-        const environments = mcpManager.getAvailableEnvironments();
-        if (environments.length === 0) {
-            console.log(chalk.yellow('No Claude environments detected on this system. Skipping MCP configuration.'));
-            return false;
-        }
-        // Auto mode - configure all available environments
+        // Determine which environments to configure
+        let environments = [];
         if (options.auto) {
-            console.log(chalk.blue('Auto-configuring all available Claude environments...'));
-            const results = await mcpManager.autoConfigureAll({
-                force: options.force,
-            });
-            if (results.configured.length > 0) {
-                console.log(chalk.green(`✓ Configured ${results.configured.length} environment(s): ${results.configured.join(', ')}`));
+            // Auto mode - configure all available environments
+            const available = mcpManager.getAvailableEnvironments();
+            environments = available.map((env) => env.environment);
+        }
+        else if (options.claudeDesktop || options.claudeCode || options.project) {
+            // Specific options provided
+            if (options.claudeDesktop) {
+                environments.push(ClaudeEnvironment.DESKTOP);
             }
-            if (results.skipped.length > 0) {
-                console.log(chalk.yellow(`⚠ Skipped ${results.skipped.length} environment(s) (already configured): ${results.skipped.join(', ')}`));
+            if (options.claudeCode) {
+                environments.push(ClaudeEnvironment.CODE_GLOBAL);
             }
-            if (results.failed.length > 0) {
-                console.log(chalk.red(`✗ Failed to configure ${results.failed.length} environment(s): ${results.failed.join(', ')}`));
+            if (options.project) {
+                environments.push(ClaudeEnvironment.CODE_PROJECT);
             }
-            return results.configured.length > 0;
         }
-        // Check which environments to configure based on options
-        const environmentsToConfig = [];
-        if (options.claudeDesktop) {
-            environmentsToConfig.push(ClaudeEnvironment.DESKTOP);
-        }
-        if (options.claudeCode) {
-            environmentsToConfig.push(ClaudeEnvironment.CODE_GLOBAL);
-        }
-        if (options.project) {
-            environmentsToConfig.push(ClaudeEnvironment.CODE_PROJECT);
-        }
-        // If no specific options, ask interactively
-        if (environmentsToConfig.length === 0) {
-            const availableChoices = environments
-                .filter((env) => env.exists || env.environment === ClaudeEnvironment.CODE_PROJECT)
-                .map((env) => ({
-                name: `${getEnvironmentDisplayName(env.environment)} ${env.configured ? '(already configured)' : ''}`,
-                value: env.environment,
-                checked: !env.configured,
-            }));
-            if (availableChoices.length === 0) {
-                console.log(chalk.yellow('No Claude environments available for configuration.'));
+        else {
+            // Interactive mode - ask user which environments to configure
+            const available = mcpManager.getAvailableEnvironments();
+            if (available.length === 0) {
+                console.log(chalk.yellow('\n⚠️  No Claude environments detected. Skipping MCP configuration.'));
                 return false;
             }
-            const { selectedEnvironments } = await inquirer.prompt([
+            const { configureMCP } = await inquirer.prompt([
+                {
+                    type: 'confirm',
+                    name: 'configureMCP',
+                    message: 'Would you like to configure Code Audit as an MCP server in Claude?',
+                    default: true,
+                },
+            ]);
+            if (!configureMCP) {
+                console.log(chalk.yellow('Skipping MCP configuration'));
+                return false;
+            }
+            // Show available environments and their status
+            console.log(chalk.cyan('\nDetected Claude environments:'));
+            for (const env of available) {
+                const status = env.configured
+                    ? chalk.green('✓ Already configured')
+                    : chalk.yellow('○ Not configured');
+                console.log(`  ${env.environment}: ${status}`);
+            }
+            const choices = available.map((env) => ({
+                name: `${env.environment} ${env.configured ? '(reconfigure)' : ''}`,
+                value: env.environment,
+                checked: !env.configured, // Default check unconfigured environments
+            }));
+            const answers = await inquirer.prompt([
                 {
                     type: 'checkbox',
                     name: 'selectedEnvironments',
-                    message: 'Select Claude environments to configure:',
-                    choices: availableChoices,
+                    message: 'Select environments to configure:',
+                    choices,
                 },
             ]);
-            if (selectedEnvironments.length === 0) {
-                console.log(chalk.yellow('Skipping MCP configuration.'));
-                return false;
-            }
-            environmentsToConfig.push(...selectedEnvironments);
+            const selectedEnvironments = answers.selectedEnvironments;
+            environments = selectedEnvironments;
+        }
+        if (environments.length === 0) {
+            return false;
         }
         // Configure selected environments
-        let successCount = 0;
-        for (const env of environmentsToConfig) {
-            const envInfo = environments.find((e) => e.environment === env);
-            if (envInfo?.configured && !options.force) {
-                console.log(chalk.yellow(`${getEnvironmentDisplayName(env)} is already configured.`));
-                continue;
-            }
-            const spinner = ora(`Configuring ${getEnvironmentDisplayName(env)}...`).start();
+        const spinner = ora('Configuring MCP servers...').start();
+        const results = {
+            configured: [],
+            failed: [],
+        };
+        for (const environment of environments) {
             try {
-                const success = await mcpManager.configureServer(env, {
+                const success = await mcpManager.configureServer(environment, {
                     force: options.force,
                 });
                 if (success) {
-                    spinner.succeed(chalk.green(`✓ Configured ${getEnvironmentDisplayName(env)}`));
-                    successCount++;
+                    results.configured.push(environment);
                 }
                 else {
-                    spinner.fail(chalk.red(`✗ Failed to configure ${getEnvironmentDisplayName(env)}`));
+                    results.failed.push(environment);
                 }
             }
             catch (error) {
-                spinner.fail(chalk.red(`✗ Error configuring ${getEnvironmentDisplayName(env)}: ${error instanceof Error ? error.message : String(error)}`));
+                results.failed.push(environment);
+                if (options.verbose) {
+                    console.error(chalk.red(`\nError configuring ${environment}:`), error);
+                }
             }
         }
-        if (successCount > 0) {
-            console.log(chalk.green(`\n✓ Successfully configured ${successCount} environment(s).`));
-            console.log(chalk.yellow('Please restart Claude Desktop/Code to load the new configuration.'));
-            return true;
+        spinner.stop();
+        // Show results
+        if (results.configured.length > 0) {
+            console.log(chalk.green(`\n✓ Successfully configured MCP in: ${results.configured.join(', ')}`));
         }
-        return false;
+        if (results.failed.length > 0) {
+            console.log(chalk.red(`\n✗ Failed to configure MCP in: ${results.failed.join(', ')}`));
+        }
+        return results.configured.length > 0;
     }
     catch (error) {
-        console.error(chalk.red('MCP configuration failed:'), error instanceof Error ? error.message : String(error));
-        // Don't throw - MCP configuration is optional
+        console.error(chalk.red('\nMCP configuration failed:'), error instanceof Error ? error.message : error);
+        // Non-fatal error - setup can continue without MCP
+        console.log(chalk.yellow('\nYou can configure MCP later by running: code-audit mcp configure'));
         return false;
-    }
-}
-/**
- * Get display name for environment
- */
-function getEnvironmentDisplayName(env) {
-    switch (env) {
-        case ClaudeEnvironment.DESKTOP:
-            return 'Claude Desktop';
-        case ClaudeEnvironment.CODE_GLOBAL:
-            return 'Claude Code (Global)';
-        case ClaudeEnvironment.CODE_PROJECT:
-            return 'Claude Code (Project)';
-        default:
-            return env;
     }
 }
 //# sourceMappingURL=setup.js.map

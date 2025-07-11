@@ -17,6 +17,7 @@ import { updateCommand } from './commands/update.js';
 import { modelsCommand } from './commands/models.js';
 import { healthCommand } from './commands/health.js';
 import { configCommand } from './commands/config.js';
+import { mcpCommand } from './commands/mcp.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -141,6 +142,19 @@ export async function cli(): Promise<void> {
     .option('--get <key>', 'Get a configuration value')
     .action(configCommand);
 
+  program
+    .command('mcp [subcommand]')
+    .description('Manage MCP server configurations in Claude')
+    .option(
+      '--environment <env>',
+      'Target specific environment (desktop, code-global, project)'
+    )
+    .option('--force', 'Skip confirmation prompts')
+    .option('--restore <file>', 'Backup file to restore from')
+    .action((subcommand, options) => {
+      mcpCommand(subcommand, options);
+    });
+
   // Add example usage
   program.addHelpText(
     'after',
@@ -151,6 +165,8 @@ Examples:
   $ code-audit start --daemon     Start as background daemon
   $ code-audit health             Check system health
   $ code-audit models --list      List installed models
+  $ code-audit mcp status         Show MCP configuration status
+  $ code-audit mcp configure      Configure MCP servers in Claude
   $ code-audit update             Check for updates
 
 For more information, visit: https://github.com/warrengates/code-audit-mcp
@@ -197,12 +213,23 @@ For more information, visit: https://github.com/warrengates/code-audit-mcp
     }
 
     if (isError(error)) {
+      // Check if this is a help-related error that shouldn't be displayed
+      if (error.message && error.message.includes('outputHelp')) {
+        // Help was displayed, exit normally
+        process.exit(0);
+      }
       console.error(chalk.red('An error occurred:'), error.message);
       if (program.opts().verbose) {
         console.error(error.stack);
       }
     } else {
-      console.error(chalk.red('An unknown error occurred:'), String(error));
+      // Check for help-related strings in the error
+      const errorStr = String(error);
+      if (errorStr.includes('outputHelp') || errorStr === '(outputHelp)') {
+        // Help was displayed, exit normally
+        process.exit(0);
+      }
+      console.error(chalk.red('An unknown error occurred:'), errorStr);
     }
     process.exit(1);
   }

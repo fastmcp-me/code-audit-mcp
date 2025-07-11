@@ -1,9 +1,0 @@
-{
-  "mcpServers": {
-    "code-audit": {
-      "command": "/Users/warrengates/.bun/bin/code-audit",
-      "args": ["start", "--stdio"],
-      "env": {}
-    }
-  }
-}

@@ -77,6 +77,8 @@ export async function getModelHealth() {
  */
 export async function pullModel(modelName, onProgress) {
     const config = await getConfig();
+    let lastProgressTime = 0;
+    const progressThrottleMs = 500; // Update at most twice per second
     try {
         const response = await fetch(`${config.ollama.host}/api/pull`, {
             method: 'POST',
@@ -95,8 +97,11 @@ export async function pullModel(modelName, onProgress) {
             let buffer = '';
             while (true) {
                 const { done, value } = await reader.read();
-                if (done)
+                if (done) {
+                    // Clear the progress line when done
+                    process.stdout.write('\r' + ' '.repeat(80) + '\r');
                     break;
+                }
                 buffer += new TextDecoder().decode(value);
                 const lines = buffer.split('\n');
                 buffer = lines.pop() || '';
@@ -104,6 +109,21 @@ export async function pullModel(modelName, onProgress) {
                     if (line.trim()) {
                         try {
                             const data = JSON.parse(line);
+                            // Enhanced progress display
+                            if (data.status === 'downloading' &&
+                                data.completed &&
+                                data.total) {
+                                const now = Date.now();
+                                if (now - lastProgressTime >= progressThrottleMs) {
+                                    lastProgressTime = now;
+                                    const percent = ((data.completed / data.total) * 100).toFixed(1);
+                                    const mbDownloaded = (data.completed / (1024 * 1024)).toFixed(1);
+                                    const mbTotal = (data.total / (1024 * 1024)).toFixed(1);
+                                    const progressText = `${percent}% (${mbDownloaded}MB / ${mbTotal}MB)`;
+                                    // Clear line and write progress
+                                    process.stdout.write(`\rDownloading ${modelName}: ${progressText}`);
+                                }
+                            }
                             if (onProgress)
                                 onProgress(data);
                         }
@@ -116,6 +136,8 @@ export async function pullModel(modelName, onProgress) {
         }
     }
     catch (error) {
+        // Clear any progress line on error
+        process.stdout.write('\r' + ' '.repeat(80) + '\r');
         throw new Error(`Failed to pull model ${modelName}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 }

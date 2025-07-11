@@ -114,20 +114,33 @@ export class CodeAuditServer {
     async initialize() {
         try {
             console.log('Initializing Code Audit MCP Server...');
-            // Initialize Ollama client
-            await this.ollamaClient.initialize();
-            // Create auditors
+            // Create auditors first (doesn't require Ollama connection)
             this.auditors = AuditorFactory.createAllAuditors(this.config.auditors, this.ollamaClient, this.modelManager);
             console.log(`Server initialized with ${Object.keys(this.auditors).length} auditors`);
-            // Perform initial health check
-            const health = await this.healthCheck();
-            if (health.status === 'unhealthy') {
-                console.warn('Server initialized but health check failed');
-            }
+            // Initialize Ollama client in the background (non-blocking)
+            this.initializeOllamaAsync();
         }
         catch (error) {
             console.error('Failed to initialize server:', error);
             throw error;
+        }
+    }
+    /**
+     * Initialize Ollama client asynchronously
+     */
+    async initializeOllamaAsync() {
+        try {
+            await this.ollamaClient.initialize();
+            console.log('Ollama client connected successfully');
+            // Perform health check after Ollama is ready
+            const health = await this.healthCheck();
+            if (health.status === 'unhealthy') {
+                console.warn('Ollama health check failed - some features may be limited');
+            }
+        }
+        catch (error) {
+            console.warn('Failed to connect to Ollama:', error instanceof Error ? error.message : error);
+            console.log('Server will continue running - Ollama connection will be retried on demand');
         }
     }
     /**
@@ -294,7 +307,14 @@ export class CodeAuditServer {
         if (existingAudit) {
             console.log('Audit already in progress, waiting for completion...');
             const result = await existingAudit.promise;
-            return { content: [result] };
+            return {
+                content: [
+                    {
+                        type: 'text',
+                        text: JSON.stringify(result, null, 2),
+                    },
+                ],
+            };
         }
         // Create audit promise with timeout
         const auditPromise = this.performAudit(request);
@@ -315,7 +335,14 @@ export class CodeAuditServer {
         });
         try {
             const result = await auditPromise;
-            return { content: [result] };
+            return {
+                content: [
+                    {
+                        type: 'text',
+                        text: JSON.stringify(result, null, 2),
+                    },
+                ],
+            };
         }
         finally {
             // Clean up audit and cancel timeout
@@ -412,7 +439,14 @@ export class CodeAuditServer {
      */
     async handleHealthCheck() {
         const health = await this.healthCheck();
-        return { content: [health] };
+        return {
+            content: [
+                {
+                    type: 'text',
+                    text: JSON.stringify(health, null, 2),
+                },
+            ],
+        };
     }
     /**
      * Handle list_models tool requests
@@ -426,7 +460,14 @@ export class CodeAuditServer {
             available: availableModels.includes(config.name),
             metrics: modelMetrics[config.name] || null,
         }));
-        return { content: [{ models: modelInfo }] };
+        return {
+            content: [
+                {
+                    type: 'text',
+                    text: JSON.stringify({ models: modelInfo }, null, 2),
+                },
+            ],
+        };
     }
     /**
      * Handle update_config tool requests
@@ -444,7 +485,14 @@ export class CodeAuditServer {
                 // Note: Ollama config updates would require client recreation
                 console.log('Ollama config update requested (requires restart)');
             }
-            return { content: [{ message: 'Configuration updated successfully' }] };
+            return {
+                content: [
+                    {
+                        type: 'text',
+                        text: JSON.stringify({ message: 'Configuration updated successfully' }, null, 2),
+                    },
+                ],
+            };
         }
         catch (error) {
             throw new McpError(ErrorCode.InternalError, `Failed to update configuration: ${error instanceof Error ? error.message : 'Unknown error'}`);

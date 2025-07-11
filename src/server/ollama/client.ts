@@ -44,6 +44,8 @@ export class OllamaClient {
   >();
   private lastHealthCheck = 0;
   private isHealthy = false;
+  private isInitialized = false;
+  private initializationPromise: Promise<void> | null = null;
 
   constructor(config: OllamaConfig) {
     this.config = config;
@@ -56,9 +58,34 @@ export class OllamaClient {
    * Initialize the client and perform health check
    */
   async initialize(): Promise<void> {
+    // If already initializing, return the existing promise
+    if (this.initializationPromise) {
+      return this.initializationPromise;
+    }
+
+    // If already initialized, return immediately
+    if (this.isInitialized) {
+      return;
+    }
+
+    // Start initialization
+    this.initializationPromise = this.doInitialize();
+
+    try {
+      await this.initializationPromise;
+    } finally {
+      this.initializationPromise = null;
+    }
+  }
+
+  /**
+   * Perform actual initialization
+   */
+  private async doInitialize(): Promise<void> {
     try {
       await this.refreshAvailableModels();
       this.isHealthy = true;
+      this.isInitialized = true;
       console.log(
         `Ollama client initialized with ${this.availableModels.size} models`
       );
@@ -67,6 +94,17 @@ export class OllamaClient {
       throw new Error(
         `Failed to initialize Ollama client: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
+    }
+  }
+
+  /**
+   * Ensure client is initialized before making requests
+   */
+  private async ensureInitialized(): Promise<void> {
+    if (!this.isInitialized && !this.initializationPromise) {
+      await this.initialize();
+    } else if (this.initializationPromise) {
+      await this.initializationPromise;
     }
   }
 
@@ -183,6 +221,9 @@ export class OllamaClient {
    * Generate response from model with retry logic
    */
   async generate(request: OllamaGenerateRequest): Promise<OllamaResponse> {
+    // Ensure client is initialized
+    await this.ensureInitialized();
+
     if (!this.isHealthy) {
       await this.healthCheck();
       if (!this.isHealthy) {
@@ -263,7 +304,10 @@ export class OllamaClient {
       return {
         response: response.response,
         model: request.model,
-        created_at: response.created_at.toISOString(),
+        created_at:
+          response.created_at instanceof Date
+            ? response.created_at.toISOString()
+            : response.created_at,
         done: response.done,
         total_duration: response.total_duration,
         load_duration: response.load_duration,
@@ -282,7 +326,17 @@ export class OllamaClient {
    */
   async refreshAvailableModels(): Promise<void> {
     try {
-      const models = await this.client.list();
+      // Add timeout to prevent hanging during startup
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(
+          () => reject(new Error('Timeout connecting to Ollama')),
+          5000
+        );
+      });
+
+      const listPromise = this.client.list();
+      const models = await Promise.race([listPromise, timeoutPromise]);
+
       this.availableModels.clear();
 
       for (const model of models.models) {

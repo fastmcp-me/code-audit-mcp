@@ -214,8 +214,8 @@ export async function startCommand(options) {
                 appendFileSync(errorLogFile, `[${new Date().toISOString()}] ${data.toString()}`);
             });
         }
-        // Try to acquire PID lock
-        if (!acquirePidLock(child.pid)) {
+        // Try to acquire PID lock (skip for stdio mode)
+        if (!options.stdio && !acquirePidLock(child.pid)) {
             console.error(chalk.red('❌ Another server instance is already running'));
             console.log(chalk.gray('Use "code-audit stop" to stop it first'));
             child.kill('SIGTERM');
@@ -264,8 +264,8 @@ export async function startCommand(options) {
             console.error(chalk.red('❌ Failed to spawn server process'));
             return;
         }
-        // Try to acquire PID lock for foreground mode
-        if (!acquirePidLock(child.pid)) {
+        // Try to acquire PID lock for foreground mode (skip for stdio mode)
+        if (!options.stdio && !acquirePidLock(child.pid)) {
             console.error(chalk.red('❌ Another server instance is already running'));
             console.log(chalk.gray('Use "code-audit stop" to stop it first'));
             child.kill('SIGTERM');
@@ -307,10 +307,12 @@ export async function startCommand(options) {
             }
         });
         child.on('exit', (code) => {
-            // Clean up PID file
-            const pidFile = getPidFilePath();
-            if (existsSync(pidFile)) {
-                unlinkSync(pidFile);
+            // Clean up PID file (skip for stdio mode)
+            if (!options.stdio) {
+                const pidFile = getPidFilePath();
+                if (existsSync(pidFile)) {
+                    unlinkSync(pidFile);
+                }
             }
             if (code === 0) {
                 console.log(chalk.green('✅ Server shut down gracefully'));

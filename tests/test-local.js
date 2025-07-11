@@ -91,7 +91,9 @@ async function testPackaging() {
 
   try {
     // Clean up any existing package
-    const tarballName = `code-audit-mcp-${packageJson.version}.tgz`;
+    // Handle scoped package names
+    const packageName = packageJson.name.replace('@', '').replace('/', '-');
+    const tarballName = `${packageName}-${packageJson.version}.tgz`;
     if (existsSync(tarballName)) {
       unlinkSync(tarballName);
     }

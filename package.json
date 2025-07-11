@@ -1,6 +1,6 @@
 {
   "name": "@moikas/code-audit-mcp",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "AI-powered code auditing via MCP using local Ollama models for security, performance, and quality analysis",
   "main": "dist/server/index.js",
   "type": "module",
@@ -25,8 +25,8 @@
     "prepublishOnly": "npm run quality-check && npm run build",
     "prepare": "husky",
     "pack-test": "npm pack && npm install -g code-audit-mcp-1.0.0.tgz",
-    "test-local": "node test-local.js",
-    "test-local-verbose": "node test-local.js --verbose",
+    "test-local": "node tests/test-local.js",
+    "test-local-verbose": "node tests/test-local.js --verbose",
     "test-publish": "node scripts/test-publish.js",
     "clean": "rm -rf dist/ *.tgz",
     "reinstall": "npm run clean && npm install",
@@ -53,12 +53,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/warrengates/code-audit-mcp.git"
+    "url": "https://github.com/moikas-code/code-audit-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/warrengates/code-audit-mcp/issues"
+    "url": "https://github.com/moikas-code/code-audit-mcp/issues"
   },
-  "homepage": "https://github.com/warrengates/code-audit-mcp#readme",
+  "homepage": "https://github.com/moikas-code/code-audit-mcp#readme",
   "files": [
     "dist/",
     "bin/",

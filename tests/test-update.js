@@ -8,7 +8,7 @@ import {
   updateCommand,
   check_update_available,
   get_current_version,
-} from './src/cli/commands/update.js';
+} from '../src/cli/commands/update.js';
 
 async function test_update_functions() {
   console.log('🧪 Testing Update Command Functions\n');

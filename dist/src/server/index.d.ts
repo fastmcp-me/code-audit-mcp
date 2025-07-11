@@ -18,6 +18,10 @@ export declare class CodeAuditServer {
      */
     initialize(): Promise<void>;
     /**
+     * Initialize Ollama client asynchronously
+     */
+    private initializeOllamaAsync;
+    /**
      * Setup tool handlers
      */
     private setupToolHandlers;

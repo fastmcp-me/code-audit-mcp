@@ -18,7 +18,7 @@ function get_package_info() {
         const package_json = JSON.parse(readFileSync(package_path, 'utf8'));
         return {
             name: package_json.name,
-            version: package_json.version
+            version: package_json.version,
         };
     }
     catch {
@@ -31,7 +31,7 @@ async function check_latest_version(package_name) {
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-        const data = await response.json();
+        const data = (await response.json());
         return data['dist-tags']?.latest || null;
     }
     catch (error) {
@@ -43,7 +43,7 @@ async function install_update(package_name) {
     const spinner = ora('Installing update...').start();
     try {
         await execa('npm', ['install', '-g', package_name], {
-            stdio: 'pipe'
+            stdio: 'pipe',
         });
         spinner.succeed('Update installed successfully');
     }
@@ -61,13 +61,13 @@ function display_update_info(current, latest, package_name) {
         `Latest version:  ${chalk.green(latest)}`,
         '',
         `Run ${chalk.cyan(`npm install -g ${package_name}`)} to update`,
-        `Or use ${chalk.cyan('code-audit update')} to update automatically`
+        `Or use ${chalk.cyan('code-audit update')} to update automatically`,
     ].join('\n');
     console.log(boxen(box_content, {
         padding: 1,
         margin: 1,
         borderStyle: 'round',
-        borderColor: 'green'
+        borderColor: 'green',
     }));
 }
 function display_no_update_info(current) {
@@ -80,7 +80,7 @@ export async function updateCommand(options) {
         const spinner = ora('Checking for updates...').start();
         let latest_version;
         try {
-            latest_version = await check_latest_version(pkg.name) || pkg.version;
+            latest_version = (await check_latest_version(pkg.name)) || pkg.version;
             spinner.succeed('Update check completed');
         }
         catch (error) {

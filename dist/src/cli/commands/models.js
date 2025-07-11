@@ -5,28 +5,28 @@ import chalk from 'chalk';
 import ora from 'ora';
 import { Listr } from 'listr2';
 import inquirer from 'inquirer';
-import { getInstalledModels, pullModel, removeModel, checkOllamaHealth } from '../utils/ollama.js';
+import { getInstalledModels, pullModel, removeModel, checkOllamaHealth, } from '../utils/ollama.js';
 const RECOMMENDED_MODELS = [
     {
         name: 'codellama:7b',
         description: 'Code Llama 7B - Lightweight code generation',
-        size: '~3.8GB'
+        size: '~3.8GB',
     },
     {
         name: 'granite-code:8b',
         description: 'IBM Granite Code 8B - Enterprise code analysis',
-        size: '~4.6GB'
+        size: '~4.6GB',
     },
     {
         name: 'codellama:13b',
         description: 'Code Llama 13B - Enhanced code generation',
-        size: '~7.3GB'
+        size: '~7.3GB',
     },
     {
         name: 'deepseek-coder:6.7b',
         description: 'DeepSeek Coder 6.7B - Advanced code understanding',
-        size: '~3.8GB'
-    }
+        size: '~3.8GB',
+    },
 ];
 function format_size(bytes) {
     const size_num = parseInt(bytes);
@@ -53,7 +53,7 @@ async function list_models() {
             console.log(chalk.yellow('\n📭 No models installed'));
             console.log(chalk.dim('Run "code-audit models --pull <model>" to install a model'));
             console.log(chalk.dim('\nRecommended models:'));
-            RECOMMENDED_MODELS.forEach(model => {
+            RECOMMENDED_MODELS.forEach((model) => {
                 console.log(chalk.dim(`  • ${model.name} - ${model.description} (${model.size})`));
             });
             return;
@@ -88,17 +88,17 @@ async function pull_model_interactive(model_name) {
                 name: 'selected_model',
                 message: 'Select a model to install:',
                 choices: [
-                    ...RECOMMENDED_MODELS.map(model => ({
+                    ...RECOMMENDED_MODELS.map((model) => ({
                         name: `${model.name} - ${model.description} (${model.size})`,
-                        value: model.name
+                        value: model.name,
                     })),
                     new inquirer.Separator(),
                     {
                         name: 'Enter custom model name',
-                        value: 'custom'
-                    }
-                ]
-            }
+                        value: 'custom',
+                    },
+                ],
+            },
         ]);
         if (selected_model === 'custom') {
             const { custom_name } = await inquirer.prompt([
@@ -112,8 +112,8 @@ async function pull_model_interactive(model_name) {
                         if (!input.includes(':'))
                             return 'Model name should include tag (e.g., model:tag)';
                         return true;
-                    }
-                }
+                    },
+                },
             ]);
             target_model = custom_name;
         }
@@ -154,9 +154,9 @@ async function remove_model_interactive(model_name) {
                 message: 'Select a model to remove:',
                 choices: models.map((model) => ({
                     name: `${model.name} (${format_size(model.size)})`,
-                    value: model.name
-                }))
-            }
+                    value: model.name,
+                })),
+            },
         ]);
         target_model = selected_model;
     }
@@ -165,8 +165,8 @@ async function remove_model_interactive(model_name) {
             type: 'confirm',
             name: 'confirm',
             message: `Are you sure you want to remove ${chalk.bold(target_model)}?`,
-            default: false
-        }
+            default: false,
+        },
     ]);
     if (!confirm) {
         console.log(chalk.yellow('❌ Removal cancelled'));
@@ -194,16 +194,16 @@ async function update_all_models() {
         title: `Updating ${model.name}`,
         task: async () => {
             await pullModel(model.name);
-        }
+        },
     })), {
         concurrent: false,
-        exitOnError: false
+        exitOnError: false,
     });
     try {
         await tasks.run();
         console.log(chalk.green('\n✅ All models updated successfully!'));
     }
-    catch (error) {
+    catch {
         console.error(chalk.red('\n❌ Some models failed to update'));
         console.log(chalk.yellow('💡 Try updating individual models manually'));
     }
